@@ -1,0 +1,50 @@
+{
+  "apphosting": [
+    {
+      "backendId": "admin-portal",
+      "rootDir": "admin-portal"
+    }
+  ],
+  "firestore": {
+    "rules": "firestore.rules"
+  },
+  "storage": {
+    "rules": "storage.rules"
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "runtime": "nodejs20",
+      "predeploy": ["npm --prefix \"$RESOURCE_DIR\" run build"]
+    }
+  ],
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "saf-uniforms",
+          "appId": "1:612500938654:android:3908ea89dee96af15e408f",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "ios": {
+        "default": {
+          "projectId": "saf-uniforms",
+          "appId": "1:612500938654:ios:db70964b515da4805e408f",
+          "uploadDebugSymbols": false,
+          "fileOutput": "ios/Runner/GoogleService-Info.plist"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "saf-uniforms",
+          "configurations": {
+            "android": "1:612500938654:android:3908ea89dee96af15e408f",
+            "ios": "1:612500938654:ios:db70964b515da4805e408f"
+          }
+        }
+      }
+    }
+  }
+}

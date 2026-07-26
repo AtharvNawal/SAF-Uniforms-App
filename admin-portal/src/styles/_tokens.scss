@@ -1,0 +1,66 @@
+/* SAF Uniforms Admin Portal — design tokens.
+   Ported verbatim from the Claude Design handoff (styles.css). Do not
+   rename CSS variables — component CSS class names (.btn-primary,
+   .sidenav-link.is-active, etc.) reference them directly. */
+
+:root {
+  /* Brand */
+  --navy: #000080;
+  --navy-light: #3A3AB8;
+  --navy-deep: #0A0A1F;
+  --gold: #FFCC00;
+  --gold-deep: #D4A017;
+  --cream: #FAF6E8;
+  --shield-red: #ED2939;
+
+  /* Neutrals (dark — default) */
+  --bg: #0B0D0E;
+  --charcoal: #16191C;
+  --charcoal-2: #1F2326;
+  --charcoal-3: #2A2F33;
+  --line: rgba(255, 255, 255, 0.08);
+  --line-strong: rgba(255, 255, 255, 0.12);
+  --line-faint: rgba(255, 255, 255, 0.04);
+
+  --ink: #fff;
+  --ink-muted: rgba(255, 255, 255, 0.55);
+  --ink-subtle: rgba(255, 255, 255, 0.40);
+  --ink-faint: rgba(255, 255, 255, 0.28);
+
+  /* Semantic */
+  --ok: #5FBF6A;
+  --warn: #E8B042;
+  --err: #D8533F;
+
+  /* Fonts */
+  --sans: 'DM Sans', system-ui, sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+
+  /* Radii */
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 14px;
+  --r-xl: 16px;
+  --r-pill: 999px;
+
+  /* Layout */
+  --sidebar-w: 240px;
+  --sidebar-w-collapsed: 64px;
+  --topbar-h: 56px;
+}
+
+/* Light theme override — driven by ThemeService writing
+   document.documentElement.dataset.theme = 'light'. */
+:root[data-theme="light"] {
+  --bg: #F5F6F4;
+  --charcoal: #FFFFFF;
+  --charcoal-2: #FFFFFF;
+  --charcoal-3: #F0EFE9;
+  --line: rgba(13, 16, 20, 0.08);
+  --line-strong: rgba(13, 16, 20, 0.14);
+  --line-faint: rgba(13, 16, 20, 0.04);
+  --ink: #0D1014;
+  --ink-muted: rgba(13, 16, 20, 0.62);
+  --ink-subtle: rgba(13, 16, 20, 0.42);
+  --ink-faint: rgba(13, 16, 20, 0.24);
+}

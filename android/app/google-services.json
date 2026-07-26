@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "612500938654",
+    "project_id": "saf-uniforms",
+    "storage_bucket": "saf-uniforms.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:612500938654:android:3908ea89dee96af15e408f",
+        "android_client_info": {
+          "package_name": "com.saf.saf_uniforms"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDqFkmZeyay3O6YCpkeeSPoRY6PgwRiaug"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

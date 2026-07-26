@@ -1,0 +1,113 @@
+name: saf_uniforms
+description: "SAF Uniforms — Singapore Armed Forces uniform reference."
+publish_to: 'none'
+version: 1.0.0+2
+
+environment:
+  sdk: ^3.11.1
+  flutter: ">=3.41.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+
+  # State management — Riverpod 3 (annotation/generator are versioned 4.x)
+  flutter_riverpod: ^3.3.1
+  riverpod_annotation: ^4.0.2
+
+  # Firebase
+  firebase_core: ^4.7.0
+  firebase_auth: ^6.4.0
+  cloud_firestore: ^6.3.0
+  cloud_functions: ^6.0.0
+  firebase_storage: ^13.0.4
+
+  # Network image caching — No.3 accessory photos + Gallery user photos.
+  cached_network_image: ^3.4.1
+
+  # Gallery: camera/library picker, full-screen zoom/pan viewer, share sheet.
+  image_picker: ^1.1.2
+  photo_view: ^0.14.0
+  share_plus: ^13.1.0
+
+  # Device identity
+  device_info_plus: ^13.1.0
+  uuid: ^4.5.0
+  android_id: ^0.5.1
+
+  # Local persistence (deviceId, cached uid, profileComplete flag).
+  # `flutter_secure_storage` is pinned to ^8 because 9.x's
+  # `flutter_secure_storage_windows` dep clashes with `device_info_plus`
+  # ^13 over `win32` — and we don't ship a Windows build anyway.
+  flutter_secure_storage: ^8.1.0
+  shared_preferences: ^2.3.3
+
+  # Modeling / serialization
+  freezed_annotation: ^3.1.0
+  json_annotation: ^4.11.0
+
+  # Routing
+  go_router: ^17.2.2
+
+  # i18n helpers
+  intl: ^0.20.2
+
+  # AR / camera / pose detection
+  camera: ^0.11.0+2
+  model_viewer_plus: ^1.9.3
+  google_mlkit_pose_detection: ^0.14.0
+  permission_handler: ^11.3.1
+
+  # Typography (DM Sans + JetBrains Mono per Claude Design handoff)
+  google_fonts: ^6.2.1
+
+  # Vector branding asset (SAF crest) — used by the Welcome screen and the
+  # dashboard app bar so the crest stays sharp at every DPI.
+  flutter_svg: ^2.0.10+1
+
+  # SHA-256 of profile fields, used by the 3D-avatar regeneration gate
+  # (lib/features/ar_engine/data/profile_hash.dart) and by
+  # tool/seed_firestore.dart's --upload-images idempotency check.
+  crypto: ^3.0.0
+  http: ^1.6.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+  build_runner: ^2.5.5
+  riverpod_generator: ^4.0.3
+  freezed: ^3.2.5
+  json_serializable: ^6.10.0
+  fake_cloud_firestore: ^4.0.0
+  firebase_admin_sdk: ^0.5.1
+  google_cloud_firestore: ^0.5.1
+  google_cloud_storage: ^0.6.0
+
+  # Generates Android mipmap + iOS AppIcon set from one master PNG. Run with
+  # `dart run flutter_launcher_icons` whenever assets/branding/saf_crest_1024.png
+  # changes.
+  flutter_launcher_icons: ^0.14.3
+  integration_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
+  generate: true
+  assets:
+    - assets/data/branch_configs.v1.json
+    - assets/data/dress_requirements.v1.json
+    - assets/data/accessory_library.v1.json
+    - assets/branding/saf_crest.svg
+
+flutter_launcher_icons:
+  android: "ic_launcher"
+  ios: true
+  image_path: "assets/branding/saf_crest_1024.png"
+  remove_alpha_ios: true            # App Store rejects icons with alpha
+  background_color_ios: "#000080"   # crest navy — fills any rounded-corner mask
+  min_sdk_android: 21

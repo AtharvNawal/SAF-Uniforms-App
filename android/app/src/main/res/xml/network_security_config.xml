@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Cleartext HTTP is denied by default on API 28+. `model_viewer_plus`
+  starts an internal HTTP server on `http://127.0.0.1:<port>/` and
+  loads it inside an embedded WebView, so the WebView needs an
+  explicit allow-list for localhost. We ONLY whitelist 127.0.0.1
+  and localhost — every other domain still requires HTTPS.
+-->
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">127.0.0.1</domain>
+        <domain includeSubdomains="false">localhost</domain>
+    </domain-config>
+</network-security-config>

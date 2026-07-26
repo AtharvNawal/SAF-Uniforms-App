@@ -1,0 +1,6 @@
+/* SAF Uniforms Admin Portal — global styles entry.
+   Order matters: tokens first (CSS vars), then the full design CSS
+   that consumes them. */
+
+@use './styles/tokens';
+@use './styles/design';

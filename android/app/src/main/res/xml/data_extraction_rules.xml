@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Android 12+ (API 31+) replaces the legacy `android:fullBackupContent`
+  rules with a separate `dataExtractionRules` file split between
+  cloud-backup and device-transfer. Mirror the same whitelist as
+  `backup_rules.xml` so reinstall recovery works on modern OS versions.
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <include domain="sharedpref" path="FlutterSecureStorage.xml" />
+        <include domain="sharedpref" path="VGhpc0lzVGhlQW5kcm9pZE1ldGFEYXRh" />
+        <include domain="sharedpref" path="saf_uniforms_prefs.xml" />
+    </cloud-backup>
+    <device-transfer>
+        <include domain="sharedpref" path="FlutterSecureStorage.xml" />
+        <include domain="sharedpref" path="VGhpc0lzVGhlQW5kcm9pZE1ldGFEYXRh" />
+        <include domain="sharedpref" path="saf_uniforms_prefs.xml" />
+    </device-transfer>
+</data-extraction-rules>

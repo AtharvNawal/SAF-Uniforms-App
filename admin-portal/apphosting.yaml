@@ -1,0 +1,18 @@
+# Firebase App Hosting runtime config for the SAF Uniforms admin portal.
+# Minimal resources — only 2-3 named admins will use this portal.
+# Bump cpu / memoryMiB / maxInstances once real screens land and traffic
+# patterns are observed.
+
+runConfig:
+  cpu: 1
+  memoryMiB: 512
+  maxInstances: 3
+  minInstances: 0
+  concurrency: 80
+
+# Secrets land here once the design plan wires up Claude API / etc.
+# Example shape:
+# env:
+#   - variable: ANTHROPIC_API_KEY
+#     secret: anthropic-api-key
+env: []

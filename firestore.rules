@@ -1,0 +1,78 @@
+rules_version = '2';
+
+// SAF Uniforms — Firestore security rules.
+//
+// Mobile clients authenticate via custom-token sign-in issued by the
+// claimDeviceIdentity Cloud Function. The admin portal authenticates
+// via email/password Firebase Auth. isAdmin() checks that the requesting
+// user has a doc in admin_accounts/{uid} — the existence check is a
+// security-rule primitive and does not add a client-side read round-trip.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper: request.auth.uid must exist as a doc in admin_accounts.
+    // Used to gate all admin-portal write paths and cross-user reads.
+    function isAdmin() {
+      return request.auth != null &&
+        exists(/databases/$(database)/documents/admin_accounts/$(request.auth.uid));
+    }
+
+    // Reference content. Mobile clients: authenticated reads only.
+    // Admin portal: reads + writes gated by isAdmin().
+    match /branch_configs/{branchId} {
+      allow read: if request.auth != null;
+      allow write: if isAdmin();
+    }
+
+    match /dress_requirements/{dressId} {
+      allow read: if request.auth != null;
+      allow write: if isAdmin();
+    }
+
+    match /accessory_library/{accessoryId} {
+      allow read: if request.auth != null;
+      allow write: if isAdmin();
+    }
+
+    match /global_logic_rules/{ruleId} {
+      allow read: if request.auth != null;
+      allow write: if isAdmin();
+    }
+
+    // Admin portal accounts. Readable and writable only by existing admins.
+    // The first doc must be seeded manually via Firebase Console —
+    // see ChangeRequest/2026-05-18_admin-portal-firestore-integration.md.
+    match /admin_accounts/{uid} {
+      allow read, write: if isAdmin();
+    }
+
+    // Append-only activity log written by the admin portal on every
+    // significant action. Readable by admins; updates and deletes blocked.
+    match /activity_log/{logId} {
+      allow read:   if isAdmin();
+      allow create: if isAdmin();
+      allow update, delete: if false;
+    }
+
+    // Device → uid registry. Written exclusively by the
+    // claimDeviceIdentity and markProfileComplete Cloud Functions
+    // (Admin SDK bypasses these rules). Clients must NEVER read or write
+    // here — the Cloud Function returns a custom token that re-auths the
+    // user as the matching uid, so client-side reverse lookup is never needed.
+    match /device_registrations/{deviceId} {
+      allow read, write: if false;
+    }
+
+    // User-owned data. Mobile app users read/write their own docs only.
+    // Admin portal reads any user doc for the Users dashboard.
+    match /users/{uid} {
+      allow read:  if (request.auth != null && request.auth.uid == uid) || isAdmin();
+      allow write: if request.auth != null && request.auth.uid == uid;
+
+      match /{document=**} {
+        allow read:  if (request.auth != null && request.auth.uid == uid) || isAdmin();
+        allow write: if request.auth != null && request.auth.uid == uid;
+      }
+    }
+  }
+}

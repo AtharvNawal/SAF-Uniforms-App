@@ -1,0 +1,65 @@
+{
+  "version": 3,
+  "branches": [
+    {
+      "branchId": "army",
+      "displayName": "Singapore Army",
+      "collarOffsetCm": 3.0,
+      "ladiesMedalAnchor": {
+        "anchor": "nameTagBaseLine",
+        "offsetCm": { "x": 0.0, "y": 0.0 }
+      },
+      "sikhTurbanLogic": {
+        "replacesHeadgear": true,
+        "color": "darkBlueWithRedFifti",
+        "alignmentOverride": "turbanCenterline"
+      },
+      "dressCodes": ["No1", "No2", "No3", "No4", "No5"]
+    },
+    {
+      "branchId": "navy",
+      "displayName": "Republic of Singapore Navy",
+      "collarOffsetCm": 1.0,
+      "ladiesMedalAnchor": {
+        "anchor": "shoulderSeamCenter",
+        "offsetCm": { "x": 0.0, "y": 15.0 }
+      },
+      "sikhTurbanLogic": {
+        "replacesHeadgear": true,
+        "color": "darkBlueWithBlackFifti",
+        "alignmentOverride": "turbanCenterline"
+      },
+      "dressCodes": ["No1", "No2", "No3", "No4", "No5"]
+    },
+    {
+      "branchId": "rsaf",
+      "displayName": "Republic of Singapore Air Force",
+      "collarOffsetCm": 1.0,
+      "ladiesMedalAnchor": {
+        "anchor": "nameTagBaseLine",
+        "offsetCm": { "x": 0.0, "y": 0.0 }
+      },
+      "sikhTurbanLogic": {
+        "replacesHeadgear": true,
+        "color": "blueWithBlueFifti",
+        "alignmentOverride": "turbanCenterline"
+      },
+      "dressCodes": ["No1", "No2", "No3", "No4", "No5"]
+    },
+    {
+      "branchId": "dis",
+      "displayName": "Digital and Intelligence Service",
+      "collarOffsetCm": 1.0,
+      "ladiesMedalAnchor": {
+        "anchor": "nameTagBaseLine",
+        "offsetCm": { "x": 0.0, "y": 0.0 }
+      },
+      "sikhTurbanLogic": {
+        "replacesHeadgear": true,
+        "color": "darkGreyWithBlackFifti",
+        "alignmentOverride": "turbanCenterline"
+      },
+      "dressCodes": ["No1", "No2", "No3", "No4", "No5"]
+    }
+  ]
+}

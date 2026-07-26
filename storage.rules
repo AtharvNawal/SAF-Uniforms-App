@@ -1,0 +1,48 @@
+rules_version = '2';
+
+// SAF Uniforms — Cloud Storage security rules.
+//
+// Reference imagery (No.3 dress accessory photos and placement diagrams)
+// lives under accessories/{accessoryId}/. Reads are auth-required to
+// mirror firestore.rules — the same signed-in app users that can read
+// accessory_library documents can fetch the linked images. Writes are
+// blocked from clients; the operator-only seed script
+// (tool/seed_firestore.dart --upload-images) writes via the Admin SDK,
+// which bypasses these rules.
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Per-accessory imagery: image.png + placement.png.
+    match /accessories/{accessoryId}/{fileName} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    // 3D asset library — body / uniform / accessory GLBs that the
+    // composeUniformModel Cloud Function reads to build per-user
+    // models. Writes are blocked from clients (operator script
+    // uploads via the Admin SDK, which bypasses rules).
+    match /models/{allPaths=**} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    // Per-user composed 3D models, written exclusively by the
+    // composeUniformModel Cloud Function (Admin SDK bypasses these
+    // rules). Each user can read only their own model files.
+    match /user_models/{uid}/{fileName} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if false;
+    }
+
+    // User-uploaded gallery photos. Only the owning user can read or write.
+    match /user_photos/{uid}/{allPaths=**} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // Default-deny everything else under the bucket.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

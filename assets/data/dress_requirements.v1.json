@@ -1,0 +1,962 @@
+{
+  "version": 3,
+  "dressRequirements": [
+    {
+      "id": "no_1_dress_requirements",
+      "dress_name": "No. 1 Dress",
+      "display_name": "Ceremonial",
+      "subtitle": "White ceremonial · Officers",
+      "doctrine_status": "stub_pending_pdf",
+      "mandatory_rules": [
+        {
+          "category": "Headdress",
+          "selection_logic": "Select 1 based on religion and gender",
+          "options": {
+            "standard_men": [
+              "beret_standard"
+            ],
+            "standard_ladies": [
+              "ladies_service_hat_a",
+              "ladies_service_hat_b"
+            ],
+            "sikh_personnel": [
+              "turban_sikh"
+            ]
+          }
+        },
+        {
+          "category": "Identification",
+          "required_for_all": [
+            "name_tag"
+          ]
+        },
+        {
+          "category": "Rank_Insignia",
+          "logic": "Rank-group specific mapping",
+          "mapping": [
+            {
+              "condition": "rank_group == 'Officer_ME'",
+              "required": [
+                "collar_rank_pins",
+                "epaulettes"
+              ]
+            },
+            {
+              "condition": "rank_group == 'Warrant_Officer'",
+              "required": [
+                "collar_rank_pins",
+                "epaulettes"
+              ]
+            },
+            {
+              "condition": "rank_group == 'Specialist'",
+              "required": [
+                "rank_insignia_sleeve",
+                "epaulettes"
+              ]
+            },
+            {
+              "condition": "rank_group == 'Enlistee_Rating'",
+              "required": [
+                "rank_insignia_sleeve"
+              ]
+            },
+            {
+              "condition": "rank_group == 'Cadet_Trainee'",
+              "required": [
+                "epaulettes",
+                "gorgettes_ladies_only"
+              ]
+            }
+          ]
+        },
+        {
+          "category": "Belt",
+          "required_for_all": [
+            "leather_belt"
+          ]
+        },
+        {
+          "category": "Socks",
+          "required_for_all": [
+            "black_socks"
+          ]
+        },
+        {
+          "category": "Footwear",
+          "logic": "Gender-specific footwear",
+          "mapping": [
+            {
+              "condition": "gender == 'Men'",
+              "required": [
+                "leather_shoes_low_cut"
+              ]
+            },
+            {
+              "condition": "gender == 'Ladies'",
+              "required": [
+                "court_shoes"
+              ]
+            }
+          ]
+        },
+        {
+          "category": "Awards",
+          "required_for_all": [
+            "medal_ribbons"
+          ]
+        }
+      ],
+      "optional_logic": {
+        "vocation": [
+          "arms_badge_vocation",
+          "lanyard_ma_sa"
+        ],
+        "skills": [
+          "saf_badges_chest",
+          "skill_tabs_sleeve",
+          "skill_badges_sleeve"
+        ],
+        "awards": [
+          "foreign_badges"
+        ]
+      },
+      "branch_overrides": {
+        "army": {
+          "belt": {
+            "men": "nylon_belt",
+            "ladies": "leather_belt"
+          },
+          "socks": "black_socks",
+          "footwear": {
+            "men": [
+              "leather_shoes_low_cut",
+              "patent_shoes_low_cut"
+            ],
+            "ladies": "court_shoes"
+          }
+        },
+        "navy": {
+          "belt": {
+            "men": "nylon_belt",
+            "ladies": "leather_belt"
+          },
+          "socks": "black_socks",
+          "footwear": {
+            "men": [
+              "leather_shoes_low_cut",
+              "patent_shoes_low_cut"
+            ],
+            "ladies": "court_shoes"
+          }
+        },
+        "rsaf": {
+          "belt": {
+            "men": "nylon_belt",
+            "ladies": "leather_belt"
+          },
+          "socks": "black_socks",
+          "footwear": {
+            "men": [
+              "leather_shoes_low_cut",
+              "patent_shoes_low_cut"
+            ],
+            "ladies": "court_shoes"
+          }
+        },
+        "dis": {
+          "belt": {
+            "men": "nylon_belt",
+            "ladies": "leather_belt"
+          },
+          "socks": "black_socks",
+          "footwear": {
+            "men": [
+              "leather_shoes_low_cut",
+              "patent_shoes_low_cut"
+            ],
+            "ladies": "court_shoes"
+          }
+        }
+      }
+    },
+    {
+      "id": "no_2_dress_requirements",
+      "dress_name": "No. 2 Dress",
+      "display_name": "Mess Dress",
+      "subtitle": "Formal evening · Officers",
+      "doctrine_status": "stub_pending_pdf",
+      "mandatory_rules": [
+        {
+          "category": "Headdress",
+          "selection_logic": "Select 1 based on religion and gender",
+          "options": {
+            "standard_men": [
+              "beret_standard"
+            ],
+            "standard_ladies": [
+              "ladies_service_hat_a",
+              "ladies_service_hat_b"
+            ],
+            "sikh_personnel": [
+              "turban_sikh"
+            ]
+          }
+        },
+        {
+          "category": "Identification",
+          "required_for_all": [
+            "name_tag"
+          ]
+        },
+        {
+          "category": "Rank_Insignia",
+          "logic": "Rank-group specific mapping",
+          "mapping": [
+            {
+              "condition": "rank_group == 'Officer_ME'",
+              "required": [
+                "collar_rank_pins",
+                "epaulettes"
+              ]
+            },
+            {
+              "condition": "rank_group == 'Warrant_Officer'",
+              "required": [
+                "collar_rank_pins",
+                "epaulettes"
+              ]
+            },
+            {
+              "condition": "rank_group == 'Specialist'",
+              "required": [
+                "rank_insignia_sleeve",
+                "epaulettes"
+              ]
+            },
+            {
+              "condition": "rank_group == 'Enlistee_Rating'",
+              "required": [
+                "rank_insignia_sleeve"
+              ]
+            },
+            {
+              "condition": "rank_group == 'Cadet_Trainee'",
+              "required": [
+                "epaulettes",
+                "gorgettes_ladies_only"
+              ]
+            }
+          ]
+        },
+        {
+          "category": "Belt",
+          "required_for_all": [
+            "leather_belt"
+          ]
+        },
+        {
+          "category": "Socks",
+          "required_for_all": [
+            "black_socks"
+          ]
+        },
+        {
+          "category": "Footwear",
+          "logic": "Gender-specific footwear",
+          "mapping": [
+            {
+              "condition": "gender == 'Men'",
+              "required": [
+                "leather_shoes_low_cut"
+              ]
+            },
+            {
+              "condition": "gender == 'Ladies'",
+              "required": [
+                "court_shoes"
+              ]
+            }
+          ]
+        },
+        {
+          "category": "Awards",
+          "required_for_all": [
+            "medal_ribbons"
+          ]
+        }
+      ],
+      "optional_logic": {
+        "vocation": [
+          "arms_badge_vocation",
+          "lanyard_ma_sa"
+        ],
+        "skills": [
+          "saf_badges_chest",
+          "skill_tabs_sleeve",
+          "skill_badges_sleeve"
+        ],
+        "awards": [
+          "foreign_badges"
+        ]
+      },
+      "branch_overrides": {
+        "army": {
+          "belt": {
+            "men": "nylon_belt",
+            "ladies": "leather_belt"
+          },
+          "socks": "black_socks",
+          "footwear": {
+            "men": [
+              "leather_shoes_low_cut",
+              "patent_shoes_low_cut"
+            ],
+            "ladies": "court_shoes"
+          }
+        },
+        "navy": {
+          "belt": {
+            "men": "nylon_belt",
+            "ladies": "leather_belt"
+          },
+          "socks": "black_socks",
+          "footwear": {
+            "men": [
+              "leather_shoes_low_cut",
+              "patent_shoes_low_cut"
+            ],
+            "ladies": "court_shoes"
+          }
+        },
+        "rsaf": {
+          "belt": {
+            "men": "nylon_belt",
+            "ladies": "leather_belt"
+          },
+          "socks": "black_socks",
+          "footwear": {
+            "men": [
+              "leather_shoes_low_cut",
+              "patent_shoes_low_cut"
+            ],
+            "ladies": "court_shoes"
+          }
+        },
+        "dis": {
+          "belt": {
+            "men": "nylon_belt",
+            "ladies": "leather_belt"
+          },
+          "socks": "black_socks",
+          "footwear": {
+            "men": [
+              "leather_shoes_low_cut",
+              "patent_shoes_low_cut"
+            ],
+            "ladies": "court_shoes"
+          }
+        }
+      }
+    },
+    {
+      "id": "no_3_dress_requirements",
+      "dress_name": "No. 3 Dress",
+      "display_name": "Service Dress",
+      "subtitle": "Office / parades · Daily",
+      "doctrine_status": "pdf_aligned",
+      "doctrine_source": "SAF No.3 Dress specification PDF (Army, Navy, RSAF, DIS)",
+      "mandatory_rules": [
+        {
+          "category": "Headdress",
+          "selection_logic": "Per-branch + per-rank-tier mapping; Sikh personnel override per-branch",
+          "resolution": "see branch_overrides[branchId].headdress (men.default / men.sikh / men.sikh_<tier_above> / ladies.<tier> / unisex for DIS)"
+        },
+        {
+          "category": "Cap_Badge",
+          "selection_logic": "Per-branch + per-rank-tier",
+          "resolution": "see branch_overrides[branchId].cap_badge",
+          "notes": [
+            "All standard cap badges carry a cadet_white_backing_diameter_mm: 53 rule for Officer Cadets.",
+            "RSAF BG/ME8 and above has separate beret vs service-hat embroidered variants."
+          ]
+        },
+        {
+          "category": "Identification",
+          "required_for_all": [
+            "name_tag_standard"
+          ],
+          "branch_specific": "DIS may use dis_protocol_name_tag in protocol contexts (see branch_overrides[dis].name_tag_protocol)."
+        },
+        {
+          "category": "Rank_Insignia",
+          "logic": "Rank-group specific mapping; sleeve insignia art ID resolved per branch",
+          "mapping": [
+            {
+              "condition": "rank_group == 'Officer_ME'",
+              "required": [
+                "collar_rank_pins",
+                "epaulettes_standard"
+              ]
+            },
+            {
+              "condition": "rank_group == 'Warrant_Officer'",
+              "required": [
+                "collar_rank_pins",
+                "epaulettes_standard"
+              ]
+            },
+            {
+              "condition": "rank_group == 'Specialist'",
+              "required": [
+                "sleeve_rank_specialist_per_branch",
+                "epaulettes_standard"
+              ]
+            },
+            {
+              "condition": "rank_group == 'Enlistee_Rating'",
+              "required": [
+                "sleeve_rank_enlistee_per_branch"
+              ]
+            },
+            {
+              "condition": "rank_group == 'Officer_Cadet'",
+              "required": [
+                "epaulettes_officer_cadet_me_trainee",
+                "gorgette_lady_officer_cadet (ladies only)"
+              ]
+            },
+            {
+              "condition": "rank_group == 'ME_Trainee'",
+              "required": [
+                "epaulettes_officer_cadet_me_trainee",
+                "gorgette_lady_me_trainee (ladies only)"
+              ]
+            }
+          ],
+          "resolution_per_branch": "sleeve_rank_specialist_per_branch and sleeve_rank_enlistee_per_branch are resolved via branch_overrides[branchId].rank_insignia_sleeve.specialist / enlistee. DIS substitutes dis_epaulettes_standard / dis_epaulettes_me_trainee for the standard epaulettes in this rule (see branch_overrides[dis].epaulettes)."
+        },
+        {
+          "category": "Belt",
+          "logic": "Gender-specific belt",
+          "mapping": [
+            {
+              "condition": "gender == 'Men'",
+              "required": [
+                "nylon_belt"
+              ]
+            },
+            {
+              "condition": "gender == 'Ladies'",
+              "required": [
+                "leather_belt"
+              ]
+            }
+          ]
+        },
+        {
+          "category": "Socks",
+          "required_for_all": [
+            "black_socks"
+          ]
+        },
+        {
+          "category": "Footwear",
+          "logic": "Gender-specific footwear",
+          "mapping": [
+            {
+              "condition": "gender == 'Men'",
+              "required": [
+                "leather_shoes_low_cut"
+              ]
+            },
+            {
+              "condition": "gender == 'Ladies'",
+              "required": [
+                "court_shoes"
+              ]
+            }
+          ],
+          "patent_variant": "Officers and formal contexts may substitute patent_shoes_low_cut (men) or patent_court_shoes (ladies)."
+        }
+      ],
+      "optional_logic": {
+        "vocation": [
+          "arms_badge_or_vocation_per_branch (resolved via branch_overrides[branchId].arms_badge / vocation_badge)",
+          "lanyard_per_branch (resolved via branch_overrides[branchId].lanyard)"
+        ],
+        "skills": [
+          "saf_badges_chest",
+          "skill_tabs_sleeve",
+          "skill_badges_sleeve"
+        ],
+        "awards": [
+          "medal_ribbons",
+          "foreign_badges"
+        ]
+      },
+      "branch_overrides": {
+        "army": {
+          "headdress": {
+            "men": {
+              "default": "army_beret",
+              "sikh": "army_sikh_turban_standard",
+              "sikh_col_me7_above": "army_sikh_turban_col_me7_above"
+            },
+            "ladies": {
+              "officer_wo_me3_to_me8": "army_ladies_hat_officer_wo_me3_to_me8",
+              "specialist_enlistee_me1_me2": "army_ladies_hat_specialist_enlistee_me1_me2"
+            }
+          },
+          "cap_badge": {
+            "sltc_me6_below": "army_cap_badge_sltc_me6_below",
+            "col_me7": "army_cap_badge_col_me7",
+            "bg_me8_above": "army_cap_badge_bg_me8_above",
+            "military_police": "army_cap_badge_military_police"
+          },
+          "rank_insignia_sleeve": {
+            "specialist": "army_specialist_insignia",
+            "enlistee": "army_enlistee_insignia"
+          },
+          "lanyard": "army_lanyard_sa_ma",
+          "arms_badge": "army_arms_badge",
+          "name_tag": "name_tag_standard",
+          "collar_offset_cm": 3.0,
+          "belt": {
+            "men": "nylon_belt",
+            "ladies": "leather_belt"
+          },
+          "socks": "black_socks",
+          "footwear": {
+            "men": [
+              "leather_shoes_low_cut",
+              "patent_shoes_low_cut"
+            ],
+            "ladies": "court_shoes"
+          }
+        },
+        "navy": {
+          "headdress": {
+            "men": {
+              "default": "navy_beret",
+              "sikh": "navy_sikh_turban_standard",
+              "sikh_3wo_me3_above": "navy_sikh_turban_3wo_me3_above"
+            },
+            "ladies": {
+              "officer_wo_me3_to_me8": "navy_ladies_hat_officer_wo_me3_to_me8",
+              "specialist_rating_cadet_me_trainee_me1_me2": "navy_ladies_hat_specialist_rating_cadet_me_trainee"
+            }
+          },
+          "cap_badge": {
+            "sltc_me6_below": "navy_cap_badge_sltc_me6_below",
+            "col_me7_above": "navy_cap_badge_col_me7_above"
+          },
+          "cap_embellishment": {
+            "maj_to_sltc_swo_to_cwo_me5_to_me6": "navy_cap_embellishment_maj_to_sltc_swo_to_cwo_me5_to_me6",
+            "col_me7": "navy_cap_embellishment_col_me7",
+            "bg_me8_above": "navy_cap_embellishment_bg_me8_above"
+          },
+          "rank_insignia_sleeve": {
+            "specialist": "navy_specialist_insignia",
+            "enlistee": "navy_rating_insignia"
+          },
+          "lanyard": "navy_lanyard_ma_na",
+          "name_tag": "name_tag_standard",
+          "no_arms_badge": true,
+          "collar_offset_cm": 1.0,
+          "belt": {
+            "men": "nylon_belt",
+            "ladies": "leather_belt"
+          },
+          "socks": "black_socks",
+          "footwear": {
+            "men": [
+              "leather_shoes_low_cut",
+              "patent_shoes_low_cut"
+            ],
+            "ladies": "court_shoes"
+          }
+        },
+        "rsaf": {
+          "headdress": {
+            "men": {
+              "default": "rsaf_beret",
+              "sikh": "rsaf_sikh_turban"
+            },
+            "ladies": {
+              "bg_me8_above": "rsaf_ladies_hat_bg_me8_above",
+              "officer_wo_me3_to_me8": "rsaf_ladies_hat_officer_wo_me3_to_me8",
+              "specialist_me1_me2_cadet_me_trainee": "rsaf_ladies_hat_specialist_me1_me2_cadet_me_trainee"
+            }
+          },
+          "cap_badge": {
+            "sltc_me6_below": "rsaf_cap_badge_sltc_me6_below",
+            "col_me7": "rsaf_cap_badge_col_me7",
+            "bg_me8_above_beret": "rsaf_cap_badge_bg_me8_above_beret",
+            "bg_me8_above_service_hat": "rsaf_cap_badge_bg_me8_above_service_hat"
+          },
+          "cap_embellishment": {
+            "maj_to_sltc_swo_to_cwo_me5_to_me6": "rsaf_cap_embellishment_maj_to_sltc_swo_to_cwo_me5_to_me6",
+            "col_me7": "rsaf_cap_embellishment_col_me7",
+            "bg_me8_above": "rsaf_cap_embellishment_bg_me8_above"
+          },
+          "rank_insignia_sleeve": {
+            "specialist": "rsaf_specialist_insignia",
+            "enlistee": "rsaf_enlistee_insignia"
+          },
+          "lanyard": "rsaf_lanyard_sa_ma",
+          "name_tag": "name_tag_standard",
+          "no_arms_badge": true,
+          "collar_offset_cm": 1.0,
+          "belt": {
+            "men": "nylon_belt",
+            "ladies": "leather_belt"
+          },
+          "socks": "black_socks",
+          "footwear": {
+            "men": [
+              "leather_shoes_low_cut",
+              "patent_shoes_low_cut"
+            ],
+            "ladies": "court_shoes"
+          }
+        },
+        "dis": {
+          "headdress": {
+            "unisex": "dis_beret",
+            "sikh": "dis_sikh_turban"
+          },
+          "cap_badge": {
+            "sltc_me6_below": "dis_cap_badge_sltc_me6_below",
+            "col_me7": "dis_cap_badge_col_me7",
+            "bg_me8_radm_above": "dis_cap_badge_bg_me8_radm_above"
+          },
+          "epaulettes": {
+            "standard": "dis_epaulettes_standard",
+            "me_trainee": "dis_epaulettes_me_trainee"
+          },
+          "rank_insignia_sleeve": {
+            "specialist": "dis_specialist_insignia",
+            "enlistee": "dis_enlistee_insignia"
+          },
+          "vocation_badge": "dis_vocation_badge",
+          "arms_badge": "dis_arms_badge",
+          "lanyard": "dis_lanyard_ma_sa",
+          "lanyard_left_side_for": [
+            "MA",
+            "SA",
+            "CDF",
+            "Service_Chief"
+          ],
+          "name_tag": "name_tag_standard",
+          "name_tag_protocol": "dis_protocol_name_tag",
+          "collar_offset_cm": 1.0,
+          "collar_offset_cm_with_arms_badge": 3.0,
+          "arms_badge_extra_offset_from_tip_cm": 1.5,
+          "ladies_belt_alignment": "saf_crest_at_placket",
+          "belt": {
+            "men": "nylon_belt",
+            "ladies": "leather_belt"
+          },
+          "socks": "black_socks",
+          "footwear": {
+            "men": [
+              "leather_shoes_low_cut",
+              "patent_shoes_low_cut"
+            ],
+            "ladies": "court_shoes"
+          }
+        }
+      }
+    },
+    {
+      "id": "no_4_dress_requirements",
+      "dress_name": "No. 4 Dress",
+      "display_name": "Smart No. 4",
+      "subtitle": "Working · Long sleeve",
+      "doctrine_status": "stub_pending_pdf",
+      "mandatory_rules": [
+        {
+          "category": "Headdress",
+          "selection_logic": "Select 1 based on religion and gender",
+          "options": {
+            "standard_men": [
+              "beret_standard"
+            ],
+            "standard_ladies": [
+              "beret_standard"
+            ],
+            "sikh_personnel": [
+              "turban_sikh"
+            ]
+          }
+        },
+        {
+          "category": "Identification",
+          "required_for_all": [
+            "name_tag"
+          ]
+        },
+        {
+          "category": "Rank_Insignia",
+          "logic": "Rank-group specific mapping",
+          "mapping": [
+            {
+              "condition": "rank_group == 'Officer_ME'",
+              "required": [
+                "collar_rank_pins"
+              ]
+            },
+            {
+              "condition": "rank_group == 'Warrant_Officer'",
+              "required": [
+                "collar_rank_pins"
+              ]
+            },
+            {
+              "condition": "rank_group == 'Specialist'",
+              "required": [
+                "rank_insignia_sleeve"
+              ]
+            },
+            {
+              "condition": "rank_group == 'Enlistee_Rating'",
+              "required": [
+                "rank_insignia_sleeve"
+              ]
+            }
+          ]
+        },
+        {
+          "category": "Belt",
+          "required_for_all": [
+            "nylon_belt"
+          ]
+        },
+        {
+          "category": "Socks",
+          "required_for_all": [
+            "black_socks"
+          ]
+        },
+        {
+          "category": "Footwear",
+          "required_for_all": [
+            "leather_shoes_low_cut"
+          ]
+        }
+      ],
+      "optional_logic": {
+        "vocation": [
+          "arms_badge_vocation"
+        ],
+        "skills": [
+          "skill_tabs_sleeve",
+          "skill_badges_sleeve"
+        ]
+      },
+      "branch_overrides": {
+        "army": {
+          "belt": {
+            "men": "nylon_belt",
+            "ladies": "leather_belt"
+          },
+          "socks": "black_socks",
+          "footwear": {
+            "men": [
+              "leather_shoes_low_cut",
+              "patent_shoes_low_cut"
+            ],
+            "ladies": "court_shoes"
+          }
+        },
+        "navy": {
+          "belt": {
+            "men": "nylon_belt",
+            "ladies": "leather_belt"
+          },
+          "socks": "black_socks",
+          "footwear": {
+            "men": [
+              "leather_shoes_low_cut",
+              "patent_shoes_low_cut"
+            ],
+            "ladies": "court_shoes"
+          }
+        },
+        "rsaf": {
+          "belt": {
+            "men": "nylon_belt",
+            "ladies": "leather_belt"
+          },
+          "socks": "black_socks",
+          "footwear": {
+            "men": [
+              "leather_shoes_low_cut",
+              "patent_shoes_low_cut"
+            ],
+            "ladies": "court_shoes"
+          }
+        },
+        "dis": {
+          "belt": {
+            "men": "nylon_belt",
+            "ladies": "leather_belt"
+          },
+          "socks": "black_socks",
+          "footwear": {
+            "men": [
+              "leather_shoes_low_cut",
+              "patent_shoes_low_cut"
+            ],
+            "ladies": "court_shoes"
+          }
+        }
+      }
+    },
+    {
+      "id": "no_5_dress_requirements",
+      "dress_name": "No. 5 Dress",
+      "display_name": "Field / Combat",
+      "subtitle": "Operations · Combat",
+      "doctrine_status": "stub_pending_pdf",
+      "mandatory_rules": [
+        {
+          "category": "Headdress",
+          "selection_logic": "Select 1 based on religion and gender",
+          "options": {
+            "standard_men": [
+              "beret_standard"
+            ],
+            "standard_ladies": [
+              "beret_standard"
+            ],
+            "sikh_personnel": [
+              "turban_sikh"
+            ]
+          }
+        },
+        {
+          "category": "Identification",
+          "required_for_all": [
+            "name_tag"
+          ]
+        },
+        {
+          "category": "Rank_Insignia",
+          "logic": "Rank-group specific mapping",
+          "mapping": [
+            {
+              "condition": "rank_group == 'Officer_ME'",
+              "required": [
+                "collar_rank_pins"
+              ]
+            },
+            {
+              "condition": "rank_group == 'Warrant_Officer'",
+              "required": [
+                "collar_rank_pins"
+              ]
+            },
+            {
+              "condition": "rank_group == 'Specialist'",
+              "required": [
+                "rank_insignia_sleeve"
+              ]
+            },
+            {
+              "condition": "rank_group == 'Enlistee_Rating'",
+              "required": [
+                "rank_insignia_sleeve"
+              ]
+            }
+          ]
+        },
+        {
+          "category": "Belt",
+          "required_for_all": [
+            "nylon_belt"
+          ]
+        },
+        {
+          "category": "Socks",
+          "required_for_all": [
+            "black_socks"
+          ]
+        },
+        {
+          "category": "Footwear",
+          "required_for_all": [
+            "leather_shoes_low_cut"
+          ]
+        }
+      ],
+      "optional_logic": {
+        "vocation": [
+          "arms_badge_vocation"
+        ],
+        "skills": [
+          "skill_tabs_sleeve"
+        ]
+      },
+      "branch_overrides": {
+        "army": {
+          "belt": {
+            "men": "nylon_belt",
+            "ladies": "leather_belt"
+          },
+          "socks": "black_socks",
+          "footwear": {
+            "men": [
+              "leather_shoes_low_cut",
+              "patent_shoes_low_cut"
+            ],
+            "ladies": "court_shoes"
+          }
+        },
+        "navy": {
+          "belt": {
+            "men": "nylon_belt",
+            "ladies": "leather_belt"
+          },
+          "socks": "black_socks",
+          "footwear": {
+            "men": [
+              "leather_shoes_low_cut",
+              "patent_shoes_low_cut"
+            ],
+            "ladies": "court_shoes"
+          }
+        },
+        "rsaf": {
+          "belt": {
+            "men": "nylon_belt",
+            "ladies": "leather_belt"
+          },
+          "socks": "black_socks",
+          "footwear": {
+            "men": [
+              "leather_shoes_low_cut",
+              "patent_shoes_low_cut"
+            ],
+            "ladies": "court_shoes"
+          }
+        },
+        "dis": {
+          "belt": {
+            "men": "nylon_belt",
+            "ladies": "leather_belt"
+          },
+          "socks": "black_socks",
+          "footwear": {
+            "men": [
+              "leather_shoes_low_cut",
+              "patent_shoes_low_cut"
+            ],
+            "ladies": "court_shoes"
+          }
+        }
+      }
+    }
+  ]
+}

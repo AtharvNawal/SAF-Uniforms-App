@@ -1,0 +1,52 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.buildlog/
+.history
+.svn/
+.vscode/
+
+# Python venv used by tool/* operator scripts (trimesh, google-cloud, etc).
+.venv-tools/
+__pycache__/
+
+# Firebase service-account JSONs (operator-only; see tool/seed_firestore.dart).
+# Anything under secrets/ stays out of the repo.
+secrets/
+
+# Raw artist / Tripo / Meshy GLB exports kept locally as the source for
+# tool/inject_sockets.py — large binary blobs that we don't want in git.
+# Compliant outputs land in assets/3d/bodies/ and are uploaded to Storage.
+assets/3d_raw/
+
+# Flutter/Dart/Pub-related
+**/doc/api/
+**/ios/Flutter/ephemeral/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+
+# iOS (CocoaPods, user-specific Xcode state)
+ios/Pods/
+ios/.symlinks/
+**/xcuserdata/
+*.xcworkspace/xcshareddata/
+
+# Android (machine-local SDK paths)
+android/local.properties
+
+# Angular admin portal — build artefacts and dependency caches.
+# Source files (admin-portal/src/, angular.json, package.json, etc.)
+# are tracked normally.
+admin-portal/node_modules/
+admin-portal/dist/
+admin-portal/.angular/
+admin-portal/.env.local

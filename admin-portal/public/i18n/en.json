@@ -1,0 +1,732 @@
+{
+  "common": {
+    "appTitle": "SAF Uniforms",
+    "appSubtitle": "Admin Portal",
+    "section": "Section",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "confirm": "Confirm",
+    "close": "Close",
+    "edit": "Edit",
+    "add": "Add",
+    "search": "Search",
+    "loading": "Loading…",
+    "error": "Something went wrong",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "nav": {
+    "manage": "Manage",
+    "dashboard": "Dashboard",
+    "dress": "Dress Requirements",
+    "accessories": "Accessory Library",
+    "models": "3D Models",
+    "branches": "Branch Config",
+    "logic": "Logic Rules",
+    "users": "App Users",
+    "admins": "Admin Accounts",
+    "settings": "Settings",
+    "signOut": "Sign Out",
+    "more": "More",
+    "tabDashboard": "Home",
+    "tabDress": "Dress",
+    "tabAccessories": "Acc.",
+    "tabModels": "3D"
+  },
+  "topbar": {
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "notifications": "Notifications",
+    "signOut": "Sign out",
+    "roleSuper": "Super Admin",
+    "roleAdmin": "Admin"
+  },
+  "login": {
+    "eyebrow": "Admin Sign-in",
+    "title": "Welcome back",
+    "subtitle": "Sign in to manage SAF Uniforms reference data, 3D models, and configuration.",
+    "emailLabel": "Email",
+    "emailPlaceholder": "name@mindef.gov.sg",
+    "passwordLabel": "Password",
+    "passwordPlaceholder": "Enter your password",
+    "submit": "Sign in",
+    "submitting": "Signing in…",
+    "errorInvalid": "Email or password is incorrect.",
+    "errorNetwork": "Couldn't reach Firebase. Check your connection and try again.",
+    "errorGeneric": "Sign-in failed. Please try again."
+  },
+  "settings": {
+    "eyebrow": "Preferences",
+    "title": "Settings",
+    "subtitle": "Theme, language, and operator-level actions.",
+    "appearanceTitle": "Appearance",
+    "appearanceSubtitle": "Choose how the portal looks on this device.",
+    "themeLabel": "Theme",
+    "themeDark": "Dark",
+    "themeLight": "Light",
+    "themeSystem": "System",
+    "localeLabel": "Language",
+    "localeEnglish": "English",
+    "dangerTitle": "Danger zone",
+    "dangerSubtitle": "Irreversible actions. Requires confirmation.",
+    "reseedTitle": "Force Re-seed Firestore",
+    "reseedBody": "Re-uploads the bundled reference collections (branch_configs, dress_requirements, accessory_library, global_logic_rules). All existing docs are overwritten.",
+    "reseedAction": "Re-seed reference data",
+    "clearCacheTitle": "Clear All Cached Models",
+    "clearCacheBody": "Deletes every per-user composed GLB under user_models/. The Cloud Function regenerates them on next request.",
+    "clearCacheAction": "Clear cached models",
+    "comingSoon": "Coming in follow-up plan"
+  },
+  "empty": {
+    "comingSoon": "Coming in a follow-up plan",
+    "followUpPlan": "This screen is part of the Phase 2+ implementation. The shell, design tokens, theming, and i18n are now in place — content lands as each screen's own ChangeRequest is executed."
+  },
+  "dashboard": {
+    "eyebrow": "Overview",
+    "title": "Dashboard",
+    "subtitle": "Operational status across the reference app — content, models, and configurations.",
+    "refresh": "Refresh",
+    "stat": {
+      "users": {
+        "value": "2,418",
+        "label": "App Users",
+        "sub": "Registered devices"
+      },
+      "models": {
+        "value": "1,026",
+        "label": "Models Generated",
+        "sub": "Bodies · Uniforms · Accessories"
+      },
+      "dressCodes": {
+        "value": "5",
+        "label": "Dress Codes",
+        "sub": "No.1 — No.5"
+      },
+      "accessories": {
+        "value": "148",
+        "label": "Accessories",
+        "sub": "In accessory_library"
+      },
+      "branches": {
+        "value": "4",
+        "label": "Branches",
+        "sub": "Army · Navy · RSAF · DIS"
+      }
+    },
+    "activity": {
+      "title": "Recent Activity",
+      "viewAll": "View all logs"
+    },
+    "quickActions": {
+      "title": "Quick Actions",
+      "uploadPdf": "Upload New Dress PDF",
+      "addAccessory": "Add Accessory",
+      "uploadBody": "Upload Body GLB",
+      "sync": "Sync Seed Data",
+      "firestore": "Firestore Console"
+    },
+    "coverage": {
+      "eyebrow": "Coverage",
+      "title": "Dress × Branch Matrix",
+      "col": {
+        "branch": "Branch"
+      },
+      "legend": {
+        "live": "Live",
+        "placeholder": "Placeholder",
+        "pending": "Pending",
+        "missing": "Missing"
+      },
+      "status": {
+        "live": "LIVE",
+        "placeholder": "PLACE-",
+        "pending": "PENDING",
+        "missing": "MISSING"
+      }
+    },
+    "toast": {
+      "refreshing": {
+        "title": "Refreshing",
+        "body": "Re-fetching from Firestore…"
+      },
+      "syncQueued": {
+        "title": "Seed sync queued",
+        "body": "Reference collections being re-applied."
+      },
+      "firestore": {
+        "title": "Opening Firestore Console"
+      }
+    }
+  },
+  "dress": {
+    "eyebrow": "Content",
+    "title": "Dress Requirements",
+    "subtitleFormat": "{{count}} requirements · 4 branches · 5 dress codes",
+    "filters": "Filters",
+    "addDress": "Add Dress",
+    "dressCodeLabel": "Dress Code",
+    "statusLabel": "Status",
+    "filter": {
+      "all": "All",
+      "live": "Live",
+      "placeholder": "Placeholder",
+      "draft": "Draft"
+    },
+    "card": {
+      "overridesFormat": "{{n}} branch overrides",
+      "mandatoryOptionalFormat": "{{m}} mandatory · {{o}} optional",
+      "branchesLabel": "across branches",
+      "view": "View",
+      "edit": "Edit",
+      "moreActions": "More actions",
+      "menu": {
+        "duplicate": "Duplicate",
+        "exportJson": "Export JSON",
+        "archive": "Archive",
+        "delete": "Delete"
+      }
+    },
+    "toast": {
+      "deletePrompt": {
+        "title": "Click again to confirm delete",
+        "body": "This action cannot be undone.",
+        "confirm": "Confirm delete"
+      },
+      "deleteSuccess": {
+        "title": "Dress requirement deleted"
+      },
+      "deleteError": {
+        "title": "Delete failed — check your connection and try again"
+      }
+    },
+    "empty": {
+      "title": "No dress requirements match these filters",
+      "body": "Try clearing the dress code or status filters.",
+      "clear": "Clear filters"
+    },
+    "add": {
+      "eyebrow": "Content · New",
+      "title": "Add Dress via PDF",
+      "subtitle": "Upload an SAF doctrine PDF — AI extracts accessory rules, branch overrides, and dress meta. Review and finalise to publish.",
+      "backToList": "Back to list",
+      "steps": {
+        "upload": "Upload",
+        "review": "Review & Edit",
+        "finalise": "Finalise"
+      },
+      "step1": {
+        "eyebrow": "Step 1",
+        "title": "Upload doctrine PDF",
+        "subtitle": "Drop a single PDF. The Claude pipeline reads pages, identifies accessory categories, and resolves per-branch overrides.",
+        "dressCode": "Dress Code",
+        "displayName": "Display Name",
+        "namePlaceholder": "e.g. Service Dress — Army Combatant",
+        "cancel": "Cancel",
+        "analyse": "Analyse PDF",
+        "noPdfWarn": "Pick a PDF first"
+      },
+      "upload": {
+        "uploading": "Uploading PDF to Firebase Storage…",
+        "done": "Upload complete",
+        "error": "PDF upload failed. Please try again."
+      },
+      "error": {
+        "idExists": "A dress with this ID already exists.",
+        "createFailed": "Failed to create dress. Please try again."
+      },
+      "dropzone": {
+        "title": "Drop doctrine PDF here, or click to browse",
+        "sub": "SAF doctrine extracts · max 25 MB",
+        "remove": "Remove",
+        "ready": "Ready to analyse"
+      },
+      "scan": {
+        "title": "Scanning doctrine PDF…",
+        "steps": {
+          "extract": "Extracting pages…",
+          "categories": "Identifying accessory categories…",
+          "overrides": "Resolving branch overrides…",
+          "done": "Complete"
+        },
+        "doneToast": {
+          "title": "PDF analysed",
+          "body": "6 mandatory · 4 optional rules extracted."
+        }
+      }
+    },
+    "review": {
+      "eyebrow": "Step 2 · Extracted Data",
+      "title": "Review & Edit",
+      "versionChip": "Version 1",
+      "lastModified": "last modified · just now",
+      "pdfFooterFormat": "no3_service_dress.pdf · p.{{p}} of {{t}}",
+      "mandatoryTitle": "Mandatory Accessories",
+      "optionalTitle": "Optional Accessories",
+      "branchOverridesTitle": "Branch Overrides",
+      "rulesChipFormat": "{{n}} rules",
+      "deltasFormat": "{{n}} deltas",
+      "addRule": "Add Rule",
+      "addOverride": "Add Override",
+      "saveRules": "Save to Firestore",
+      "rulePlaceholder": "e.g. headdress_beret",
+      "keyPlaceholder": "key",
+      "valuePlaceholder": "value (JSON or string)",
+      "back": "Back",
+      "saveDraft": "Save Draft",
+      "saveDraftToast": "Saved as draft",
+      "continue": "Continue to Finalise",
+      "toast": {
+        "rulesSaved": "Rules saved",
+        "saveError": "Save failed — check your connection and try again.",
+        "invalidJson": "Invalid JSON — fix errors before saving."
+      }
+    },
+    "finalise": {
+      "eyebrow": "Step 3",
+      "title": "Finalise & Publish",
+      "summary": {
+        "mandatoryRules": "Mandatory rules",
+        "optionalRules": "Optional rules",
+        "branchOverrides": "Branch overrides",
+        "createdBy": "Created by",
+        "doctrinePdf": "Doctrine PDF"
+      },
+      "doctrineStatus": "Doctrine Status",
+      "status": {
+        "draft": "Draft",
+        "placeholder": "Placeholder",
+        "live": "Live"
+      },
+      "warnLive": "This will be visible to all app users immediately on next sync.",
+      "back": "Back",
+      "saveAsDraft": "Save as Draft",
+      "markFinal": "Mark as Final",
+      "savedDraft": {
+        "title": "Saved as Draft"
+      },
+      "savedLive": {
+        "title": "Dress published as Live"
+      }
+    },
+    "edit": {
+      "eyebrowFormat": "Edit · {{code}}",
+      "subtitle": "Inline editing of mandatory / optional rules and branch overrides.",
+      "back": "Back",
+      "saveDraft": "Save Draft",
+      "publish": "Publish",
+      "pdfTitle": "Doctrine PDF",
+      "viewPdf": "View PDF",
+      "noPdf": "No PDF uploaded for this dress.",
+      "toast": {
+        "draftSaved": "Saved as draft",
+        "published": "Dress published as Live",
+        "saveError": "Save failed — check your connection and try again."
+      }
+    },
+    "history": {
+      "title": "Change History",
+      "editsFormat": "{{n}} edits",
+      "empty": "No changes recorded yet."
+    }
+  },
+  "accessories": {
+    "eyebrow": "Library",
+    "title": "Accessory Library",
+    "subtitleFormat": "{{items}} items · {{categories}} categories",
+    "searchPlaceholder": "Search accessories by name or ID…",
+    "addAccessory": "Add Accessory",
+    "col": {
+      "id": "ID",
+      "name": "Display Name",
+      "category": "Category",
+      "branch": "Branch",
+      "gender": "Gender",
+      "img": "Img",
+      "glb": "GLB",
+      "place": "Place"
+    },
+    "filter": {
+      "all": "All",
+      "allCategories": "All categories",
+      "glbStatus": "GLB status — all",
+      "hasGlb": "Has GLB",
+      "missingGlb": "Missing GLB",
+      "legacy": "Legacy placeholder"
+    },
+    "footer": {
+      "showingFormat": "Showing {{visible}} of {{total}}",
+      "showingRangeFormat": "{{from}}–{{to}} of {{total}}",
+      "pageSize": "Per page"
+    },
+    "empty": {
+      "title": "No accessories match",
+      "body": "Adjust filters or search keywords.",
+      "clear": "Clear filters"
+    },
+    "drawer": {
+      "eyebrowFormat": "Accessory · {{cat}}",
+      "tabs": {
+        "details": "Details",
+        "images": "Images",
+        "model": "3D Model",
+        "usage": "Usage"
+      },
+      "details": {
+        "name": "Display Name",
+        "category": "Category",
+        "branch": "Branch",
+        "gender": "Gender",
+        "rules": "Rules (JSON)",
+        "renderLogic": "Render Logic"
+      },
+      "images": {
+        "accessory": "Accessory Image",
+        "placement": "Placement Diagram",
+        "replace": "Replace",
+        "uploading": "Uploading…",
+        "specs": "PNG or WebP · transparent background · 512 px min. Placement diagrams should be on a standard mannequin template."
+      },
+      "model": {
+        "frameLabel": "{{id}}.glb · drag-rotate enabled",
+        "noGlb": "No GLB uploaded",
+        "metaFormat": "1.42 MB · uploaded 2026-04-30 11:24",
+        "uploadNew": "Upload New Version",
+        "uploading": "Uploading…",
+        "progress": "{{pct}}% uploaded",
+        "download": "Download"
+      },
+      "usage": {
+        "referencedBy": "Referenced by"
+      },
+      "footer": {
+        "delete": "Delete",
+        "confirmDelete": "Confirm Delete",
+        "discard": "Discard",
+        "edit": "Edit",
+        "cancel": "Cancel",
+        "save": "Save Changes"
+      }
+    },
+    "modal": {
+      "eyebrow": "New",
+      "title": "Add Accessory",
+      "idLabel": "ID (kebab-case)",
+      "idPlaceholder": "e.g. hdr_beret_navy_f",
+      "nameLabel": "Display Name",
+      "namePlaceholder": "e.g. Navy Beret (Female)",
+      "categoryLabel": "Category",
+      "branchLabel": "Branch",
+      "genderLabel": "Gender",
+      "cancel": "Cancel",
+      "create": "Create"
+    },
+    "toast": {
+      "saved": {
+        "title": "Changes saved"
+      },
+      "deleted": {
+        "title": "Accessory deleted"
+      },
+      "created": {
+        "title": "Accessory created"
+      },
+      "uploadImg": {
+        "title": "Image uploaded"
+      },
+      "uploadGlb": {
+        "title": "GLB uploaded"
+      },
+      "deletePrompt": {
+        "title": "Confirm deletion",
+        "body": "Click Confirm Delete again to permanently remove this accessory."
+      },
+      "error": {
+        "required": "ID, name and category are required.",
+        "idExists": "An accessory with this ID already exists.",
+        "createFailed": "Failed to create accessory.",
+        "updateFailed": "Failed to save changes.",
+        "deleteFailed": "Failed to delete accessory.",
+        "uploadFailed": "Upload failed. Please try again.",
+        "downloadFailed": "Could not retrieve download URL."
+      }
+    }
+  },
+  "models": {
+    "eyebrow": "Assets",
+    "title": "3D Models",
+    "subtitle": "GLB assets for body shapes, uniforms, and accessories. Sockets must match the standard 15-point rig.",
+    "rescan": "Re-scan Storage",
+    "tabs": {
+      "bodies": "Bodies",
+      "uniforms": "Uniforms",
+      "accessories": "Accessories",
+      "placeholder": "Placeholder"
+    },
+    "bodies": {
+      "male": "Male",
+      "female": "Female",
+      "delivered": "Artist Delivery",
+      "placeholder": "Placeholder",
+      "uploadNew": "Upload New",
+      "replace": "Replace",
+      "download": "Download",
+      "preview": "Preview 3D",
+      "viewFull": "Socket Detail",
+      "checkSockets": "Check Sockets",
+      "checking": "Checking…",
+      "socketMissing": "missing",
+      "socketAllOk": "All 15 sockets OK"
+    },
+    "fullModal": {
+      "eyebrow": "Socket Detail",
+      "ctrls": {
+        "front": "Front",
+        "side": "Side",
+        "back": "Back",
+        "rotate": "Rotate"
+      },
+      "socketsTitle": "Sockets · 15 expected"
+    },
+    "preview": {
+      "eyebrow": "3D Preview",
+      "loading": "Loading model…"
+    },
+    "uploading": {
+      "progressFormat": "{{pct}}% uploaded"
+    },
+    "uniforms": {
+      "branch": "Branch",
+      "uploaded": "Uploaded",
+      "missing": "Missing",
+      "replace": "Replace",
+      "download": "Download",
+      "upload": "Upload",
+      "preview": "Preview",
+      "genderLabel": "Gender",
+      "gender": {
+        "male": "Male",
+        "female": "Female",
+        "maternity": "Maternity"
+      }
+    },
+    "accessoriesCol": {
+      "id": "ID",
+      "name": "Display Name",
+      "category": "Category",
+      "branch": "Branch",
+      "glb": "GLB",
+      "uploadedChip": "Uploaded",
+      "placeholderChip": "Placeholder",
+      "missingChip": "Missing",
+      "upload": "Upload",
+      "download": "Download"
+    },
+    "placeholder": {
+      "banner": "This single file is used as the fallback whenever any other model asset is missing or fails to load.",
+      "frameLabel": "placeholder.glb · drag-rotate enabled",
+      "fileEyebrow": "File",
+      "rows": {
+        "path": "Storage path",
+        "usedBy": "Used by",
+        "usedByValue": "All missing assets"
+      },
+      "replace": "Replace",
+      "download": "Download"
+    },
+    "toast": {
+      "rescanning": "Rescanning Storage…",
+      "uploadBodyOk": "Body GLB uploaded ({{id}})",
+      "uploadUniformOk": "Uniform uploaded — {{label}}",
+      "uploadAccOk": "Accessory GLB uploaded ({{id}})",
+      "uploadPlaceholderOk": "Placeholder GLB updated",
+      "uploadFailed": "Upload failed — check your connection and try again",
+      "downloadFailed": "Could not retrieve download URL",
+      "previewError": "Failed to load 3D preview",
+      "socketOk": "{{title}} — all 15 sockets present",
+      "socketMissing": "{{title}} — {{n}} socket(s) missing",
+      "socketCheckFailed": "Socket check failed — GLB may be invalid or unreachable"
+    }
+  },
+  "branches": {
+    "eyebrow": "Config",
+    "title": "Branch Config",
+    "subtitle": "Per-branch render parameters · collar offsets, anchors, Sikh logic, and available dress codes.",
+    "saveAll": "Save All Branches",
+    "saveOne": "Save Changes",
+    "lastSavedFormat": "Last saved · {{when}}",
+    "section": {
+      "collar": "Collar Offset",
+      "ladiesAnchor": "Ladies Medal Anchor",
+      "sikh": "Sikh Turban Logic",
+      "codes": "Dress Codes Enabled"
+    },
+    "field": {
+      "offset": "Offset",
+      "anchor": "Anchor",
+      "offsetX": "Offset X",
+      "offsetY": "Offset Y",
+      "replacesHeadgear": "Replaces Headgear",
+      "colour": "Colour",
+      "alignOverride": "Align Override",
+      "on": "On",
+      "off": "Off"
+    },
+    "align": {
+      "none": "none",
+      "forward": "forward",
+      "back": "back",
+      "center": "center"
+    },
+    "toast": {
+      "allSaved": {
+        "title": "All branches saved",
+        "body": "4 branches updated"
+      },
+      "oneSavedFormat": {
+        "title": "{{name}} saved",
+        "body": "Config {{version}} written"
+      },
+      "saveFailed": {
+        "title": "Save failed — check your connection and try again"
+      }
+    }
+  },
+  "logic": {
+    "eyebrow": "Config",
+    "title": "Global Logic Rules",
+    "subtitle": "App-wide composition rules. Evaluated server-side at model assembly time.",
+    "addRule": "Add Rule",
+    "activeChip": "Active",
+    "inactiveChip": "Inactive",
+    "modifiedFormat": "modified · {{when}}",
+    "editJson": "Edit JSON",
+    "descriptionLabel": "Description",
+    "paramsLabel": "Params",
+    "delete": "Delete",
+    "save": "Save",
+    "modal": {
+      "eyebrow": "New",
+      "title": "Add Logic Rule",
+      "idLabel": "Rule ID (kebab-case)",
+      "idPlaceholder": "e.g. ladies_collar_offset",
+      "descriptionLabel": "Description",
+      "descriptionPlaceholder": "Plain-English description of what this rule does and when it fires.",
+      "paramsLabel": "Params",
+      "cancel": "Cancel",
+      "create": "Create Rule"
+    },
+    "jsonViewer": {
+      "header": "JSON · gold strings · navy keys",
+      "valid": "Schema valid",
+      "copy": "Copy"
+    },
+    "toast": {
+      "saved": {
+        "title": "Rule saved"
+      },
+      "deletePrompt": {
+        "titleFormat": "Confirm delete: {{id}}"
+      },
+      "created": {
+        "title": "Rule created"
+      }
+    }
+  },
+  "users": {
+    "eyebrow": "Read-only",
+    "title": "App Users",
+    "subtitleFormat": "{{count}} registered devices · platform mix · profile completion",
+    "searchPlaceholder": "Search by UID or device ID…",
+    "filter": {
+      "allBranches": "All",
+      "allProfiles": "All profiles",
+      "complete": "Complete",
+      "incomplete": "Incomplete"
+    },
+    "col": {
+      "uid": "UID",
+      "device": "Device ID",
+      "platform": "Platform",
+      "branch": "Branch",
+      "profile": "Profile",
+      "lastSeen": "Last Seen"
+    },
+    "action": {
+      "copyUid": "Copy UID",
+      "open": "Open user"
+    },
+    "drawer": {
+      "eyebrow": "User · Read-only",
+      "profileTitle": "Profile · Current",
+      "statsTitle": "Stats",
+      "row": {
+        "branch": "Branch",
+        "rank": "Rank",
+        "gender": "Gender",
+        "dressCode": "Dress code",
+        "fullName": "Full name",
+        "vocation": "Vocation",
+        "medalRows": "Medal rows",
+        "badgeIds": "Badge IDs",
+        "sikh": "Sikh",
+        "profileComplete": "Profile complete"
+      },
+      "stat": {
+        "photos": "Gallery photos",
+        "models": "Generated models",
+        "sessions": "Sessions"
+      },
+      "close": "Close"
+    },
+    "empty": {
+      "title": "No users match",
+      "body": "Adjust the search or filter to widen the result set."
+    },
+    "toast": {
+      "uidCopied": "UID copied"
+    }
+  },
+  "admins": {
+    "eyebrow": "Access",
+    "title": "Admin Accounts",
+    "subtitle": "Only pre-created Firebase Auth accounts can access this portal.",
+    "addAdmin": "Add Admin",
+    "infoBanner": "Password management lives in the Firebase Auth console. This portal only manages role + status.",
+    "col": {
+      "name": "Name",
+      "email": "Email",
+      "role": "Role",
+      "created": "Created",
+      "lastLogin": "Last Login",
+      "status": "Status"
+    },
+    "role": {
+      "super": "Super Admin",
+      "admin": "Admin"
+    },
+    "modal": {
+      "eyebrow": "New",
+      "title": "Add Admin Account",
+      "nameLabel": "Full Name",
+      "namePlaceholder": "e.g. Aisha Kumar",
+      "emailLabel": "Email",
+      "emailPlaceholder": "name@mindef.gov.sg",
+      "roleLabel": "Role",
+      "cancel": "Cancel",
+      "submit": "Send Invite"
+    },
+    "toast": {
+      "inviteSent": {
+        "title": "Invite sent",
+        "body": "An email with sign-in instructions has been queued (mock)."
+      }
+    }
+  },
+  "toast": {
+    "signedIn": "Welcome back, {{name}}",
+    "signedOut": "Signed out",
+    "saved": "Changes saved",
+    "themeChanged": "Theme updated"
+  }
+}

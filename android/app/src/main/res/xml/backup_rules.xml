@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Android Auto Backup whitelist (API < 31). We back up the encrypted
+  SharedPreferences files used by `flutter_secure_storage` so that on
+  reinstall the same `deviceId` (and therefore the same Firebase uid)
+  is recovered. Everything else is excluded — Firestore SDK already
+  handles its own offline cache lifecycle.
+-->
+<full-backup-content>
+    <include domain="sharedpref" path="FlutterSecureStorage.xml" />
+    <include domain="sharedpref" path="VGhpc0lzVGhlQW5kcm9pZE1ldGFEYXRh" />
+    <include domain="sharedpref" path="saf_uniforms_prefs.xml" />
+</full-backup-content>
