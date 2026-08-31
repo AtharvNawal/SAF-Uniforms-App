@@ -26,7 +26,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
   ref.listen<Object?>(authSessionProvider, (_, _) => refresh.value++);
   ref.onDispose(refresh.dispose);
 
-  return GoRouter(
+  final router = GoRouter(
     initialLocation: Routes.welcome,
     debugLogDiagnostics: false,
     refreshListenable: refresh,
@@ -128,4 +128,24 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
     ],
   );
+
+  // Persist the current location on every navigation, restricted to
+  // `Routes.restorable` — lets `WelcomeScreen` return a returning user
+  // to the screen they were on after a cold start instead of always
+  // `/dashboard`, including an Android-triggered process-death respawn
+  // (e.g. the OS camera app backgrounding this app for a photo capture).
+  // See ChangeRequest/2026-08-11_capture-flow-state-loss-fix.md.
+  // `GoRouterDelegate` is a `Listenable` that notifies on every
+  // navigation — there's no dedicated "route changed" callback.
+  void persistCurrentRoute() {
+    final uri = router.routerDelegate.currentConfiguration.uri;
+    if (Routes.restorable.contains(uri.path)) {
+      ref.read(localStorageServiceProvider).writeLastRoute(uri.toString());
+    }
+  }
+
+  router.routerDelegate.addListener(persistCurrentRoute);
+  ref.onDispose(() => router.routerDelegate.removeListener(persistCurrentRoute));
+
+  return router;
 });

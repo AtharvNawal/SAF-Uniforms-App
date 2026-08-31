@@ -3,3 +3,4 @@ lib/
 *.log
 .firebase/
 .runtimeconfig.json
+.secret.local

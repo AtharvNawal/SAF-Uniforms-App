@@ -18,12 +18,14 @@ dependencies:
   flutter_riverpod: ^3.3.1
   riverpod_annotation: ^4.0.2
 
-  # Firebase
-  firebase_core: ^4.7.0
-  firebase_auth: ^6.4.0
-  cloud_firestore: ^6.3.0
-  cloud_functions: ^6.0.0
-  firebase_storage: ^13.0.4
+  # Firebase — floors raised 2026-08-30: cloud_firestore < 6.9.0 fails to
+  # compile on iOS against firebase-ios-sdk >= 12.16 (FLTPipelineParser /
+  # FIRCollectionSourceStageBridge). Keep the family in lockstep.
+  firebase_core: ^4.14.0
+  firebase_auth: ^6.6.1
+  cloud_firestore: ^6.9.0
+  cloud_functions: ^6.4.0
+  firebase_storage: ^13.5.0
 
   # Network image caching — No.3 accessory photos + Gallery user photos.
   cached_network_image: ^3.4.1
@@ -83,7 +85,7 @@ dev_dependencies:
   riverpod_generator: ^4.0.3
   freezed: ^3.2.5
   json_serializable: ^6.10.0
-  fake_cloud_firestore: ^4.0.0
+  fake_cloud_firestore: ^4.2.0
   firebase_admin_sdk: ^0.5.1
   google_cloud_firestore: ^0.5.1
   google_cloud_storage: ^0.6.0

@@ -1,0 +1,12 @@
+# Dependencies needed to GENERATE synthetic data and TRAIN models —
+# not needed at inference time, so kept out of cv-service/requirements.txt
+# (that file is what a deployed/inference-only instance installs).
+#
+#   .venv-tools/bin/pip install -r cv-service/training/requirements-training.txt
+
+pyrender>=0.1.45
+shapely>=2.0        # trimesh's mesh-slicing (trimesh.intersections.slice_mesh_plane) needs this...
+rtree>=1.0          # ...which needs this for polygon enclosure trees...
+mapbox_earcut>=1.0  # ...and this for cap-face triangulation.
+pyyaml>=6.0          # data.yaml for the ultralytics dataset format
+torch>=2.0            # ultralytics training backend (MPS/CUDA/CPU)

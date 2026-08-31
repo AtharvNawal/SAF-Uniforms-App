@@ -1,0 +1,271 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>cv-service — ground-truth labeling</title>
+<style>
+  body { font-family: -apple-system, sans-serif; margin: 0; display: flex; height: 100vh; }
+  #canvas-pane { flex: 1; overflow: auto; background: #222; display: flex; align-items: flex-start; justify-content: center; padding: 16px; }
+  canvas { cursor: crosshair; background: #000; }
+  #sidebar { width: 340px; padding: 16px; overflow-y: auto; box-sizing: border-box; border-left: 1px solid #ccc; }
+  h2 { font-size: 15px; margin: 0 0 8px; }
+  .item { padding: 4px 6px; border-radius: 4px; margin-bottom: 2px; font-size: 13px; }
+  .item.current { background: #ffe58a; font-weight: 600; }
+  .item.done { color: #2a8a2a; }
+  .item.skipped { color: #999; text-decoration: line-through; }
+  button { display: block; width: 100%; padding: 8px; margin-top: 8px; font-size: 13px; }
+  input, textarea, select { width: 100%; box-sizing: border-box; margin-bottom: 8px; padding: 4px; }
+  label.field { display: block; font-size: 12px; margin-top: 8px; }
+  #errors { color: #c0392b; font-size: 12px; white-space: pre-wrap; }
+  .acc-row { display: flex; align-items: center; gap: 6px; font-size: 13px; margin-bottom: 4px; }
+  #remaining { font-size: 12px; color: #666; }
+</style>
+</head>
+<body>
+<div id="canvas-pane"><canvas id="canvas"></canvas></div>
+<div id="sidebar">
+  <div id="remaining"></div>
+  <div id="phase-anchors">
+    <h2>1. Click each anchor (or mark not visible)</h2>
+    <div id="anchor-list"></div>
+    <button id="not-visible-btn">Mark current anchor NOT visible</button>
+  </div>
+  <div id="phase-accessories" style="display:none">
+    <h2>2. Mark accessories present / outline them</h2>
+    <div id="accessory-list"></div>
+    <button id="finish-polygon-btn" style="display:none">Finish polygon (need ≥3 points)</button>
+    <button id="undo-point-btn" style="display:none">Undo last point</button>
+  </div>
+  <div id="phase-metadata" style="display:none">
+    <h2>3. Confirm metadata &amp; save</h2>
+    <label class="field">subject_id<input id="subject_id" /></label>
+    <label class="field">angle
+      <select id="angle"></select>
+    </label>
+    <label class="field">lighting
+      <select id="lighting"></select>
+    </label>
+    <label class="field">annotator<input id="annotator" /></label>
+    <label class="field"><input type="checkbox" id="is_synthetic_stand_in" style="width:auto;display:inline"/> This is a synthetic / rendered stand-in, NOT a real photo</label>
+    <label class="field">notes<textarea id="notes" rows="2"></textarea></label>
+    <button id="save-btn">Save &amp; load next photo</button>
+    <div id="errors"></div>
+  </div>
+</div>
+<script>
+const CONFIG = __CONFIG_JSON__;
+
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const img = new Image();
+let scale = 1;
+
+const anchors = {};       // name -> {x_px, y_px, visible}
+const accessories = [];   // {class_name, present, polygon_px, side?}
+let anchorIndex = 0;
+let accessoryIndex = 0;
+let currentPolygon = null; // array of [x,y] in image space while drawing
+let phase = 'anchors';
+
+img.onload = () => {
+  const maxW = Math.min(img.naturalWidth, window.innerWidth - 380);
+  scale = maxW / img.naturalWidth;
+  canvas.width = img.naturalWidth * scale;
+  canvas.height = img.naturalHeight * scale;
+  redraw();
+};
+img.src = CONFIG.imageDataUrl;
+
+function redraw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = '#00ff6a';
+  ctx.strokeStyle = '#00ff6a';
+  for (const name in anchors) {
+    const a = anchors[name];
+    if (!a.visible) continue;
+    ctx.beginPath();
+    ctx.arc(a.x_px * scale, a.y_px * scale, 4, 0, 2 * Math.PI);
+    ctx.fill();
+  }
+  for (const acc of accessories) {
+    if (!acc.present || !acc.polygon_px) continue;
+    drawPolygon(acc.polygon_px, '#3fa7ff');
+  }
+  if (currentPolygon && currentPolygon.length) {
+    drawPolygon(currentPolygon, '#ffcf3f', false);
+  }
+}
+
+function drawPolygon(points, color, closed = true) {
+  ctx.strokeStyle = color;
+  ctx.beginPath();
+  points.forEach(([x, y], i) => {
+    const px = x * scale, py = y * scale;
+    if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+  });
+  if (closed) ctx.closePath();
+  ctx.stroke();
+  points.forEach(([x, y]) => {
+    ctx.beginPath();
+    ctx.arc(x * scale, y * scale, 3, 0, 2 * Math.PI);
+    ctx.fillStyle = color;
+    ctx.fill();
+  });
+}
+
+canvas.addEventListener('click', (e) => {
+  const rect = canvas.getBoundingClientRect();
+  const x = (e.clientX - rect.left) / scale;
+  const y = (e.clientY - rect.top) / scale;
+  if (phase === 'anchors') {
+    recordAnchor(x, y);
+  } else if (phase === 'accessories' && currentPolygon) {
+    currentPolygon.push([x, y]);
+    redraw();
+  }
+});
+
+function recordAnchor(x, y) {
+  const name = CONFIG.anchorNames[anchorIndex];
+  anchors[name] = { x_px: x, y_px: y, visible: true };
+  anchorIndex++;
+  renderAnchorList();
+  redraw();
+  if (anchorIndex >= CONFIG.anchorNames.length) startAccessoryPhase();
+}
+
+document.getElementById('not-visible-btn').addEventListener('click', () => {
+  if (phase !== 'anchors') return;
+  const name = CONFIG.anchorNames[anchorIndex];
+  anchors[name] = { visible: false };
+  anchorIndex++;
+  renderAnchorList();
+  if (anchorIndex >= CONFIG.anchorNames.length) startAccessoryPhase();
+});
+
+function renderAnchorList() {
+  const list = document.getElementById('anchor-list');
+  list.innerHTML = '';
+  CONFIG.anchorNames.forEach((name, i) => {
+    const div = document.createElement('div');
+    const a = anchors[name];
+    let cls = 'item';
+    let label = name;
+    if (a && a.visible) { cls += ' done'; label += ' ✓'; }
+    else if (a && !a.visible) { cls += ' skipped'; label += ' (not visible)'; }
+    else if (i === anchorIndex) cls += ' current';
+    div.className = cls;
+    div.textContent = label;
+    list.appendChild(div);
+  });
+}
+
+function startAccessoryPhase() {
+  phase = 'accessories';
+  document.getElementById('phase-anchors').style.display = 'none';
+  document.getElementById('phase-accessories').style.display = 'block';
+  renderAccessoryList();
+}
+
+function renderAccessoryList() {
+  const list = document.getElementById('accessory-list');
+  list.innerHTML = '';
+  CONFIG.accessoryClasses.forEach((cls) => {
+    const row = document.createElement('div');
+    row.className = 'acc-row';
+    const existing = accessories.find((a) => a.class_name === cls);
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.checked = !!(existing && existing.present);
+    checkbox.addEventListener('change', () => onAccessoryToggle(cls, checkbox.checked));
+    const span = document.createElement('span');
+    span.textContent = cls + (existing && existing.present && existing.polygon_px ? ` (${existing.polygon_px.length} pts)` : '');
+    row.appendChild(checkbox);
+    row.appendChild(span);
+    list.appendChild(row);
+  });
+  const doneBtn = document.createElement('button');
+  doneBtn.textContent = 'Done with accessories → metadata';
+  doneBtn.addEventListener('click', startMetadataPhase);
+  list.appendChild(doneBtn);
+}
+
+function onAccessoryToggle(className, present) {
+  let entry = accessories.find((a) => a.class_name === className);
+  if (!present) {
+    if (entry) { entry.present = false; delete entry.polygon_px; }
+    else accessories.push({ class_name: className, present: false });
+    redraw();
+    renderAccessoryList();
+    return;
+  }
+  currentPolygon = [];
+  document.getElementById('finish-polygon-btn').style.display = 'block';
+  document.getElementById('undo-point-btn').style.display = 'block';
+  document.getElementById('finish-polygon-btn').onclick = () => {
+    if (currentPolygon.length < 3) { alert('Need at least 3 points'); return; }
+    let e = accessories.find((a) => a.class_name === className);
+    if (!e) { e = { class_name: className, present: true }; accessories.push(e); }
+    e.present = true;
+    e.polygon_px = currentPolygon;
+    currentPolygon = null;
+    document.getElementById('finish-polygon-btn').style.display = 'none';
+    document.getElementById('undo-point-btn').style.display = 'none';
+    redraw();
+    renderAccessoryList();
+  };
+  document.getElementById('undo-point-btn').onclick = () => {
+    currentPolygon.pop();
+    redraw();
+  };
+}
+
+function startMetadataPhase() {
+  phase = 'metadata';
+  document.getElementById('phase-accessories').style.display = 'none';
+  document.getElementById('phase-metadata').style.display = 'block';
+  document.getElementById('subject_id').value = CONFIG.subjectIdHint;
+  document.getElementById('annotator').value = CONFIG.annotator;
+
+  const angleSel = document.getElementById('angle');
+  CONFIG.angles.forEach((a) => angleSel.appendChild(new Option(a, a, false, a === CONFIG.angleHint)));
+  const lightSel = document.getElementById('lighting');
+  CONFIG.lightingConditions.forEach((l) => lightSel.appendChild(new Option(l, l, false, l === CONFIG.lightingHint)));
+}
+
+document.getElementById('save-btn').addEventListener('click', async () => {
+  const label = {
+    schema_version: 1,
+    photo_id: CONFIG.photoId,
+    source_path: CONFIG.sourcePath,
+    subject_id: document.getElementById('subject_id').value,
+    angle: document.getElementById('angle').value,
+    lighting: document.getElementById('lighting').value,
+    image_width: CONFIG.imageWidth,
+    image_height: CONFIG.imageHeight,
+    is_synthetic_stand_in: document.getElementById('is_synthetic_stand_in').checked,
+    annotator: document.getElementById('annotator').value,
+    labeled_at: new Date().toISOString(),
+    notes: document.getElementById('notes').value,
+    anchors,
+    accessories,
+  };
+  const res = await fetch('/save', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(label),
+  });
+  const body = await res.json();
+  if (!body.ok) {
+    document.getElementById('errors').textContent = body.errors.join('\n');
+    return;
+  }
+  location.reload();
+});
+
+document.getElementById('remaining').textContent = CONFIG.remaining + ' photo(s) remaining (including this one)';
+renderAnchorList();
+</script>
+</body>
+</html>

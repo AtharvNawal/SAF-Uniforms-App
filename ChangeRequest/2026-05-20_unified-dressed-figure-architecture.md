@@ -100,11 +100,18 @@ until their own unified figures are authored.
 
 ## Verification
 
-1. `cd functions && npm run build && npm test` — all tests pass.
-2. `firebase deploy --only functions`
-3. `flutter analyze` — clean.
-4. `flutter run` — rebuilds with `kModelBundleVersion = 22`.
-5. Open GhostScreen → Army No.3 male, trigger fresh compose.
-6. Confirm: beret on head, name tag on right chest, rank chevrons on both upper arms,
-   lanyard from right shoulder, belt at waist, shoes on feet, no z-fighting.
-7. Update status → `verified`.
+1. `cd functions && npm run build && npm test` — ✅ 2026-07-30: `tsc` builds clean, all 22
+   `node --test` cases pass.
+2. `firebase deploy --only functions` — not run (requires operator credentials / explicit
+   deploy approval).
+3. `flutter analyze` — ✅ 2026-07-30: was reporting 244 issues, all inside the gitignored
+   `ios/build/ios/SourcePackages/**` Swift-Package-Manager dependency cache (a local build
+   artifact, not project source — see fix below). Added an `analyzer: exclude:` block to
+   `analysis_options.yaml` for `build/**`, `ios/build/**`, `android/build/**`; analyze now
+   reports "No issues found!".
+4. `flutter test` — ✅ 2026-07-30: all 73 tests pass.
+5. `flutter run` on a real device — not run in this session (no attached device/simulator).
+6. Open GhostScreen → Army No.3 male, trigger fresh compose, confirm placement — not run
+   (depends on step 5).
+7. Status left as `in-progress`: steps 1/3/4 verified clean; steps 2/5/6 (deploy + on-device
+   visual confirmation) still need an operator with deploy credentials and a device/simulator.

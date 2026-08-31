@@ -260,6 +260,12 @@ abstract class AppLocalizations {
   /// **'Get Started'**
   String get welcomeGetStarted;
 
+  /// No description provided for @configSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t save your profile — check your connection and tap Done to try again'**
+  String get configSaveFailed;
+
   /// No description provided for @configHeaderConfiguration.
   ///
   /// In en, this message translates to:
@@ -1376,53 +1382,107 @@ abstract class AppLocalizations {
   /// **'BDG'**
   String get arMetaBdg;
 
-  /// No description provided for @arIssue1Title.
+  /// No description provided for @arAnalyzing.
   ///
   /// In en, this message translates to:
-  /// **'Name tag tilted'**
-  String get arIssue1Title;
+  /// **'Analyzing your photo…'**
+  String get arAnalyzing;
 
-  /// No description provided for @arIssue1Body.
+  /// No description provided for @arAnalyzingSub.
   ///
   /// In en, this message translates to:
-  /// **'Detected ~3° rotation. Inspection threshold is 1°.'**
-  String get arIssue1Body;
+  /// **'Comparing against your expected accessories'**
+  String get arAnalyzingSub;
 
-  /// No description provided for @arIssue2Title.
+  /// No description provided for @arCheckFailed.
   ///
   /// In en, this message translates to:
-  /// **'Beret angle off'**
-  String get arIssue2Title;
+  /// **'Couldn\'t complete the check'**
+  String get arCheckFailed;
 
-  /// No description provided for @arIssue2Body.
+  /// No description provided for @arCheckFailedSub.
   ///
   /// In en, this message translates to:
-  /// **'Tilted left at ~12°. Should slope right at 22°.'**
-  String get arIssue2Body;
+  /// **'Check your connection and try again'**
+  String get arCheckFailedSub;
 
-  /// No description provided for @arPass1.
+  /// No description provided for @arErrorSignInTitle.
   ///
   /// In en, this message translates to:
-  /// **'Collar rank pins · 3 cm centred'**
-  String get arPass1;
+  /// **'Still signing you in'**
+  String get arErrorSignInTitle;
 
-  /// No description provided for @arPass2.
+  /// No description provided for @arErrorSignInSub.
   ///
   /// In en, this message translates to:
-  /// **'Medal ribbons · level and flush'**
-  String get arPass2;
+  /// **'Please wait a moment and try again'**
+  String get arErrorSignInSub;
 
-  /// No description provided for @arPass3.
+  /// No description provided for @arErrorProfileTitle.
   ///
   /// In en, this message translates to:
-  /// **'Lanyard knot · 10 cm from armpit'**
-  String get arPass3;
+  /// **'Finish your profile first'**
+  String get arErrorProfileTitle;
 
-  /// No description provided for @arPass4.
+  /// No description provided for @arErrorProfileSub.
   ///
   /// In en, this message translates to:
-  /// **'Belt buckle · centred to slit'**
-  String get arPass4;
+  /// **'Complete Configuration before running a compliance check'**
+  String get arErrorProfileSub;
+
+  /// No description provided for @arErrorPhotoTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Something\'s wrong with that photo'**
+  String get arErrorPhotoTitle;
+
+  /// No description provided for @arErrorPhotoSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Please retake it and try again'**
+  String get arErrorPhotoSub;
+
+  /// No description provided for @arErrorConnectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection problem'**
+  String get arErrorConnectionTitle;
+
+  /// No description provided for @arErrorConnectionSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Check your connection and try again'**
+  String get arErrorConnectionSub;
+
+  /// No description provided for @arErrorCvUnreachableSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t reach the dev CV service — make sure it\'s running'**
+  String get arErrorCvUnreachableSub;
+
+  /// No description provided for @arErrorCameraTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera unavailable'**
+  String get arErrorCameraTitle;
+
+  /// No description provided for @arErrorCameraSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Check camera permission in Settings and try again'**
+  String get arErrorCameraSub;
+
+  /// No description provided for @arRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Try Again'**
+  String get arRetry;
+
+  /// No description provided for @arUncertainChecks.
+  ///
+  /// In en, this message translates to:
+  /// **'Uncertain · {count}'**
+  String arUncertainChecks(int count);
 
   /// No description provided for @generatingChip.
   ///

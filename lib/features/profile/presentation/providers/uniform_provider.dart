@@ -261,9 +261,14 @@ class UniformProfileNotifier extends _$UniformProfileNotifier {
   /// Awaits a Firestore write immediately. Used at the end of the
   /// Configuration wizard so we know the profile is durable before
   /// flipping `profileComplete`.
-  Future<void> persist() async {
+  /// Flushes the debounced write immediately and reports whether it
+  /// actually succeeded — unlike the fire-and-forget debounced path,
+  /// `ConfigScreen`'s completion step needs to know this landed before
+  /// it can safely mark onboarding complete and navigate away. See
+  /// `ChangeRequest/2026-08-11_config-profile-save-failure-fix.md`.
+  Future<bool> persist() async {
     _debounce?.cancel();
-    await _writeNow();
+    return _writeNow();
   }
 
   void _scheduleSync() {
@@ -274,7 +279,7 @@ class UniformProfileNotifier extends _$UniformProfileNotifier {
     });
   }
 
-  Future<void> _writeNow() async {
+  Future<bool> _writeNow() async {
     final session = ref.read(authSessionProvider);
     if (session == null) {
       AppLog.i(
@@ -282,7 +287,7 @@ class UniformProfileNotifier extends _$UniformProfileNotifier {
         '(kickoffAuthFlow not yet complete)',
         tag: _tag,
       );
-      return;
+      return false;
     }
     AppLog.d(
       'write START — uid=${session.uid}  '
@@ -301,6 +306,7 @@ class UniformProfileNotifier extends _$UniformProfileNotifier {
         'write OK — users/${session.uid}/profile/current updated',
         tag: _tag,
       );
+      return true;
     } catch (e, st) {
       AppLog.e(
         'write FAILED — users/${session.uid}/profile/current',
@@ -308,6 +314,7 @@ class UniformProfileNotifier extends _$UniformProfileNotifier {
         error: e,
         st: st,
       );
+      return false;
     }
   }
 }

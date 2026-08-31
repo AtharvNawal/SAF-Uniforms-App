@@ -91,6 +91,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get welcomeGetStarted => 'Get Started';
 
   @override
+  String get configSaveFailed =>
+      'Couldn\'t save your profile — check your connection and tap Done to try again';
+
+  @override
   String get configHeaderConfiguration => 'Configuration';
 
   @override
@@ -691,29 +695,60 @@ class AppLocalizationsEn extends AppLocalizations {
   String get arMetaBdg => 'BDG';
 
   @override
-  String get arIssue1Title => 'Name tag tilted';
+  String get arAnalyzing => 'Analyzing your photo…';
 
   @override
-  String get arIssue1Body =>
-      'Detected ~3° rotation. Inspection threshold is 1°.';
+  String get arAnalyzingSub => 'Comparing against your expected accessories';
 
   @override
-  String get arIssue2Title => 'Beret angle off';
+  String get arCheckFailed => 'Couldn\'t complete the check';
 
   @override
-  String get arIssue2Body => 'Tilted left at ~12°. Should slope right at 22°.';
+  String get arCheckFailedSub => 'Check your connection and try again';
 
   @override
-  String get arPass1 => 'Collar rank pins · 3 cm centred';
+  String get arErrorSignInTitle => 'Still signing you in';
 
   @override
-  String get arPass2 => 'Medal ribbons · level and flush';
+  String get arErrorSignInSub => 'Please wait a moment and try again';
 
   @override
-  String get arPass3 => 'Lanyard knot · 10 cm from armpit';
+  String get arErrorProfileTitle => 'Finish your profile first';
 
   @override
-  String get arPass4 => 'Belt buckle · centred to slit';
+  String get arErrorProfileSub =>
+      'Complete Configuration before running a compliance check';
+
+  @override
+  String get arErrorPhotoTitle => 'Something\'s wrong with that photo';
+
+  @override
+  String get arErrorPhotoSub => 'Please retake it and try again';
+
+  @override
+  String get arErrorConnectionTitle => 'Connection problem';
+
+  @override
+  String get arErrorConnectionSub => 'Check your connection and try again';
+
+  @override
+  String get arErrorCvUnreachableSub =>
+      'Couldn\'t reach the dev CV service — make sure it\'s running';
+
+  @override
+  String get arErrorCameraTitle => 'Camera unavailable';
+
+  @override
+  String get arErrorCameraSub =>
+      'Check camera permission in Settings and try again';
+
+  @override
+  String get arRetry => 'Try Again';
+
+  @override
+  String arUncertainChecks(int count) {
+    return 'Uncertain · $count';
+  }
 
   @override
   String get generatingChip => 'BUILDING';
