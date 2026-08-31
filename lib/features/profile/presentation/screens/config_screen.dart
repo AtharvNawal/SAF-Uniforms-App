@@ -148,13 +148,41 @@ class _ConfigScreenState extends ConsumerState<ConfigScreen> {
         tag: _tag,
       );
 
-      // 2. Flush profile — uid is now known so the write will land.
+      // 2. Flush profile — uid is now known so the write will land. A
+      // failed write here must NEVER be treated as success (see
+      // ChangeRequest/2026-08-11_config-profile-save-failure-fix.md) —
+      // one automatic retry absorbs a transient blip; if that also
+      // fails, stop here rather than silently completing onboarding
+      // against a profile that was never actually saved.
       AppLog.i(
         'completeConfiguration: STEP 2 — persisting profile to '
         'users/${session.uid}/profile/current',
         tag: _tag,
       );
-      await ref.read(uniformProfileProvider.notifier).persist();
+      var persisted = await ref.read(uniformProfileProvider.notifier).persist();
+      if (!persisted) {
+        AppLog.w(
+          'completeConfiguration: STEP 2 retry — first write failed',
+          tag: _tag,
+        );
+        persisted = await ref.read(uniformProfileProvider.notifier).persist();
+      }
+      if (!persisted) {
+        AppLog.e(
+          'completeConfiguration: STEP 2 FAILED after retry — aborting, '
+          'staying on Config',
+          tag: _tag,
+        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(context.l10n.configSaveFailed),
+              duration: const Duration(seconds: 4),
+            ),
+          );
+        }
+        return;
+      }
       AppLog.i('completeConfiguration: STEP 2 OK — profile written', tag: _tag);
 
       // 3. Mark device registration complete (best-effort).
@@ -209,6 +237,17 @@ class _ConfigScreenState extends ConsumerState<ConfigScreen> {
         error: e,
         st: st,
       );
+      // Never treat an unexpected exception as success — stay on
+      // Config rather than navigate away with onboarding half-done.
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(context.l10n.configSaveFailed),
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+      return;
     } finally {
       if (mounted) setState(() => _loading = false);
     }

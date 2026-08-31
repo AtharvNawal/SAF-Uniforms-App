@@ -12,6 +12,7 @@ import '../../../../core/l10n/l10n_extensions.dart';
 import '../../../../core/routing/routes.dart';
 import '../../../../core/theme/branch_theme_extension.dart';
 import '../../../../core/utils/app_logger.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
 import '../providers/app_bootstrap_provider.dart';
 
 const String _tag = 'welcome';
@@ -56,6 +57,22 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     );
   }
 
+  /// Returns a returning user to the screen they were on (per the
+  /// last-persisted, allowlist-validated route) instead of always
+  /// `/dashboard` — see `Routes.restorable` and
+  /// `ChangeRequest/2026-08-11_capture-flow-state-loss-fix.md`.
+  Future<void> _navigateToLastRoute() async {
+    final lastRoute =
+        await ref.read(localStorageServiceProvider).readLastRoute();
+    final target = Routes.resolveRestoreTarget(lastRoute);
+    AppLog.i('navigating to $target (returning user)', tag: _tag);
+    if (!mounted) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.go(target);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final branchTheme = context.branchTheme;
@@ -69,12 +86,9 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
 
     if (ready && !_didNavigate && outcome == BootstrapOutcome.returningUser) {
       _didNavigate = true;
-      AppLog.i('navigating to /dashboard (returning user)', tag: _tag);
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        context.go(Routes.dashboard);
-      });
+      unawaited(_navigateToLastRoute());
     }
+
 
     final showCta = ready && outcome == BootstrapOutcome.newUser;
 

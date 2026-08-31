@@ -252,4 +252,20 @@ void main() {
       },
     );
   });
+
+  group('persist()', () {
+    // See ChangeRequest/2026-08-11_config-profile-save-failure-fix.md —
+    // persist() must report whether the write actually landed so
+    // ConfigScreen can avoid silently completing onboarding against a
+    // profile that was never saved.
+    test('returns false when there is no auth session (write never attempted)',
+        () async {
+      // authSessionProvider defaults to null with no overrides — the
+      // exact "kickoffAuthFlow not yet complete" case persist() must
+      // report as a failure, not silently swallow.
+      final result =
+          await container.read(uniformProfileProvider.notifier).persist();
+      expect(result, isFalse);
+    });
+  });
 }

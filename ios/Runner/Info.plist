@@ -10,6 +10,21 @@
 	<string>SAF Uniforms accesses your photo library to save and load gallery photos.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>SAF Uniforms saves captured photos to your photo library.</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>SAF Uniforms connects to a uniform-analysis service running on your local network during development.</string>
+	<!--
+	  DEV / SIDE-LOAD concession: NSAllowsLocalNetworking permits
+	  cleartext HTTP to private-range IPs (e.g. http://192.168.x.x:8001,
+	  the locally-run cv-service — see deploy/run-cv-service-local.sh and
+	  kCvServiceBaseUrl). ATS still applies to everything on the public
+	  internet; Firebase traffic is HTTPS regardless. Remove this before
+	  any App Store submission.
+	-->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>

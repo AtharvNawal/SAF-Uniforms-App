@@ -1,12 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Cleartext HTTP is denied by default on API 28+. `model_viewer_plus`
-  starts an internal HTTP server on `http://127.0.0.1:<port>/` and
-  loads it inside an embedded WebView, so the WebView needs an
-  explicit allow-list for localhost. We ONLY whitelist 127.0.0.1
-  and localhost — every other domain still requires HTTPS.
+  `model_viewer_plus` runs an internal HTTP server on 127.0.0.1 and
+  loads it in a WebView, so localhost cleartext must be allowed.
+
+  `base-config` additionally permits cleartext to ANY host. This is a
+  DEV / SIDE-LOAD build concession so the uniform scanner can reach a
+  `cv-service` you run on your own Mac over the LAN
+  (http://<mac-ip>:8001 — see deploy/run-cv-service-local.sh and
+  kCvServiceBaseUrl). Firebase traffic is HTTPS regardless (the SDK
+  enforces it). If this app is ever shipped through the Play Store,
+  tighten base-config back to `cleartextTrafficPermitted="false"` and
+  add per-IP domain-config entries instead.
 -->
 <network-security-config>
+    <base-config cleartextTrafficPermitted="true" />
     <domain-config cleartextTrafficPermitted="true">
         <domain includeSubdomains="false">127.0.0.1</domain>
         <domain includeSubdomains="false">localhost</domain>

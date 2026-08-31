@@ -41,6 +41,7 @@ class LocalStorageService {
   static const String _kProfileComplete = 'saf.profileComplete';
   static const String _kLastBranchId = 'saf.lastBranchId';
   static const String _kThemeAccent = 'saf.themeAccent';
+  static const String _kLastRoute = 'saf.lastRoute';
 
   Future<String?> readDeviceId() async {
     try {
@@ -153,6 +154,43 @@ class LocalStorageService {
     }
   }
 
+  /// Last matched `GoRouter` location, restricted at write time to
+  /// [Routes.restorable] — see `app_router.dart`'s navigation listener.
+  /// Used by `WelcomeScreen` to return a returning user to the screen
+  /// they were on instead of always `/dashboard` after a cold start
+  /// (including an Android-triggered process-death respawn, e.g. after
+  /// the OS camera app backgrounds this app for a photo capture).
+  Future<String?> readLastRoute() async {
+    try {
+      final prefs = await _preferences;
+      return prefs.getString(_kLastRoute);
+    } catch (e, st) {
+      developer.log('readLastRoute failed', name: _logName,
+          error: e, stackTrace: st, level: 1000);
+      return null;
+    }
+  }
+
+  Future<void> writeLastRoute(String path) async {
+    try {
+      final prefs = await _preferences;
+      await prefs.setString(_kLastRoute, path);
+    } catch (e, st) {
+      developer.log('writeLastRoute failed', name: _logName,
+          error: e, stackTrace: st, level: 1000);
+    }
+  }
+
+  Future<void> clearLastRoute() async {
+    try {
+      final prefs = await _preferences;
+      await prefs.remove(_kLastRoute);
+    } catch (e, st) {
+      developer.log('clearLastRoute failed', name: _logName,
+          error: e, stackTrace: st, level: 1000);
+    }
+  }
+
   Future<void> clear() async {
     try {
       await _secure.delete(key: _kDeviceId);
@@ -161,6 +199,7 @@ class LocalStorageService {
       await prefs.remove(_kProfileComplete);
       await prefs.remove(_kLastBranchId);
       await prefs.remove(_kThemeAccent);
+      await prefs.remove(_kLastRoute);
     } catch (e, st) {
       developer.log('clear failed', name: _logName,
           error: e, stackTrace: st, level: 1000);

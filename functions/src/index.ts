@@ -19,6 +19,7 @@ import { z } from "zod";
 initializeApp();
 
 export { composeUniformModel } from "./composeUniformModel";
+export { checkUniformCompliance } from "./checkUniformCompliance";
 
 // Defence-in-depth: refuse the Nil UUID. The client never has a
 // legitimate reason to send it; if one arrives, it's evidence that

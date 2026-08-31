@@ -1,0 +1,29 @@
+# Data layer (anchor extraction, offline — see utils/extract_anchors.py)
+trimesh>=4.0
+numpy>=1.26
+pygltflib>=1.16
+
+# Stage 1 — human detection
+ultralytics>=8.3
+
+# Stage 2 — pose estimation
+mediapipe>=0.10
+
+# Stage 3, 6, 7 — camera math, rule engine, report rendering
+opencv-python-headless>=4.9
+
+# Stage 4/5 substitute — vision-crop inspector
+anthropic>=0.68
+
+# Stage 6/7 API
+fastapi>=0.110
+uvicorn>=0.29
+python-multipart>=0.0.9
+
+# Ground-truth labeling (cv-service/labeling/) — validates label JSON
+# against cv-service/data/schemas/ground_truth.v1.schema.json
+jsonschema>=4.0
+
+# Tests
+pytest>=8.0
+httpx>=0.27

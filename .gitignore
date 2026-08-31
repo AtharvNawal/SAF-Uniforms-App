@@ -50,3 +50,21 @@ admin-portal/node_modules/
 admin-portal/dist/
 admin-portal/.angular/
 admin-portal/.env.local
+
+# cv-service — model checkpoints and rendered synthetic-data batches are
+# large, generated, and versioned separately (Git LFS / Cloud Storage).
+# Source files (cv-service/utils, rules, api, etc.) are tracked normally.
+cv-service/models/
+cv-service/synthetic_data/
+
+# cv-service — real (or stand-in) intake photos and the ground-truth
+# labels produced from them. These will eventually contain photos of real
+# servicemembers, so unlike the two entries above this is a privacy
+# boundary, not just a size one — never commit anything under here.
+# cv-service/data/schemas/ (the label schema itself) has no PII and stays
+# tracked normally.
+cv-service/data/real_photos/
+cv-service/data/labels/
+
+# Claude Code local (machine-specific permission grants)
+.claude/settings.local.json

@@ -1,0 +1,223 @@
+{
+  "_meta": {
+    "dress_code": "No3",
+    "branch": "army",
+    "gender": "men",
+    "schema_version": 1,
+    "source": "SAF No.3 Dress doctrine PDF (Army section, pp.1-14), cross-referenced against assets/data/accessory_library.v1.json render_logic where a 3D anchor already exists for the same accessory",
+    "anchor_file": "cv-service/rules/anchors.male.json",
+    "note": "Every rule below carries a doctrine_ref pointing at the specific PDF picture/page it was transcribed from. Where the Army section has no explicit cm figure for an item (e.g. cap badge on beret), that is stated rather than invented — see the item's doctrine_ref."
+  },
+  "rules": [
+    {
+      "object": "army_beret",
+      "category": "headdress_beret",
+      "doctrine_ref": "Army No.3, Accessories p.4 ('Sikh personnel will wear turban of the same colour instead of beret')",
+      "required": true,
+      "mutually_exclusive_with": ["army_sikh_turban_standard", "army_sikh_turban_col_me7_above"],
+      "expected_anchor": "head_top",
+      "search_radius_cm": 12.0,
+      "position_rule": "presence + region only — doctrine gives no cm offset for the beret itself, only for the cap badge mounted on it",
+      "tolerance_cm": null
+    },
+    {
+      "object": "army_sikh_turban_standard",
+      "category": "headdress_sikh_turban",
+      "doctrine_ref": "Army No.3, Accessories p.4",
+      "required": false,
+      "condition": "profile.isSikh == true AND rank_tier != col_me7_and_above",
+      "mutually_exclusive_with": ["army_beret", "army_sikh_turban_col_me7_above"],
+      "expected_anchor": "head_top",
+      "search_radius_cm": 14.0,
+      "tolerance_cm": null
+    },
+    {
+      "object": "army_cap_badge_sltc_me6_below",
+      "category": "cap_badge",
+      "doctrine_ref": "Army section has no explicit cap-badge placement picture; convention cross-referenced from the DIS section's 'Position of Cap Badges' (p.46: 'pinned centrally on the backing of the beret, approximately 1.3cm above the bottom edge of the band') and the current render_logic offset (anchor=cap_band_front, offset_y_cm=-1.0, offset_z_cm=3.0)",
+      "required": true,
+      "condition": "rank_tier == sltc_me6_and_below",
+      "expected_anchor": "cap_band_front",
+      "offset_x_cm": 0, "offset_y_cm": -1.0, "offset_z_cm": 3.0,
+      "angle_deg": 0,
+      "tolerance_cm": 1.3, "tolerance_deg": 10,
+      "variant_gate": "rank_tier must match — a COL/ME7 or BG/ME8-and-above badge present here is wrong_type, not correct"
+    },
+    {
+      "object": "army_cap_badge_col_me7",
+      "category": "cap_badge",
+      "doctrine_ref": "Army No.3, Accessories p.4 ('COL/ME7 and General (BG/ME8 and above) will wear the respective embroidered cap badges')",
+      "required": true,
+      "condition": "rank_tier == col_me7",
+      "expected_anchor": "cap_band_front",
+      "offset_x_cm": 0, "offset_y_cm": 1.3, "offset_z_cm": 3.0,
+      "tolerance_cm": 1.3
+    },
+    {
+      "object": "army_cap_badge_bg_me8_above",
+      "category": "cap_badge",
+      "doctrine_ref": "Army No.3, Accessories p.4",
+      "required": true,
+      "condition": "rank_tier == bg_me8_and_above",
+      "expected_anchor": "cap_band_front",
+      "offset_x_cm": 0, "offset_y_cm": 1.3, "offset_z_cm": 3.0,
+      "tolerance_cm": 1.3
+    },
+    {
+      "object": "epaulettes_standard",
+      "category": "epaulette",
+      "doctrine_ref": "Army No.3, Accessories p.4-5 (epaulette imagery only — no cm placement given; position is fixed by garment construction, the epaulette slides onto a fixed shoulder strap)",
+      "required": true,
+      "condition": "rank_tier != officer_cadet_and_mxt_trainee",
+      "paired": true,
+      "expected_anchor": "left_shoulder_seam,right_shoulder_seam",
+      "position_rule": "presence + variant only — no independent misalignment is physically possible once fitted, so this module only emits present / missing / wrong_type",
+      "tolerance_cm": null
+    },
+    {
+      "object": "epaulettes_officer_cadet_me_trainee",
+      "category": "epaulette",
+      "doctrine_ref": "Army No.3, Accessories p.5",
+      "required": true,
+      "condition": "rank_tier == officer_cadet_and_mxt_trainee",
+      "paired": true,
+      "expected_anchor": "left_shoulder_seam,right_shoulder_seam",
+      "tolerance_cm": null
+    },
+    {
+      "object": "army_specialist_insignia",
+      "category": "sleeve_rank_specialist",
+      "doctrine_ref": "Army No.3, Picture C-3, p.9",
+      "required": true,
+      "condition": "rank_tier == specialist",
+      "paired": true,
+      "expected_anchor": "left_shoulder_seam,right_shoulder_seam",
+      "position_rule": "fraction_of_sleeve_length: 0.5, measured from shoulder seam toward sleeve hem",
+      "alignment": "leading edge of badge aligned to the crease of the sleeve",
+      "tolerance_cm": 1.5, "tolerance_deg": 6,
+      "rule_text": "Sewn on both sleeves at half of the sleeve length from the shoulder seam. The edge of the badge is aligned to the crease of the sleeve."
+    },
+    {
+      "object": "army_enlistee_insignia",
+      "category": "sleeve_rank_enlistee",
+      "doctrine_ref": "Army No.3, Picture C-4, p.9",
+      "required": true,
+      "condition": "rank_tier == enlistee",
+      "paired": true,
+      "expected_anchor": "left_sleeve_upper,right_sleeve_upper",
+      "position_rule": "fraction_of_sleeve_length: 0.5, measured from shoulder seam toward sleeve hem",
+      "alignment": "leading edge of badge aligned to the crease of the sleeve",
+      "tolerance_cm": 1.5, "tolerance_deg": 6
+    },
+    {
+      "object": "army_arms_badge",
+      "category": "arms_badge",
+      "doctrine_ref": "Army No.3, p.8 notes under Picture C-1/C-2 ('1.5cm from tip of blouse collar and below rank insignia'); orientation per Picture C-5, p.9 ('aligned to the tip')",
+      "required": true,
+      "expected_anchor": "right_collar_tip",
+      "offset_x_cm": 0, "offset_y_cm": -1.5, "offset_z_cm": 0,
+      "alignment": "aligned to the collar tip",
+      "relationships": [
+        { "type": "below", "target": "collar_rank_insignia", "when": "rank_tier in [officer, warrant_officer, military_expert]" }
+      ],
+      "tolerance_cm": 0.8, "tolerance_deg": 10
+    },
+    {
+      "object": "name_tag_standard",
+      "category": "name_tag",
+      "doctrine_ref": "Army No.3, Picture C-6, p.10",
+      "required": true,
+      "expected_anchor": "right_chest_pocket",
+      "offset_x_cm": 0, "offset_y_cm": 1.0, "offset_z_cm": 0,
+      "angle_deg": 0,
+      "tolerance_cm": 1.5, "tolerance_deg": 8,
+      "rule_text": "Men will wear the name tag centred, immediately above and parallel to the top edge of the right chest pocket."
+    },
+    {
+      "object": "medal_ribbons",
+      "category": "medal_ribbons",
+      "doctrine_ref": "Army No.3, Awards & Badges notes, p.11",
+      "required": false,
+      "expected_anchor": "left_chest_pocket",
+      "offset_x_cm": 0, "offset_y_cm": 1.0, "offset_z_cm": 0,
+      "angle_deg": 0,
+      "tolerance_cm": 1.5, "tolerance_deg": 8,
+      "row_count_field": "medalRowCount",
+      "rule_text": "For men, medal ribbons are worn centred, immediately above and parallel to the top edge of the left chest pocket. The bottom edge of the ribbons is in line with the bottom edge of the name tag."
+    },
+    {
+      "object": "saf_badges_chest",
+      "category": "saf_badge",
+      "doctrine_ref": "Army No.3, Picture D-7..D-10 notes, p.12",
+      "required": false,
+      "max_count": 3,
+      "expected_anchor": "left_chest_pocket",
+      "conditional_offset": [
+        { "when": "medalRowCount < 3", "offset_y_cm": 3.0, "reference": "top edge of left chest pocket" },
+        { "when": "medalRowCount >= 3", "offset_y_cm": 1.0, "reference": "top edge of the medal ribbon stack" }
+      ],
+      "angle_deg": 0,
+      "tolerance_cm": 1.0, "tolerance_deg": 8,
+      "rule_text": "Maximum of three SAF badges on the left chest area, centred, 3cm above the top edge of the left chest pocket — or 1cm above the top edge of the ribbons when three or more rows of medal ribbons are worn."
+    },
+    {
+      "object": "skill_tabs_sleeve",
+      "category": "skill_tab",
+      "doctrine_ref": "Army No.3, Picture D-13/D-14 notes, p.12",
+      "required": false,
+      "max_count": 2,
+      "expected_anchor": "left_shoulder_seam",
+      "offset_x_cm": 0, "offset_y_cm": -1.0, "offset_z_cm": 0,
+      "alignment": "aligned to the crease of the sleeve",
+      "stacking_rule": "second tab immediately below the first",
+      "tolerance_cm": 0.8, "tolerance_deg": 6,
+      "rule_text": "Maximum of two tabs on the left shoulder sleeve, 1cm below the left shoulder seam. The second tab is immediately below the first, both aligned to the crease of the sleeve."
+    },
+    {
+      "object": "skill_badges_sleeve",
+      "category": "skill_badge",
+      "doctrine_ref": "Army No.3, Picture D-11..D-16 notes, pp.12-13",
+      "required": false,
+      "max_count": 2,
+      "mutual_exclusion_groups": [
+        ["marksmanship_badge", "sniper_marksmanship_badge", "fitness_specialist_badge"]
+      ],
+      "expected_anchor": "left_sleeve_upper",
+      "position_rule": "when a single badge is worn: centred between shoulder seam and sleeve edge, aligned to the crease. When two are worn: the marksmanship-type badge sits 0.5cm above and centred to the IPPT badge. When chevrons are present: the IPPT badge is centred on the lower portion of the chevrons.",
+      "tolerance_cm": 1.0, "tolerance_deg": 8
+    },
+    {
+      "object": "nylon_belt",
+      "category": "belt",
+      "doctrine_ref": "Army No.3, Picture C-8, p.10",
+      "required": true,
+      "expected_anchor": "belt_center",
+      "alignment": "symmetry_plane",
+      "checks": [
+        "buckle centred to the trousers, referenced to the edge of the trousers' slit opening",
+        "buckle centred to the shirt, referenced to the centreline of the shirt's buttons",
+        "metal end of the belt shown immediately next to the edge of the buckle"
+      ],
+      "tolerance_cm": 1.0
+    },
+    {
+      "object": "leather_shoes_low_cut",
+      "category": "footwear",
+      "doctrine_ref": "Army No.3, Accessories p.7 ('Black leather low-cut shoes for men')",
+      "required": true,
+      "paired": true,
+      "expected_anchor": "left_foot_top,right_foot_top",
+      "position_rule": "presence + variant + left/right pairing only — doctrine gives no cm placement for footwear",
+      "tolerance_cm": null
+    },
+    {
+      "object": "black_socks",
+      "category": "socks",
+      "doctrine_ref": "Army No.3, Accessories p.7",
+      "required": true,
+      "paired": true,
+      "expected_anchor": "left_ankle,right_ankle",
+      "tolerance_cm": null
+    }
+  ]
+}

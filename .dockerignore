@@ -1,0 +1,29 @@
+# Keeps `docker build -f cv-service/Dockerfile .` from shipping the
+# rest of this monorepo (Flutter build output, Angular node_modules,
+# git history, etc.) into the build context.
+.git/
+.venv-tools/
+build/
+.dart_tool/
+ios/
+android/
+admin-portal/node_modules/
+admin-portal/dist/
+admin-portal/.angular/
+functions/node_modules/
+functions/lib/
+cv-service/models/*
+!cv-service/models/download_models.sh
+# Ship trained checkpoint weights (they have no download fallback, unlike
+# the pretrained YOLO/MediaPipe weights this excludes) — but not the bulky   r4e
+# training-run artifacts (plots, batch previews, args.yaml) sitting next
+# to them. Add a matching triple here for each new models/<name>_v*/ dir.
+!cv-service/models/segmentation_v1/
+!cv-service/models/segmentation_v1/weights/
+!cv-service/models/segmentation_v1/weights/best.pt
+!cv-service/models/detection_v1/
+!cv-service/models/detection_v1/weights/
+!cv-service/models/detection_v1/weights/best.pt
+cv-service/synthetic_data/
+cv-service/.pytest_cache/
+**/__pycache__/

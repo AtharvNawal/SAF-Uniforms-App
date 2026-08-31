@@ -16,6 +16,7 @@
     "node": "20"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.32.0",
     "@gltf-transform/core": "^4.1.0",
     "@gltf-transform/extensions": "^4.1.0",
     "@gltf-transform/functions": "^4.1.0",

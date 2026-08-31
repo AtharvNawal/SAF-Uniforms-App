@@ -90,6 +90,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get welcomeGetStarted => '开始使用';
 
   @override
+  String get configSaveFailed => '无法保存您的个人资料 — 请检查网络连接后点击「完成」重试';
+
+  @override
   String get configHeaderConfiguration => '配置';
 
   @override
@@ -666,28 +669,57 @@ class AppLocalizationsZh extends AppLocalizations {
   String get arMetaBdg => '徽';
 
   @override
-  String get arIssue1Title => '姓名牌倾斜';
+  String get arAnalyzing => '正在分析照片…';
 
   @override
-  String get arIssue1Body => '检测到约 3° 旋转。检阅阈值为 1°。';
+  String get arAnalyzingSub => '正在与预期配件进行比对';
 
   @override
-  String get arIssue2Title => '贝雷帽角度偏离';
+  String get arCheckFailed => '无法完成检查';
 
   @override
-  String get arIssue2Body => '向左倾斜约 12°。应右倾 22°。';
+  String get arCheckFailedSub => '请检查网络连接后重试';
 
   @override
-  String get arPass1 => '衣领军衔徽 · 居中 3 厘米';
+  String get arErrorSignInTitle => '正在登录中';
 
   @override
-  String get arPass2 => '勋表 · 水平且齐平';
+  String get arErrorSignInSub => '请稍候片刻后重试';
 
   @override
-  String get arPass3 => '肩绳结 · 距腋下 10 厘米';
+  String get arErrorProfileTitle => '请先完成个人资料设置';
 
   @override
-  String get arPass4 => '腰带扣环 · 对齐裤裆';
+  String get arErrorProfileSub => '请先完成配置设置后再进行合规检查';
+
+  @override
+  String get arErrorPhotoTitle => '照片有问题';
+
+  @override
+  String get arErrorPhotoSub => '请重新拍摄后再试';
+
+  @override
+  String get arErrorConnectionTitle => '连接问题';
+
+  @override
+  String get arErrorConnectionSub => '请检查网络连接后重试';
+
+  @override
+  String get arErrorCvUnreachableSub => '无法连接开发用CV服务 — 请确认其正在运行';
+
+  @override
+  String get arErrorCameraTitle => '相机不可用';
+
+  @override
+  String get arErrorCameraSub => '请在设置中检查相机权限后重试';
+
+  @override
+  String get arRetry => '重试';
+
+  @override
+  String arUncertainChecks(int count) {
+    return '不确定 · $count';
+  }
 
   @override
   String get generatingChip => '构建中';
