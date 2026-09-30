@@ -1319,8 +1319,152 @@ abstract class AppLocalizations {
   /// No description provided for @arAlignedSub.
   ///
   /// In en, this message translates to:
-  /// **'Hold still — capturing in 3…'**
+  /// **'Tap capture — we take 3 quick frames'**
   String get arAlignedSub;
+
+  /// No description provided for @arHintNoPerson.
+  ///
+  /// In en, this message translates to:
+  /// **'Step into the frame'**
+  String get arHintNoPerson;
+
+  /// No description provided for @arHintNotFullBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Show the whole body — head to feet'**
+  String get arHintNotFullBody;
+
+  /// No description provided for @arHintTooFar.
+  ///
+  /// In en, this message translates to:
+  /// **'Move closer to the camera'**
+  String get arHintTooFar;
+
+  /// No description provided for @arHintTooClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Step back — keep head and feet in frame'**
+  String get arHintTooClose;
+
+  /// No description provided for @arHintNotCentered.
+  ///
+  /// In en, this message translates to:
+  /// **'Centre the person in the frame'**
+  String get arHintNotCentered;
+
+  /// No description provided for @arHintFacingAway.
+  ///
+  /// In en, this message translates to:
+  /// **'Face the camera'**
+  String get arHintFacingAway;
+
+  /// No description provided for @arHintTurnedSideways.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn to face the camera square-on'**
+  String get arHintTurnedSideways;
+
+  /// No description provided for @arHintArmsRaised.
+  ///
+  /// In en, this message translates to:
+  /// **'Relax your arms at your sides'**
+  String get arHintArmsRaised;
+
+  /// No description provided for @arHintPhoneTilted.
+  ///
+  /// In en, this message translates to:
+  /// **'Hold the phone upright and level'**
+  String get arHintPhoneTilted;
+
+  /// No description provided for @arHintHoldStill.
+  ///
+  /// In en, this message translates to:
+  /// **'Hold still…'**
+  String get arHintHoldStill;
+
+  /// No description provided for @arHintUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Live guidance unavailable — check the framing yourself'**
+  String get arHintUnavailable;
+
+  /// No description provided for @cvServerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Analysis server'**
+  String get cvServerTitle;
+
+  /// No description provided for @cvServerHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Address of the laptop running the uniform-scan service.'**
+  String get cvServerHint;
+
+  /// No description provided for @cvServerSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get cvServerSave;
+
+  /// No description provided for @cvServerUsb.
+  ///
+  /// In en, this message translates to:
+  /// **'USB cable'**
+  String get cvServerUsb;
+
+  /// No description provided for @cvServerReset.
+  ///
+  /// In en, this message translates to:
+  /// **'Default'**
+  String get cvServerReset;
+
+  /// No description provided for @cvServerTest.
+  ///
+  /// In en, this message translates to:
+  /// **'Test connection'**
+  String get cvServerTest;
+
+  /// No description provided for @cvServerTesting.
+  ///
+  /// In en, this message translates to:
+  /// **'Testing…'**
+  String get cvServerTesting;
+
+  /// No description provided for @cvServerOk.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected'**
+  String get cvServerOk;
+
+  /// No description provided for @cvServerFail.
+  ///
+  /// In en, this message translates to:
+  /// **'Can\'t reach it'**
+  String get cvServerFail;
+
+  /// No description provided for @cvServerInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Not a valid address'**
+  String get cvServerInvalid;
+
+  /// No description provided for @cvServerUsbHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'USB cable: plug the phone into the laptop and run deploy/connect-phone-usb.sh there, then tap USB cable.'**
+  String get cvServerUsbHelp;
+
+  /// No description provided for @cvServerSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved'**
+  String get cvServerSaved;
+
+  /// No description provided for @arServerSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Server settings'**
+  String get arServerSettings;
 
   /// No description provided for @arRescan.
   ///
@@ -1657,6 +1801,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Medal ribbon rows'**
   String get profileFieldMedalRows;
+
+  /// No description provided for @profileFieldHeight.
+  ///
+  /// In en, this message translates to:
+  /// **'Height (cm)'**
+  String get profileFieldHeight;
+
+  /// No description provided for @profileHeightHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional — helps the uniform scan measure more accurately.'**
+  String get profileHeightHint;
 
   /// No description provided for @profileFullName.
   ///

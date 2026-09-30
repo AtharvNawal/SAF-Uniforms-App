@@ -68,3 +68,9 @@ cv-service/data/labels/
 
 # Claude Code local (machine-specific permission grants)
 .claude/settings.local.json
+
+# Local distributable builds (unsigned .ipa, etc.)
+dist/
+
+cv-service/logs/
+/yolov8s-seg.pt

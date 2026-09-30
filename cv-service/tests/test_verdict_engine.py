@@ -113,7 +113,7 @@ def test_pass_when_centroid_within_tolerance():
 
 
 def test_fail_when_centroid_outside_tolerance():
-    crop = _crop("belt_center", 200, 300, radius=100)  # generous crop bounds (doesn't gate detection)
+    crop = _crop("belt_center", 200, 300, radius=100)  # generous crop bounds so the detection is inside the search area
     rule = _rule("nylon_belt", "belt", [crop], tolerance_cm=1.0)
     mask = _rect_mask(250, 300, 260, 310)  # centroid ~(255, 305), far from (200,300)
     seg = _segmentation([SegmentedRegion("belt", 0.9, mask, (250, 300, 260, 310))])
@@ -145,7 +145,7 @@ def test_optional_rule_skipped_when_detector_exists_but_finds_nothing():
 
 def test_unverifiable_when_no_detector_class_and_required():
     crop = _crop("chest_pocket", 200, 300, radius=40)
-    rule = _rule("name_tag_standard", "name_tag", [crop], required=True)  # category not in the map
+    rule = _rule("saf_badges_chest", "saf_badge", [crop], required=True)  # category has no detector
     seg = _segmentation([])
 
     results = evaluate_verdicts([rule], seg, cm_per_px=0.05, image_width=IMAGE_WIDTH, image_height=IMAGE_HEIGHT)
@@ -242,19 +242,76 @@ def test_orientation_unverifiable_when_mask_too_ambiguous():
 # --- paired crops (worst-first) -------------------------------------------
 
 def test_paired_crops_take_worst_status():
-    left = _crop("left_shoulder_seam", 100, 300, radius=100)
-    right = _crop("right_shoulder_seam", 300, 300, radius=100)
-    rule = _rule("epaulettes_standard", "epaulette", [left, right], required=True)  # no tolerance_cm -> region check
-    left_mask = _rect_mask(90, 290, 110, 310)  # inside left crop bounds -> pass
-    right_mask = _rect_mask(500, 500, 510, 510)  # far outside right crop bounds -> fail
+    left = _crop("left_shoulder_seam", 100, 300, radius=40)
+    right = _crop("right_shoulder_seam", 300, 300, radius=40)
+    rule = _rule("sleeve_insignia", "sleeve_rank_enlistee", [left, right], tolerance_cm=1.0, required=True)
+    left_mask = _rect_mask(95, 295, 105, 305)  # ~0px off -> pass
+    right_mask = _rect_mask(330, 300, 340, 310)  # ~35px off, tolerance 20px, band 30px -> fail
     seg = _segmentation([
-        SegmentedRegion("epaulette", 0.9, left_mask, (90, 290, 110, 310)),
-        SegmentedRegion("epaulette", 0.9, right_mask, (500, 500, 510, 510)),
+        SegmentedRegion("sleeve_rank", 0.9, left_mask, (95, 295, 105, 305)),
+        SegmentedRegion("sleeve_rank", 0.9, right_mask, (330, 300, 340, 310)),
     ])
 
     results = evaluate_verdicts([rule], seg, cm_per_px=0.05, image_width=IMAGE_WIDTH, image_height=IMAGE_HEIGHT)
     assert len(results) == 1
     assert results[0].status == "fail"  # worst of [pass, fail] = fail
+
+
+def test_paired_crop_with_detection_outside_search_area_is_missing_not_fail():
+    """A detection far from the expected region must not stand in for it:
+    the right side is `missing`, not a misplaced `fail`."""
+    left = _crop("left_shoulder_seam", 100, 300, radius=100)
+    right = _crop("right_shoulder_seam", 300, 300, radius=100)
+    rule = _rule("epaulettes_standard", "epaulette", [left, right], required=True)
+    left_mask = _rect_mask(90, 290, 110, 310)  # inside left crop -> pass
+    stray_mask = _rect_mask(380, 500, 390, 510)  # outside both crops
+    seg = _segmentation([
+        SegmentedRegion("epaulette", 0.9, left_mask, (90, 290, 110, 310)),
+        SegmentedRegion("epaulette", 0.9, stray_mask, (380, 500, 390, 510)),
+    ])
+
+    results = evaluate_verdicts([rule], seg, cm_per_px=0.05, image_width=IMAGE_WIDTH, image_height=IMAGE_HEIGHT)
+    assert len(results) == 1
+    assert results[0].status == "missing"
+    assert "outside the search area" in results[0].reason
+
+
+def test_single_detection_cannot_satisfy_both_paired_crops():
+    """Overlapping search boxes, one detection in the overlap: it may be
+    assigned to only one side; the other side is `missing`."""
+    left = _crop("left_foot_top", 180, 500, radius=40)
+    right = _crop("right_foot_top", 220, 500, radius=40)
+    rule = _rule("leather_shoes_low_cut", "footwear", [left, right], required=True)
+    mask = _rect_mask(195, 495, 205, 505)  # centroid ~(199.5, 499.5), inside both crops
+    seg = _segmentation([SegmentedRegion("footwear", 0.9, mask, (195, 495, 205, 505))])
+
+    results = evaluate_verdicts([rule], seg, cm_per_px=0.05, image_width=IMAGE_WIDTH, image_height=IMAGE_HEIGHT)
+    assert results[0].status == "missing"
+
+
+def test_two_detections_assigned_to_their_own_sides():
+    left = _crop("left_foot_top", 150, 500, radius=60)
+    right = _crop("right_foot_top", 250, 500, radius=60)
+    rule = _rule("leather_shoes_low_cut", "footwear", [left, right], required=True)
+    left_mask = _rect_mask(145, 495, 155, 505)
+    right_mask = _rect_mask(245, 495, 255, 505)
+    seg = _segmentation([
+        SegmentedRegion("footwear", 0.9, right_mask, (245, 495, 255, 505)),
+        SegmentedRegion("footwear", 0.9, left_mask, (145, 495, 155, 505)),
+    ])
+
+    results = evaluate_verdicts([rule], seg, cm_per_px=0.05, image_width=IMAGE_WIDTH, image_height=IMAGE_HEIGHT)
+    assert results[0].status == "pass"
+
+
+def test_optional_rule_skipped_when_detection_only_outside_search_area():
+    crop = _crop("epaulette_pos", 200, 300, radius=40)
+    rule = _rule("fake_optional_epaulette", "epaulette", [crop], required=False)
+    stray = _rect_mask(20, 20, 30, 30)
+    seg = _segmentation([SegmentedRegion("epaulette", 0.9, stray, (20, 20, 30, 30))])
+
+    results = evaluate_verdicts([rule], seg, cm_per_px=0.05, image_width=IMAGE_WIDTH, image_height=IMAGE_HEIGHT)
+    assert results == []
 
 
 # --- enriched geometry fields (ChangeRequest/2026-08-28) -------------------

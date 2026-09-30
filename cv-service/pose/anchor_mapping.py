@@ -23,6 +23,11 @@ full per-anchor table and the reasoning behind each fraction constant.
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
+import numpy as np
+
 import config
 from pose.estimate_pose import PoseResult, estimate_pose
 
@@ -192,7 +197,65 @@ def _interpolated_via_midpoint(pose: PoseResult, shoulder_name: str, fraction: f
     return {"x_px": point[0], "y_px": point[1], "confidence": confidence}
 
 
-def map_pose_to_anchors(pose: PoseResult) -> dict[str, dict]:
+_OFFSETS_PATH = Path(__file__).resolve().parent / "anchor_offsets.male.json"
+_offsets_cache: dict | None = None
+
+
+def _load_offsets() -> dict:
+    global _offsets_cache
+    if _offsets_cache is None:
+        _offsets_cache = json.loads(_OFFSETS_PATH.read_text())["offsets"] if _OFFSETS_PATH.exists() else {}
+    return _offsets_cache
+
+
+def body_frame(estimate: dict[str, dict]):
+    """Body-aligned 2D frame from the two shoulder estimates:
+    `(origin, outward_x, down, shoulder_width_px)` where `outward_x` is the
+    unit vector from the wearer's right shoulder to their left (image +x
+    for a front photo) and `down` is perpendicular, pointing toward the
+    hips. `None` when either shoulder is missing."""
+    left, right = estimate.get("left_shoulder_seam"), estimate.get("right_shoulder_seam")
+    if not left or not right or left["x_px"] is None or right["x_px"] is None:
+        return None
+    lp, rp = np.array([left["x_px"], left["y_px"]]), np.array([right["x_px"], right["y_px"]])
+    width = float(np.linalg.norm(lp - rp))
+    if width < 1e-6:
+        return None
+    outward_x = (lp - rp) / width
+    down = np.array([-outward_x[1], outward_x[0]])
+    return (lp + rp) / 2, outward_x, down, width
+
+
+def apply_anchor_offsets(estimate: dict[str, dict], offsets: dict | None = None) -> dict[str, dict]:
+    """Applies the fitted per-anchor bias corrections from
+    `pose/calibrate_anchor_offsets.py` (see its docstring for why they
+    exist). Each corrected estimate gains `calibrated: True` and
+    `residual_px` — the fit's residual spread in pixels, which the
+    verdict engine's uncertainty model uses (A5)."""
+    offsets = _load_offsets() if offsets is None else offsets
+    frame = body_frame(estimate)
+    if not offsets or frame is None:
+        return estimate
+    _, outward_x, down, width = frame
+    corrected = {}
+    for name, est in estimate.items():
+        o = offsets.get(name)
+        if o is None or est["x_px"] is None:
+            corrected[name] = est
+            continue
+        side = -1.0 if name.startswith("right_") else 1.0
+        shift = width * (side * o["outward"] * outward_x + o["down"] * down)
+        corrected[name] = {
+            **est,
+            "x_px": est["x_px"] + float(shift[0]),
+            "y_px": est["y_px"] + float(shift[1]),
+            "calibrated": True,
+            "residual_px": o["residual_std"] * width,
+        }
+    return corrected
+
+
+def map_pose_to_anchors(pose: PoseResult, *, apply_offsets: bool = True) -> dict[str, dict]:
     """Pure function: a `PoseResult` in, all 16 `anchors.male.json` keys
     out, each `{"x_px": float | None, "y_px": float | None, "confidence":
     float}`. `confidence == 0.0` (with null coordinates) means the
@@ -223,12 +286,15 @@ def map_pose_to_anchors(pose: PoseResult) -> dict[str, dict]:
     result["head_top"] = head_top
     result["cap_band_front"] = _cap_band_front(pose, head_top)
 
+    if apply_offsets and config.APPLY_ANCHOR_OFFSETS:
+        result = apply_anchor_offsets(result)
     result["chest_center"] = _chest_center(result["left_chest_pocket"], result["right_chest_pocket"])
 
     return result
 
 
-def estimate_anchor_pose(image_path: str) -> dict[str, dict]:
+def estimate_anchor_pose(image_path: str, *, person_box=None, apply_offsets: bool = True) -> dict[str, dict]:
     """`image_path -> dict` convenience wrapper: runs Stage 2's pose
-    estimator, then maps it onto all 16 anchor names in one call."""
-    return map_pose_to_anchors(estimate_pose(image_path))
+    estimator (on the person crop when `person_box` is given — see
+    `estimate_pose`), then maps it onto all 16 anchor names in one call."""
+    return map_pose_to_anchors(estimate_pose(image_path, person_box=person_box), apply_offsets=apply_offsets)

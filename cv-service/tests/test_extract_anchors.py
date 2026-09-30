@@ -64,7 +64,10 @@ def test_left_right_pairs_are_mirrored_on_x(result):
     for left_name, right_name in pairs:
         left_x = result["anchors"][left_name]["x"]
         right_x = result["anchors"][right_name]["x"]
-        assert left_x < 0 < right_x, f"{left_name}/{right_name} not mirrored: {left_x}, {right_x}"
+        # Anatomical convention: the body faces +z, so the wearer's left is
+        # +x (image-right in a front photo, matching MediaPipe's naming).
+        # See extract_anchors._to_anatomical_sides.
+        assert right_x < 0 < left_x, f"{left_name}/{right_name} not mirrored: {left_x}, {right_x}"
         assert math.isclose(-left_x, right_x, abs_tol=1e-4), (
             f"{left_name}/{right_name} not symmetric: {left_x} vs {right_x}"
         )

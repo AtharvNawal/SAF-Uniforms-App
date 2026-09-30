@@ -96,10 +96,29 @@ def test_sikh_turban_compound_condition_respects_is_sikh_flag(solved_camera):
     sikh_specialist = resolve_rules(camera, cm_per_px, profile={"isSikh": True, "rank_tier": "specialist"})
     assert "army_sikh_turban_standard" in {r.object_id for r in sikh_specialist}
 
+    # `col_me7` is what the app actually sends for a COL (the condition's
+    # old `col_me7_and_above` value was never sent by anything).
     sikh_senior_officer = resolve_rules(
-        camera, cm_per_px, profile={"isSikh": True, "rank_tier": "col_me7_and_above"}
+        camera, cm_per_px, profile={"isSikh": True, "rank_tier": "col_me7"}
     )
     assert "army_sikh_turban_standard" not in {r.object_id for r in sikh_senior_officer}
+
+
+@pytest.mark.parametrize("rank_tier,expected_badge", [
+    ("enlistee", "army_cap_badge_sltc_me6_below"),
+    ("specialist", "army_cap_badge_sltc_me6_below"),
+    ("officer_cadet_and_mxt_trainee", "army_cap_badge_sltc_me6_below"),
+    ("col_me7", "army_cap_badge_col_me7"),
+    ("bg_me8_and_above", "army_cap_badge_bg_me8_above"),
+])
+def test_every_rank_tier_gets_exactly_one_cap_badge_rule(solved_camera, rank_tier, expected_badge):
+    """Regression: cap-badge conditions used to test rank_tier against
+    'sltc_me6_and_below', which the app never sends — so enlistees and
+    specialists (most soldiers) had no cap-badge check at all."""
+    camera, cm_per_px = solved_camera
+    resolved = resolve_rules(camera, cm_per_px, profile={"rank_tier": rank_tier})
+    badges = [r.object_id for r in resolved if r.category == "cap_badge"]
+    assert badges == [expected_badge]
 
 
 def test_saf_badge_conditional_offset_present_in_raw_rule(solved_camera):

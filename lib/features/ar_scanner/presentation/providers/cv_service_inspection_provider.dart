@@ -6,6 +6,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../../core/utils/app_logger.dart';
 import '../../data/cv_service_inspection_repository.dart';
 import '../../domain/entities/cv_inspection_result.dart';
+import 'cv_service_url_provider.dart';
 
 part 'cv_service_inspection_provider.g.dart';
 
@@ -13,7 +14,8 @@ const String _tag = 'arScanner.cvService.ctl';
 
 @Riverpod(keepAlive: true)
 CvServiceInspectionRepository cvServiceInspectionRepository(Ref ref) {
-  return CvServiceInspectionRepository(client: http.Client());
+  // Rebuilt whenever the user changes the analysis-server address.
+  return CvServiceInspectionRepository(client: http.Client(), baseUrl: ref.watch(cvServiceUrlProvider));
 }
 
 /// Drives a single Phase-2 `cv-service` inspection. Same shape as

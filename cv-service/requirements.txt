@@ -15,6 +15,18 @@ opencv-python-headless>=4.9
 # Stage 4/5 substitute — vision-crop inspector
 anthropic>=0.68
 
+# Accuracy program (ChangeRequest/2026-09-28_accuracy-program-no-real-data.md)
+# scipy: weighted PnP + gravity-prior refinement (least_squares)
+# Pillow: EXIF focal length (api/intrinsics.py)
+# easyocr: name-tag OCR (detectors/name_tag_ocr.py)
+# torch (via ultralytics) + torch.hub DINOv2: badge-variant check (detectors/variant_matcher.py)
+# clip: text encoder YOLO-World needs (detectors/zero_shot.py) — ultralytics
+#   auto-installs it on first use; pinned here so deploys don't pip-install at runtime
+scipy>=1.11
+Pillow>=10.0
+easyocr>=1.7
+clip @ git+https://github.com/ultralytics/CLIP.git
+
 # Stage 6/7 API
 fastapi>=0.110
 uvicorn>=0.29

@@ -180,7 +180,7 @@ SAF-Uniforms/
 │   └── upload_models.py               # Python uploader for `assets/3d/**/*.glb` → Firebase Storage `models/**`. Mirrors `upload_accessory_images.py`'s pattern (urllib + openssl signing, idempotent SHA-256, persistent download tokens). Run via `GOOGLE_APPLICATION_CREDENTIALS=<svc>.json python3 tool/upload_models.py --bucket saf-uniforms.firebasestorage.app`. Supports `--dry-run` and `--only <glob>` for targeted uploads.
 ├── functions/             # Firebase Cloud Functions (TypeScript, Node 20). Three HTTPS callables: `claimDeviceIdentity` and `markProfileComplete` back the device-bound identity flow; `composeUniformModel` runs the Phase-2 multi-asset 3D merger (uniform + accessories + name-tag bake + Draco/WebP compression) via the helpers in `src/glb_compose.ts`. Deployed via `firebase deploy --only functions`. Tests: `npm test` (Node 20 built-in `node:test` runner over `lib/*.test.js`).
 ├── admin-portal/          # Angular 20 SSR admin portal (standalone components, routing, SCSS). Lives entirely in its own folder with its own `package.json` / `tsconfig.json` / `node_modules/`. Wired via AngularFire 20 to the same `saf-uniforms` Firestore + Storage + Auth + Functions (region `asia-southeast1`) as the Flutter mobile app. SSR routes are all `RenderMode.Client` — the SSR server just ships the shell; live Firebase reads happen client-side. Deployed to **Firebase App Hosting** (Cloud Run-backed) via `apphosting.yaml` + GitHub auto-deploy. **Phase 1 foundation (current state):** Claude Design CSS ported verbatim to `src/styles/_tokens.scss` + `_design.scss` (light/dark via `[data-theme="..."]`); **ngx-translate** i18n (English only today via `public/i18n/en.json`; structurally ready for more); **ThemeService** (`'dark' | 'light' | 'system'`, persists to `localStorage`); **ToastService**; **AuthService + auth guard** over AngularFire Auth; **`<app-icon>` component** with all 41 SVGs; **15 UI primitives** (Button / Chip / Card / Field / Input / Select / Toggle / PillToggle / Modal / Avatar / BranchDot / Eyebrow / MonoTag / EmptyState / PageStub); **responsive shell** (sidebar 240 px on desktop, slide-over below 1023 px, bottom mobile nav + "More" overflow modal); **MockDataService** mirroring the JSX `data.jsx` shapes for all 11 reference collections (swap to AngularFire-backed implementations in a follow-up plan with no caller changes). **All 10 routes fully designed against the Claude Design handoff** (no stubs remain): `/login` (centred crest card + sign-in form), `/dashboard` (5-card stat grid + activity list + quick actions + coverage matrix), `/dress` (filterable card grid), `/dress/add` (3-step PDF wizard with animated AI scan overlay → review pane → finalise pane), `/dress/:id` (review pane + change history accordion), `/accessories` (table + 4-tab detail drawer), `/models` (4-tab router: bodies / uniforms matrix / accessories table / placeholder), `/branches` (4-card per-branch config editor with collapsible sections), `/logic` (rule cards + JSON viewer + Add Rule modal), `/users` (read-only table + drawer), `/admins` (table + Add Admin modal), `/settings` (theme picker + locale + danger-zone shells). Every page consumes data via `MockDataService` (Observable-based; swap to AngularFire-backed implementations in a follow-up "Real Firestore wiring" plan with no caller changes). New shared primitives added beyond the foundation: `<app-icon-btn>`, `<app-drawer>`, `<app-cfg-section>`, `<app-json-viewer>`, `<app-pdf-dropzone>`. Scaffolded by `ChangeRequest/2026-05-17_angular-admin-portal-scaffold.md`; foundation by `ChangeRequest/2026-05-17_admin-portal-foundation.md`; per-screen ChangeRequests at `ChangeRequest/2026-05-17_admin-portal-{dashboard,users,admins,branches,logic,accessories,models,dress}.md` (all status: executed). Topographic background overlay (`.topo-overlay`) removed from runtime — CSS class still present in `_design.scss` for future use.
-├── cv-service/             # Python — Phase-2 AI uniform-compliance CV pipeline (sibling to `functions/`, own dependency stack, not part of any JS/Dart build; not wired into production — `checkUniformCompliance.ts` is unchanged). Runnable `POST /inspect` and `POST /check_uniform` FastAPI endpoints (`api/main.py`) chaining real geometry — human detection (`pose/detect_person.py`, YOLOv8n), pose estimation (`pose/estimate_pose.py`, MediaPipe), PnP camera-pose recovery (`calibration/pnp_solve.py`, projects the canonical body anchors from `utils/extract_anchors.py` into each specific photo, with a `reliable` guard against poses that don't resemble a relaxed standing A-pose), and the doctrine rule engine (`rules/rule_engine.py` + `rules/army_no3_male.json`, transcribed from the SAF No.3 Dress PDF) — with a real trained YOLOv8n-seg model (`segmentation/segment_uniform.py`, 9 classes, mask mAP50 0.742 — **synthetic renders only, zero real photos, unvalidated real-world accuracy**, see §5.10) for garment segmentation, a vision-language stand-in (`detectors/vision_crop_inspector.py`) for the not-yet-trained accessory detector, and a scored JSON + annotated-image report (`reporting/report.py`). `pose/anchor_mapping.py` is a second, general-purpose BlazePose→anchor mapping (all 16 `anchors.male.json` keys, additive alongside `pnp_solve.py`'s own narrower 7-anchor correspondence — see §5.10) with measured synthetic accuracy (143.55px mean error, 92% coverage) and an explicit 0-real-photos gap. `labeling/` + `data/` are real-photo ground-truth **infrastructure only** — a versioned label schema, a local FastAPI+canvas tool for a human to click the 15 anchors and outline accessories on a photo, and a gitignored intake folder — populated so far with 0 real photos and 3 clearly-flagged synthetic stand-ins (see §5.10). `geometry/solve_camera_pose.py` + `geometry/project_rules.py` are a second, additive PnP-solve + rule-projection path consuming Milestone B's fuller pose estimate (up to 15 anchor correspondences vs. `pnp_solve.py`'s own 7) — measured lateral position accuracy is good (~6cm mean) but recovered camera **depth is unreliable** (~62cm mean error, up to ~1m) from a single near-frontal view, a real single-view-PnP limitation, not a bug (see §5.10). `evaluation/compare_segmentation_real_vs_synthetic.py` is real-vs-synthetic mAP50 comparison tooling for the trained segmentation model — built and mechanically verified, but reports "0 real photos, nothing to compare" today rather than a table, since none exist (see §5.10). `rules/rule_engine.py`'s `evaluate_verdicts()` + `segmentation/mask_geometry.py` are a geometric pass/fail/missing/unverifiable verdict engine (Army No.3 Male) chaining Milestones B+C+the trained segmenter for the first time end-to-end — measured footwear precision/recall 1.0/1.0 (n=2, thin) against Milestone A's stand-ins, every other accessory class 0 ground-truth-positive signal, 5 of 18 doctrine rules structurally undetectable (no matching segmentation class) and always reported `unverifiable`, never guessed at (see §5.10). `/inspect` now also returns an additive `geometric_verdicts` field (a second, independent B→C→segmenter→verdict pass, kept deliberately separate from the endpoint's original vision-crop path — see §5.10) surfaced in the Flutter dev scorecard. `evaluation/run_real_photo_sanity_check.py` is a lightweight, label-free batch runner — the cheapest pre-check of whether detection/pose/camera-solve hold up on real photos at all, before investing in labeling or training (see §5.10); not yet run for real, 0 real photos exist. `POST /check_uniform` (`api/response_schema.py` + `api/validation.py`, see §5.10) is a second, additive endpoint reshaping the same geometric pipeline into a stable `{success, overall_status, overall_score, image_quality, person, accessories[], summary}` contract with a `SLIGHTLY_MISALIGNED` status band, a Stage-0 image-quality gate, and zero Anthropic dependency; `config.py` centralizes every confidence/tolerance constant across the service (env-var overridable) that used to be scattered per-file. 138 tests (`.venv-tools/bin/pytest cv-service/tests/`), all runnable without external credentials via a dependency-injected fake Anthropic client. `training/` holds the synthetic-dataset generators (bbox + segmentation-mask, both `pyrender`-based) and the segmentation training script. See `cv-service/README.md` for exactly what's real CV vs. synthetic-only-trained vs. a vision-language placeholder, and what's still un-built (a real accessory detector, real-photo validation of anything, Flutter/Cloud-Function wiring, Cloud Run deploy). Uses the same `.venv-tools` Python venv as `tool/*.py`. Built across `ChangeRequest/2026-08-05_cv-service-anchor-extraction-scaffold.md`, `2026-08-05_cv-service-mvp-inspect-endpoint.md`, `2026-08-05_cv-service-remaining-milestones.md`, `2026-08-05_cv-service-m2-synthetic-segmentation-model.md`, `2026-08-11_cv-service-real-photo-ground-truth-tooling.md`, `2026-08-11_cv-service-pose-anchor-mapping.md`, `2026-08-11_cv-service-geometry-camera-pose-rule-projection.md`, `2026-08-11_cv-service-segmentation-real-vs-synthetic-comparison-tooling.md`, `2026-08-11_cv-service-verdict-engine-army-no3-male.md`, `2026-08-11_flutter-geometric-verdict-ui-wiring.md`, `2026-08-11_real-photo-phase1-sanity-check-tooling.md`, and `2026-08-28_cv-service-check-uniform-api-contract.md`.
+├── cv-service/             # Python — Phase-2 AI uniform-compliance CV pipeline (sibling to `functions/`, own dependency stack, not part of any JS/Dart build; not wired into production — `checkUniformCompliance.ts` is unchanged). Runnable `POST /inspect` and `POST /check_uniform` FastAPI endpoints (`api/main.py`) chaining real geometry — human detection (`pose/detect_person.py`, YOLOv8n), pose estimation (`pose/estimate_pose.py`, MediaPipe), PnP camera-pose recovery (`calibration/pnp_solve.py`, projects the canonical body anchors from `utils/extract_anchors.py` into each specific photo, with a `reliable` guard against poses that don't resemble a relaxed standing A-pose), and the doctrine rule engine (`rules/rule_engine.py` + `rules/army_no3_male.json`, transcribed from the SAF No.3 Dress PDF) — with a real trained YOLOv8n-seg model (`segmentation/segment_uniform.py`, 9 classes, mask mAP50 0.742 — **synthetic renders only, zero real photos, unvalidated real-world accuracy**, see §5.10) for garment segmentation, a vision-language stand-in (`detectors/vision_crop_inspector.py`) for the not-yet-trained accessory detector, and a scored JSON + annotated-image report (`reporting/report.py`). `pose/anchor_mapping.py` is a second, general-purpose BlazePose→anchor mapping (all 16 `anchors.male.json` keys, additive alongside `pnp_solve.py`'s own narrower 7-anchor correspondence — see §5.10) with measured synthetic accuracy (143.55px mean error, 92% coverage) and an explicit 0-real-photos gap. `labeling/` + `data/` are real-photo ground-truth **infrastructure only** — a versioned label schema, a local FastAPI+canvas tool for a human to click the 15 anchors and outline accessories on a photo, and a gitignored intake folder — populated so far with 0 real photos and 3 clearly-flagged synthetic stand-ins (see §5.10). `geometry/solve_camera_pose.py` + `geometry/project_rules.py` are a second, additive PnP-solve + rule-projection path consuming Milestone B's fuller pose estimate (up to 15 anchor correspondences vs. `pnp_solve.py`'s own 7) — measured lateral position accuracy is good (~6cm mean) but recovered camera **depth is unreliable** (~62cm mean error, up to ~1m) from a single near-frontal view, a real single-view-PnP limitation, not a bug (see §5.10). `evaluation/compare_segmentation_real_vs_synthetic.py` is real-vs-synthetic mAP50 comparison tooling for the trained segmentation model — built and mechanically verified, but reports "0 real photos, nothing to compare" today rather than a table, since none exist (see §5.10). `rules/rule_engine.py`'s `evaluate_verdicts()` + `segmentation/mask_geometry.py` are a geometric pass/fail/missing/unverifiable verdict engine (Army No.3 Male) chaining Milestones B+C+the trained segmenter for the first time end-to-end — measured footwear precision/recall 1.0/1.0 (n=2, thin) against Milestone A's stand-ins, every other accessory class 0 ground-truth-positive signal, 5 of 18 doctrine rules structurally undetectable (no matching segmentation class) and always reported `unverifiable`, never guessed at (see §5.10). `/inspect` now also returns an additive `geometric_verdicts` field (a second, independent B→C→segmenter→verdict pass, kept deliberately separate from the endpoint's original vision-crop path — see §5.10) surfaced in the Flutter dev scorecard. `evaluation/run_real_photo_sanity_check.py` is a lightweight, label-free batch runner — the cheapest pre-check of whether detection/pose/camera-solve hold up on real photos at all, before investing in labeling or training (see §5.10); not yet run for real, 0 real photos exist. `POST /check_uniform` (`api/response_schema.py` + `api/validation.py`, see §5.10) is a second, additive endpoint reshaping the same geometric pipeline into a stable `{success, overall_status, overall_score, image_quality, person, accessories[], summary}` contract with a `SLIGHTLY_MISALIGNED` status band, a Stage-0 image-quality gate, and zero Anthropic dependency; `config.py` centralizes every confidence/tolerance constant across the service (env-var overridable) that used to be scattered per-file. 138 tests (`.venv-tools/bin/pytest cv-service/tests/`), all runnable without external credentials via a dependency-injected fake Anthropic client. `training/` holds the synthetic-dataset generators (bbox + segmentation-mask, both `pyrender`-based) and the segmentation training script. See `cv-service/README.md` for exactly what's real CV vs. synthetic-only-trained vs. a vision-language placeholder, and what's still un-built (a real accessory detector, real-photo validation of anything, Flutter/Cloud-Function wiring, Cloud Run deploy). Uses the same `.venv-tools` Python venv as `tool/*.py`. Built across `ChangeRequest/2026-08-05_cv-service-anchor-extraction-scaffold.md`, `2026-08-05_cv-service-mvp-inspect-endpoint.md`, `2026-08-05_cv-service-remaining-milestones.md`, `2026-08-05_cv-service-m2-synthetic-segmentation-model.md`, `2026-08-11_cv-service-real-photo-ground-truth-tooling.md`, `2026-08-11_cv-service-pose-anchor-mapping.md`, `2026-08-11_cv-service-geometry-camera-pose-rule-projection.md`, `2026-08-11_cv-service-segmentation-real-vs-synthetic-comparison-tooling.md`, `2026-08-11_cv-service-verdict-engine-army-no3-male.md`, `2026-08-11_flutter-geometric-verdict-ui-wiring.md`, `2026-08-11_real-photo-phase1-sanity-check-tooling.md`, and `2026-08-28_cv-service-check-uniform-api-contract.md`. **Accuracy program (2026-09-28, see §5.10 last subsection):** several numbers above are superseded — the "~62cm depth error, single-view limitation" and "143.55px anchor error" were largely a left/right-mirrored anchor bug, now fixed (camera depth 1-4 cm, anchors 5.7 px on the same stand-ins); `/check_uniform` gained live-guided burst capture, EXIF focal length, gravity/height priors, weighted PnP, mask-refined anchors, calibrated uncertainty, two-stage + zero-shot detection, colour / badge-variant / name-tag-OCR checks, per-item instructions, and a synthetic violation benchmark that measures all of it.
 ├── firebase.json          # Firebase CLI config (firestore.rules + storage.rules + functions pointer; `apphosting` block added by `firebase init apphosting` for the admin portal)
 ├── firestore.rules        # Firestore security rules
 ├── storage.rules          # Cloud Storage security rules — auth-required reads for accessories/{id}/{image,placement}.png; owner read/write for user_photos/{uid}/
@@ -209,7 +209,8 @@ SAF-Uniforms/
 | Linting               | `flutter_lints ^6.0.0` (see `analysis_options.yaml`)            |
 | Tests                 | `flutter_test`, `fake_cloud_firestore ^4.2.0`                   |
 | Operator tooling      | `firebase_admin_sdk ^0.5.1`, `google_cloud_firestore`, `google_cloud_storage`, `crypto` (dev deps; pure-Dart admin SDK used only by `tool/seed_firestore.dart` — Firestore + Storage upload + SHA-256 hashing for idempotent reruns) |
-| Camera / AR / pose    | `camera ^0.11.0+2`, `model_viewer_plus ^1.9.3` (now wired into `GhostScreen` to render the per-user composed GLB), `google_mlkit_pose_detection ^0.14.0`, `permission_handler ^11.3.1` |
+| Camera / AR / pose    | `camera ^0.11.0+2` (live preview + image stream for capture guidance), `model_viewer_plus ^1.9.3` (now wired into `GhostScreen` to render the per-user composed GLB), `google_mlkit_pose_detection ^0.14.0` (live capture guidance + post-capture gate), `permission_handler ^11.3.1` |
+| Device motion         | `sensors_plus ^7.1.0` (accelerometer → phone pitch/roll for the AR Scanner's "hold the phone level" guidance and the `gravity_x/y/z` camera-tilt prior sent to `cv-service`) |
 | Hashing               | `crypto ^3.0.0` (sha256 over profile fields → 16-hex `profileHash` cache key for the 3D-avatar regeneration gate; also used by the seed-tool's image idempotency check) |
 | Typography            | `google_fonts ^6.2.1` (DM Sans + JetBrains Mono per Claude Design handoff) |
 | Vector branding       | `flutter_svg ^2.0.10+1` (SAF crest in Welcome screen + dashboard app bar)   |
@@ -297,7 +298,7 @@ lib/
     │   ├── data/
     │   │   ├── branch_config_repository.dart # Pure Firestore stream of branch_configs/{branchId}
     │   │   ├── global_rules_repository.dart  # Pure Firestore stream of global_logic_rules/{ruleId}
-    │   │   ├── profile_repository_impl.dart  # users/{uid}/profile/current
+    │   │   ├── profile_repository_impl.dart  # users/{uid}/profile/current (incl. optional `heightCm`, sent to the AR Scanner's check)
     │   │   └── dtos/
     │   │       ├── branch_config_firestore.dart # BranchConfig.fromFirestore(docId, data)
     │   │       └── uniform_profile_dto.dart
@@ -386,22 +387,28 @@ lib/
     │   │   └── entities/
     │   │       ├── compliance_result.dart            # @freezed ComplianceResult/ComplianceItem + ComplianceStatus enum (correct/missing/incorrect/uncertain); mirrors the `report_compliance` tool schema forced on the `checkUniformCompliance` Cloud Function. **Phase-1 Node/Anthropic path is disabled** (`uniform_compliance_provider.dart` commented out in full; `checkUniformCompliance` is on trial billing). Model + `compliance_result_test.dart` kept for when it's re-enabled.
     │   │       ├── cv_inspection_result.dart         # @freezed CvInspectionResult + CvVerdict (5-state: present/missing/misaligned/wrongType/lowConfidence) + CvSubscores/CvIssue/CvUncertainItem/CvCameraDiagnostics — mirrors `cv-service`'s `/inspect` JSON shape (Phase 2, long-press dev path). Deliberately NOT unified with `compliance_result.dart` — the backends return different-shaped reports.
-    │   │       └── uniform_check_result.dart         # @freezed UniformCheckResult + UniformCheckAccessory + UniformCheckStatus (5-state: correct/slightlyMisaligned/incorrect/missing/uncertain) + UniformCheckPoint/Box/Summary — mirrors `cv-service`'s Anthropic-free `POST /check_uniform` contract (`api/response_schema.py`). This is the **default capture path** now (replaced the fabricated "100% match" stand-in). Third report shape, deliberately separate from the other two. Added `ChangeRequest/2026-08-30_ar-scanner-real-geometry-scorecard.md`.
+    │   │       └── uniform_check_result.dart         # @freezed UniformCheckResult + UniformCheckAccessory + UniformCheckStatus (5-state: correct/slightlyMisaligned/incorrect/missing/uncertain) + UniformCheckPoint/Box/Summary — mirrors `cv-service`'s Anthropic-free `POST /check_uniform` contract (`api/response_schema.py`). `overallStatus` is `PASS`/`FAIL`/`INCOMPLETE` (`passed` / `incomplete` getters). Per item: `instruction` (cm + wearer's left/right), `required`, `checkable`, `detectionSource`, `frameAgreement`; per result: coverage counts, `debugImageBase64`, burst frame counts, `focalSource`. `couldNotCheck` (checkable but unjudgeable — a retake may help) vs `checkByEye` (no detector yet) split the old single "uncertain" list. This is the **default capture path** now (replaced the fabricated "100% match" stand-in). Third report shape, deliberately separate from the other two. Added `ChangeRequest/2026-08-30_ar-scanner-real-geometry-scorecard.md`.
     │   ├── data/
     │   │   ├── uniform_compliance_repository.dart    # Wraps the `checkUniformCompliance` HTTPS callable; base64-encodes the captured photo client-side. Currently unused (Phase-1 path disabled — see above).
     │   │   ├── cv_service_inspection_repository.dart # HTTP multipart client for `cv-service`'s `POST /inspect` (`kCvServiceBaseUrl`, defaults to `localhost:8001` — no deployed instance yet)
-    │   │   ├── uniform_check_repository.dart         # HTTP multipart client for `cv-service`'s `POST /check_uniform` (reuses `kCvServiceBaseUrl`). Throws `UniformCheckException(message, {statusCode, errorCode})` — `statusCode == null` = service unreachable; `errorCode` is the service's typed code (`NO_PERSON_DETECTED`, `POSE_UNRELIABLE`, `SCALE_UNAVAILABLE`, `UNSUPPORTED_UNIFORM`, `SEGMENTER_UNAVAILABLE`, image-quality codes).
-    │   │   └── capture_quality_gate.dart              # On-device pose-quality check via `google_mlkit_pose_detection` (previously declared but unused — see §8) — rejects a picked photo (no person / torso not visible / camera tilted) before it's uploaded to either backend. Runs post-capture, not mid-shutter, since this app has no live camera feed (image_picker hands back one already-taken JPEG).
+    │   │   ├── uniform_check_repository.dart         # HTTP multipart client for `cv-service`'s `POST /check_uniform` (one frame) / `POST /check_uniform_burst` (several frames, D17) (reuses `kCvServiceBaseUrl`). Sends the optional accuracy inputs `wearer_name` (profile full name → name-tag OCR), `height_cm`, `gravity_x/y/z`, and `include_debug_image=true`; the focal length travels in the JPEG's EXIF. Decodes responses as UTF-8 explicitly (the service sends no charset; `Response.body` fell back to Latin-1 and garbled "—"/"°"). Throws `UniformCheckException(message, {statusCode, errorCode})` — `statusCode == null` = service unreachable; `errorCode` is the service's typed code, read from the body's `status` key (it was read from `error` and always lost before 2026-09-28) (`NO_PERSON_DETECTED`, `POSE_UNRELIABLE`, `SCALE_UNAVAILABLE`, `UNSUPPORTED_UNIFORM`, `SEGMENTER_UNAVAILABLE`, image-quality codes).
+    │   │   ├── capture_quality_gate.dart              # On-device pose-quality check via `google_mlkit_pose_detection` — rejects a captured photo (no person / torso not visible / camera tilted) before it's uploaded. Now the post-capture backstop behind the live guide below.
+    │   │   ├── live_pose_guide.dart                   # D15 live capture guidance: `CaptureGuidance.assess` (pure, unit-tested) turns ML Kit landmarks + phone tilt into the first failing `CaptureHint` (no person / not full body / too far / too close / off-centre / facing away / sideways / arms raised / phone tilted / hold still / ready); `LivePoseGuide` runs it on the throttled camera image stream (NV21 / BGRA8888) and only reports `ready` after 3 consecutive good frames. Replaced a fixed 1.8 s timer that unlocked capture regardless of framing.
+    │   │   ├── cv_service_health.dart                 # `normaliseCvServiceUrl` + `CvServiceHealth.check` (`GET /health`, 5 s timeout, never throws — reports the exact error) + `kCvServiceUsbUrl` (`http://127.0.0.1:8001`, for `adb reverse`).
+    │   │   └── device_tilt.dart                       # D16: accelerometer (sensors_plus, low-pass) → world-up in the back camera's OpenCV frame (`gravityUpCamera`, sent as `gravity_x/y/z`) + pitch/roll for guidance.
     │   └── presentation/
     │       ├── providers/
     │       │   ├── uniform_compliance_provider.dart  # **Commented out in full** — `UniformComplianceController` (Phase-1 Node/Anthropic path) is disabled. Kept so it can be uncommented later.
     │       │   ├── uniform_compliance_provider.g.dart
     │       │   ├── cv_service_inspection_provider.dart # `CvServiceInspectionController` — drives `cv-service`'s `/inspect` (long-press dev path). Separate controller.
     │       │   ├── cv_service_inspection_provider.g.dart
+    │       │   ├── cv_service_url_provider.dart       # `cvServiceUrlProvider` (keepAlive `Notifier<String>`): compiled `kCvServiceBaseUrl`, replaced by the persisted `saf.cvServiceUrl` override once loaded; `set(input)` normalises + persists, `reset()` clears. Both cv-service repository providers `watch` it.
     │       │   ├── uniform_check_provider.dart        # `uniformCheckRepositoryProvider` + `UniformCheckController` (`@riverpod` AsyncNotifier<UniformCheckResult?>, not keepAlive) — `check(photoBytes, uniformType, rankTier, gender, isSikh, medalRowCount, bodyType)` drives `POST /check_uniform`, `reset()` clears for a re-scan. Ephemeral, nothing persisted. This is what the **default capture button** now calls.
     │       │   └── uniform_check_provider.g.dart
+    │       ├── widgets/
+    │       │   └── cv_server_settings.dart            # `CvServerSettings`: address field, Save, "USB cable" preset, Default, "Test connection" — in the Settings sheet and behind the "Server settings" button on the scanner's "Connection problem" screen (which also shows the URL called + the real error).
     │       └── screens/
-    │           └── ar_scanner_screen.dart             # Live `CameraPreview` → align/aligned → capture-quality gate → **default tap** runs a real geometry/pixel check via `cv-service`'s Anthropic-free `POST /check_uniform` (`UniformCheckController.check`; `uniform_type` sent as `"${branch}_${dress}_${gender}"` e.g. `army_no3_male` — a non-army/non-No3 profile gets the service's `UNSUPPORTED_UNIFORM` 422 surfaced verbatim) → `_RealScorecard` (overall PASS/FAIL + score ring, per-accessory rows with status colour + expected-vs-detected pixel offset + doctrine ref, summary tallies) → analyzing / failed states. **Needs a reachable `cv-service`** (`kCvServiceBaseUrl`, default `http://localhost:8001`; override per device with `--dart-define=CV_SERVICE_BASE_URL=...`) — no deployment exists yet, so an unreachable service lands on `_FailedPhase` with an explicit "analysis service unreachable" message (NOT a fake pass). The prior fabricated "100% perfect match" stand-in (`_buildResult`) is deleted. See `ChangeRequest/2026-08-30_ar-scanner-real-geometry-scorecard.md` (status: executed — **not device-verified**, no reachable cv-service). Long-press the capture button still routes through the older `/inspect` dev path (`_captureCvService` → `_CvScorecard`, labelled "PHASE 2 · DEV", with a "GEOMETRIC VERDICTS" section from `/inspect`'s `geometric_verdicts` field). Phase-1 `checkUniformCompliance` (Node/Anthropic) is disabled — imports commented out. **Not exercised against any real photo** (0 exist in this project).
+    │           └── ar_scanner_screen.dart             # Live `CameraPreview` + **live pose guidance** (`LivePoseGuide` on the image stream, `DeviceTilt`; the status banner shows the current `CaptureHint`; capture unlocks only when the protocol holds, or after 4 s if guidance can't run on the device) → **default tap** takes a 3-frame burst → capture-quality gate on frame 1 → `POST /check_uniform_burst` (`UniformCheckController.check(photos: …, wearerName, heightCm, gravityUpCamera)`; `uniform_type` sent as `"${branch}_${dress}_${gender}"` e.g. `army_no3_male` — a non-army/non-No3 profile gets the service's `UNSUPPORTED_UNIFORM` 422 surfaced verbatim) → `_RealScorecard` (overall PASS/FAIL/INCOMPLETE + score ring, expected-vs-detected overlay image, per-item instruction + frame agreement, separate "could not check — a retake may help" and "check by eye" lists, summary tallies) → analyzing / failed states. **Needs a reachable `cv-service`** (`kCvServiceBaseUrl`, default `http://localhost:8001`; override per device with `--dart-define=CV_SERVICE_BASE_URL=...`) — no deployment exists yet, so an unreachable service lands on `_FailedPhase` with an explicit "analysis service unreachable" message (NOT a fake pass). The prior fabricated "100% perfect match" stand-in (`_buildResult`) is deleted. See `ChangeRequest/2026-08-30_ar-scanner-real-geometry-scorecard.md` (status: executed — **not device-verified**, no reachable cv-service). Long-press the capture button still routes through the older `/inspect` dev path (`_captureCvService` → `_CvScorecard`, labelled "PHASE 2 · DEV", with a "GEOMETRIC VERDICTS" section from `/inspect`'s `geometric_verdicts` field). Phase-1 `checkUniformCompliance` (Node/Anthropic) is disabled — imports commented out. **Not exercised against any real photo** (0 exist in this project).
     │
     └── ar_engine/
         ├── data/
@@ -631,6 +638,7 @@ synchronously:
 | `saf.profileComplete`| `shared_preferences`    | Mirrors `device_registrations/{deviceId}.profileComplete`; drives the Welcome → Config vs. Dashboard branch. |
 | `saf.lastBranchId`   | `shared_preferences`    | Optional theme-bootstrap hint (not yet wired into `BranchTheme`). |
 | `saf.themeAccent`    | `shared_preferences`    | `"follow"` (default) or `"saf_crest"` — drives `themeAccentProvider`. |
+| `saf.cvServiceUrl`   | `shared_preferences`    | User-set AR Scanner analysis-server (`cv-service`) address, overriding the compiled `kCvServiceBaseUrl`; edited in Settings → Analysis server or from the scanner's "Connection problem" screen (`cvServiceUrlProvider`). `http://127.0.0.1:8001` = USB via `adb reverse` (`deploy/connect-phone-usb.sh`). See `ChangeRequest/2026-09-30_cv-service-url-setting-and-usb.md`. |
 | `saf.lastRoute`      | `shared_preferences`    | Last matched `GoRouter` location, written on every navigation but restricted to `Routes.restorable` (see §5.6). Lets `WelcomeScreen` return a returning user to the screen they were on after a cold start — including an Android-triggered process-death respawn (e.g. the OS camera app backgrounding this app for a photo capture) — instead of always `/dashboard`. See `ChangeRequest/2026-08-11_capture-flow-state-loss-fix.md`. |
 
 All actual app content (reference collections + the `UniformProfile`
@@ -669,7 +677,12 @@ whitelist). On iOS the keychain entries persist by default.
     GitHub pushes to the linked live branch.
   - The Python `cv-service` has **no hosted deployment** — it runs
     locally via `deploy/run-cv-service-local.sh` (or `cv-service/Dockerfile`),
-    and the Flutter app reaches it over the LAN (`kCvServiceBaseUrl`).
+    and the Flutter app reaches it over the LAN, or over the USB cable via
+    `deploy/connect-phone-usb.sh` (`adb reverse tcp:8001 tcp:8001` + the
+    app's "USB cable" preset). The address is compiled in
+    (`kCvServiceBaseUrl`) but can be changed on the phone — Settings →
+    Analysis server, with a "Test connection" `GET /health` probe — no
+    rebuild needed.
 - **Auth:** **Custom-token sign-in** issued by the
   `claimDeviceIdentity` Cloud Function. The previous client-side
   `signInAnonymously()` flow was retired because anonymous-auth UIDs
@@ -1400,6 +1413,10 @@ lateral position, both fine here — but not yet trustworthy for anything
 that depends on recovered depth alone from a single photo. Same
 real-photo gap as every other subsection: **0 real photos**, so this
 entire table is synthetic-only.
+**Superseded 2026-09-28:** the depth error was the mirrored-anchor bug
+described in the accuracy-program subsection below, not a single-view
+limitation, and the evaluator graded the mirrored solution against the
+wrong rotation convention.
 
 **Segmentation real-vs-synthetic comparison tooling — built, verified
 mechanically, reports 0 real photos today (2026-08-11,
@@ -1610,6 +1627,136 @@ screen, never a fake pass. Code-only: `flutter analyze` clean,
 `flutter test` green (9 new tests), **not device-verified** — needs the
 operator to run `uvicorn` and point the app at it. Cloud Run deploy +
 a Cloud Function proxy remain the open follow-up.
+
+**Coverage gate + search-area-gated matching (2026-09-28,
+`ChangeRequest/2026-09-28_cv-service-coverage-gate-and-matching.md`):**
+two logic fixes to `/check_uniform`, independent of model accuracy.
+(1) `overall_status` is now `PASS` / `FAIL` / **`INCOMPLETE`** — PASS
+requires at least `MIN_VERIFIED_COVERAGE` (config, default 0.8) of the
+*detector-backed* required items to have a definite verdict; below that
+the result is `INCOMPLETE`, or `FAIL` if a required item was already
+found `fail`/`missing`. Previously unverifiable items were silently
+dropped from the score, so 1 verified pass out of 7 read as 100 → PASS.
+Required items with no segmentation class (name tag, socks) are excluded
+from the gate's denominator — otherwise PASS would be impossible for
+every profile — and reported in a new additive `coverage` object
+(`verified_required`, `checkable_required`, `fraction`,
+`not_checkable_required`). (2) `evaluate_verdicts` only accepts a
+detection whose mask centroid lies inside the rule's crop (search) box,
+and assigns detections to a rule's crops one-to-one (greedy by
+distance) — a stray or other-side detection can no longer turn an empty
+expected region into a misplaced `fail` (it's now `missing`, with the
+out-of-area detection noted in the reason), and one detection can no
+longer satisfy both sides of a paired item. `/inspect`'s
+`geometric_verdicts` inherits (2). Flutter's `_RealScorecard` shows
+`INCOMPLETE` (warn colour + retake hint) via
+`UniformCheckResult.incomplete`.
+
+**Accuracy program — everything short of real photos (2026-09-28,
+`ChangeRequest/2026-09-28_accuracy-program-no-real-data.md`).** The
+`/check_uniform` flow now lives in `api/pipeline.py` (`solve_geometry` +
+`run_check`, shared by the endpoint, `POST /check_uniform_burst` and the
+benchmark). Stages, in order:
+1. Stage-0 gate; **blur measured on the person crop** (`check_sharpness`) —
+   whole-image Laplacian variance falsely rejected 40% of benchmark photos
+   against plain walls.
+2. Segmentation with manual **flip TTA** (Ultralytics' `augment=True` is a
+   no-op for seg models). Loader prefers `segmentation_v2` only once
+   `models/segmentation_v2/training_complete.json` exists (Ultralytics
+   rewrites `best.pt` every epoch — the service used to pick up a
+   half-trained model); `CV_SERVICE_SEGMENTATION_MODEL` pins one;
+   `tests/conftest.py` pins the regression tests to v1.
+3. Pose: `pose_landmarker_heavy` on the padded/upscaled person crop;
+   **fitted landmark→socket offsets** (`pose/anchor_offsets.male.json`,
+   fitted by `pose/calibrate_anchor_offsets.py` on 60 dressed renders in a
+   body-aligned frame) — anchor error on the 3 stand-ins 55.6 → 5.7 px.
+4. **Mask-refined anchors** (`geometry/mask_anchor_refinement.py`):
+   head_top from headwear, belt_center from the shirt/trousers waistline
+   (never from the belt it later judges), ankles from footwear.
+5. Camera: **anatomical anchor names** (`utils/extract_anchors.py
+   _to_anatomical_sides` — the GLB's socket names are left/right-swapped,
+   which made every earlier solve a mirrored, body-behind-the-camera fit),
+   **behind-camera guard**, frontal-seeded iterative + SQPnP, **EXIF focal
+   length** (`api/intrinsics.py`; guessed focal = 57-115 cm depth error,
+   true focal = 0-4 cm), anchors scaled to **`height_cm`**, and a final
+   **weighted** least-squares refinement (1/σ per anchor from the fitted
+   residuals) with an optional **gravity prior** (`gravity_x/y/z`).
+6. Rules: derived **`cap_badge_tier`** (cap-badge conditions used to test a
+   `rank_tier` value the app never sends — no enlistee/specialist had their
+   cap badge checked); tolerance from the **local px/cm** at each rule's 3D
+   point; per-rule geometric uncertainty.
+7. **Two-stage** re-segmentation of small items' search boxes (one batched
+   call) and **zero-shot** YOLO-World + SAM 2 for empty headwear / belt /
+   footwear boxes only (measured: true large items score 0.61-0.91, a bare
+   head scored 0.18 as "beret", small items < 0.2 → accept ≥ 0.45).
+8. Verdicts measure the doctrine **reference edge** (`reference_point`,
+   e.g. the name tag's bottom edge) and decide with **calibrated
+   uncertainty**: pass only if distance + u ≤ tolerance, out-of-tolerance
+   only if distance − u > tolerance, else `unverifiable` (`failure_kind:
+   boundary`) with the measured offset in the instruction.
+   `UNCERTAINTY_REPROJECTION_WEIGHT`/`_MASK_FRACTION` (1.35 / 0.09) are
+   fitted by `evaluation/calibrate_uncertainty.py` to cover 90% of real
+   measurement error.
+9. **Colour** (shoes/socks black relative to the shirt; only where doctrine
+   states a colour — the Army beret is dark green / formation-dependent),
+   **badge variant** (DINOv2 vs `assets/accessories/<id>/image.png`, fails
+   only on a clear margin), **name-tag OCR** (EasyOCR vs any word of the
+   profile full name, sent as `wearer_name`).
+10. Response adds per-item `instruction` (cm + wearer's left/right),
+    `required`, `checkable`, `detection_source`, `tolerance`-aware text,
+    `summary.slightly_misaligned`, and a `camera` block (focal + source,
+    reprojection, gravity disagreement, height scale).
+
+`POST /check_uniform_burst` runs 1-5 frames and keeps each item's strict
+majority status (`api/burst.py`; no majority → `UNCERTAIN`,
+`frame_agreement` per item). `segmentation_v2`: 12 classes (adds
+`name_tag`, `socks`, `hand` — fixes "hands labelled trousers"), 1 150
+domain-randomised renders (`training/generate_segmentation_dataset_v2.py`:
+procedural backgrounds, lighting, camera roll/offset, body proportions,
+accessory variants and random absences, blur/noise/JPEG), yolov8s-seg at
+768 px.
+
+**Measured on the synthetic violation benchmark**
+(`training/generate_violation_benchmark.py` — 60 scenes, 540 item
+verdicts with exact ground truth: doctrine-exact placements plus injected
+displacements of 0.5/1.25/2× tolerance, removals, wrong-pocket name tag,
+wrong cap-badge variant, grey socks; scored by
+`evaluation/run_violation_benchmark.py`, results in `cv-service/logs/`,
+gitignored):
+
+| Variant | Exact | Violation recall | False alarms | Abstain |
+| --- | --- | --- | --- | --- |
+| baseline (program stages off, bug fixes kept) | 10.2% | 56.6% | 52.6% | 39.4% |
+| program, v1 segmenter | 15.9% | 45.3% | 32.9% | 52.8% |
+| **program, v2 segmenter (default)** | **36.1%** | **60.4%** | **5.5%** | 58.1% |
+
+(v2: 93% of correctly placed items detected vs 32% for v1; mask mAP50
+0.879 on its domain-randomised synthetic val split. Per item, v2 abstains
+on the tight-tolerance badges — cap badge 87%, insignia 90%, arms badge
+97% — and still falsely flags epaulettes 15.5% / belt 17.9% of the time,
+so no truly compliant benchmark scene reached PASS: 9 FAIL, 6
+INCOMPLETE. 13/60 scenes are rejected as genuinely blurred.)
+
+**The central, honest finding:** even with the geometry fixed, the
+pipeline's measurement error on correctly placed items is a median
+0.78 cm with v2 (1.3 cm with v1) — the same order as doctrine's 0.8-1.5 cm
+tolerances. With uncertainty
+calibrated so correct items aren't flagged, ±1 cm items cannot be
+*certified* from one full-body photo at ~2.5 m and come back "too close to
+call" (with the measured offset). Missing items, wrong variants/colours
+and clearly misplaced items are still caught. The next accuracy step is a
+second, closer upper-body photo (pixel error roughly constant → cm error
+halves), plus real labelled photos. Everything here is synthetic-only —
+**0 real photos**.
+
+App side: live pose guidance (`live_pose_guide.dart`) replaced a fixed
+1.8 s "aligned" timer; `DeviceTilt` supplies gravity; default capture is a
+3-frame burst; `heightCm` on the profile; scorecard shows instructions,
+the overlay image, "could not check" vs "check by eye". Fixed in passing:
+typed error codes were read from the wrong key (always lost), and
+responses were decoded as Latin-1 (garbled "—"/"°"). `flutter test` runs on
+this machine without accepting the Xcode licence via an `xcrun` shim to the
+Command Line Tools SDK (see the plan's verification notes).
 
 ---
 

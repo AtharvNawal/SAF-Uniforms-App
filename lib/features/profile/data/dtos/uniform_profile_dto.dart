@@ -16,6 +16,7 @@ class UniformProfileDto {
       'fullName': profile.fullName,
       'vocation': profile.vocation,
       'medalRowCount': profile.medalRowCount,
+      'heightCm': profile.heightCm,
       'selectedBadgeIds': profile.selectedBadgeIds.toList(),
       'selectedAccessoryIds': profile.selectedAccessoryIds.toList(),
       'dressAccessoryChecks': profile.dressAccessoryChecks.map(
@@ -37,6 +38,7 @@ class UniformProfileDto {
       fullName: (json['fullName'] as String?) ?? '',
       vocation: (json['vocation'] as String?) ?? 'Infantry',
       medalRowCount: (json['medalRowCount'] as num?)?.toInt() ?? 0,
+      heightCm: (json['heightCm'] as num?)?.toInt() ?? 0,
       selectedBadgeIds: ((json['selectedBadgeIds'] as List?) ?? const [])
           .cast<String>()
           .toSet(),

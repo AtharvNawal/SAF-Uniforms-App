@@ -83,5 +83,16 @@ void main() {
         isFalse,
       );
     });
+
+    test('incomplete is distinct from passed and failed', () {
+      final r = make([UniformCheckStatus.uncertain])
+          .copyWith(overallStatus: 'INCOMPLETE');
+      expect(r.incomplete, isTrue);
+      expect(r.passed, isFalse);
+      expect(
+        make([UniformCheckStatus.correct]).copyWith(overallStatus: 'FAIL').incomplete,
+        isFalse,
+      );
+    });
   });
 }

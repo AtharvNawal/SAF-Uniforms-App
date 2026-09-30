@@ -70,6 +70,35 @@ def _midpoint(a: Point3, b: Point3, *, force_x: float | None = None) -> Point3:
     )
 
 
+_PAIRED_STEMS = ["collar_tip", "chest_pocket", "shoulder_seam", "sleeve_upper", "ankle", "foot_top"]
+
+
+def _to_anatomical_sides(raw: dict[str, Point3]) -> tuple[dict[str, Point3], list[str]]:
+    """Name every left/right pair by the WEARER's anatomy.
+
+    The body faces +z, so the wearer's left side is +x (a front-facing
+    camera sees it on image-right — exactly where MediaPipe's
+    `left_shoulder` lands). `male_apose.glb`'s socket names are the
+    opposite (CLAUDE.md §8 pass 8: "+X = wearer's LEFT", yet the socket
+    named `left_*` sits at -x). Left uncorrected, the anatomically-named
+    pose landmarks are paired with mirrored 3D points and `solvePnP`
+    converges to a physically impossible camera with the body *behind*
+    it — and every doctrine side ("name tag on the right pocket") is
+    measured on the wrong side. Decided per pair by x sign, so this stays
+    correct if the GLB's names are ever fixed. Returns the corrected
+    points and the stems that were swapped.
+    See ChangeRequest/2026-09-28_accuracy-program-no-real-data.md.
+    """
+    fixed = dict(raw)
+    swapped = []
+    for stem in _PAIRED_STEMS:
+        left, right = raw[f"left_{stem}"], raw[f"right_{stem}"]
+        if left.x < right.x:
+            fixed[f"left_{stem}"], fixed[f"right_{stem}"] = right, left
+            swapped.append(stem)
+    return fixed, swapped
+
+
 def extract_anchors(glb_path: str | Path) -> dict:
     """Load `glb_path` and return the canonical anchor record.
 
@@ -84,6 +113,7 @@ def extract_anchors(glb_path: str | Path) -> dict:
         transform, _geom_name = scene.graph.get(name)
         translation = transform[:3, 3]
         raw[name] = Point3(*(float(v) for v in translation))
+    raw, swapped_stems = _to_anatomical_sides(raw)
 
     chest_center = _midpoint(
         raw["left_chest_pocket"], raw["right_chest_pocket"], force_x=0.0
@@ -108,7 +138,9 @@ def extract_anchors(glb_path: str | Path) -> dict:
             "origin": "feet at y=0, x/z centered on the body's vertical symmetry axis",
             "up_axis": "y",
             "forward_axis": "+z (body-front)",
+            "side_convention": "anatomical — left_* is the wearer's left (+x); matches MediaPipe landmark naming",
         },
+        "glb_socket_names_swapped": swapped_stems,
         "anchors": anchors,
     }
 

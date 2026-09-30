@@ -17,6 +17,8 @@ sys.path.insert(0, str(REPO_ROOT / "cv-service"))
 
 from pose.anchor_mapping import (  # noqa: E402
     _ALL_ANCHOR_NAMES,
+    apply_anchor_offsets,
+    body_frame,
     estimate_anchor_pose,
     map_pose_to_anchors,
 )
@@ -87,7 +89,7 @@ def test_pose_not_found_returns_all_null():
 
 def test_direct_anchors_use_landmark_coordinates_exactly():
     pose = _fake_pose(_FULL_BODY_POINTS, visibility=0.9)
-    result = map_pose_to_anchors(pose)
+    result = map_pose_to_anchors(pose, apply_offsets=False)
     assert result["left_shoulder_seam"]["x_px"] == 330
     assert result["left_shoulder_seam"]["y_px"] == 330
     assert result["left_shoulder_seam"]["confidence"] == pytest.approx(0.9)
@@ -97,7 +99,7 @@ def test_direct_anchors_use_landmark_coordinates_exactly():
 
 def test_belt_center_is_hip_midpoint():
     pose = _fake_pose(_FULL_BODY_POINTS)
-    result = map_pose_to_anchors(pose)
+    result = map_pose_to_anchors(pose, apply_offsets=False)
     assert result["belt_center"]["x_px"] == pytest.approx((350 + 450) / 2)
     assert result["belt_center"]["y_px"] == pytest.approx((600 + 600) / 2)
 
@@ -176,3 +178,47 @@ def test_accuracy_report_synthetic_vs_real_are_reported_separately():
     # The real-photo row must say "0", never a fabricated number.
     assert report["real"]["photo_count"] == 0
     assert report["real"]["mean_px_error"] is None
+
+
+# --- fitted landmark->socket bias corrections (ChangeRequest/2026-09-28) ---
+
+def _estimate(points):
+    return {name: {"x_px": x, "y_px": y, "confidence": 0.9} for name, (x, y) in points.items()}
+
+
+def test_body_frame_outward_points_from_right_to_left_shoulder():
+    frame = body_frame(_estimate({"left_shoulder_seam": (500, 300), "right_shoulder_seam": (300, 300)}))
+    _, outward, down, width = frame
+    assert width == pytest.approx(200)
+    assert outward == pytest.approx([1.0, 0.0])
+    assert down == pytest.approx([0.0, 1.0])  # toward the hips
+
+
+def test_offsets_mirror_outward_per_side_and_scale_with_shoulder_width():
+    estimate = _estimate({
+        "left_shoulder_seam": (500, 300), "right_shoulder_seam": (300, 300),
+        "left_chest_pocket": (450, 400), "right_chest_pocket": (350, 400), "belt_center": (400, 600),
+    })
+    offsets = {
+        "left_chest_pocket": {"outward": -0.1, "down": 0.2, "residual_std": 0.05},
+        "right_chest_pocket": {"outward": -0.1, "down": 0.2, "residual_std": 0.05},
+        "belt_center": {"outward": 0.0, "down": -0.4, "residual_std": 0.05},
+    }
+    corrected = apply_anchor_offsets(estimate, offsets)
+    # inward by 0.1 × 200px on each side (mirrored), down by 0.2 × 200px
+    assert (corrected["left_chest_pocket"]["x_px"], corrected["left_chest_pocket"]["y_px"]) == pytest.approx((430, 440))
+    assert (corrected["right_chest_pocket"]["x_px"], corrected["right_chest_pocket"]["y_px"]) == pytest.approx((370, 440))
+    assert corrected["belt_center"]["y_px"] == pytest.approx(520)
+    assert corrected["belt_center"]["residual_px"] == pytest.approx(10)
+    assert corrected["left_shoulder_seam"] == estimate["left_shoulder_seam"]  # no offset entry -> untouched
+
+
+def test_default_mapping_applies_fitted_offsets_when_file_present():
+    offsets_file = REPO_ROOT / "cv-service" / "pose" / "anchor_offsets.male.json"
+    if not offsets_file.exists():
+        pytest.skip("anchor_offsets.male.json not fitted")
+    pose = _fake_pose(_FULL_BODY_POINTS)
+    raw = map_pose_to_anchors(pose, apply_offsets=False)
+    fitted = map_pose_to_anchors(pose)
+    assert fitted["belt_center"]["y_px"] != pytest.approx(raw["belt_center"]["y_px"])
+    assert fitted["belt_center"].get("calibrated") is True

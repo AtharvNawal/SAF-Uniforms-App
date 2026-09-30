@@ -55,7 +55,7 @@ final class UniformCheckRepositoryProvider
 }
 
 String _$uniformCheckRepositoryHash() =>
-    r'cce69449de7494e0202228687dbfb0a395b565e3';
+    r'1b0f58c359f496e163ec681b2c0a3db084ce060f';
 
 /// Drives a single real (geometry/pixel) uniform check from
 /// `ARScannerScreen`'s default capture button, via `cv-service`'s
@@ -117,7 +117,7 @@ final class UniformCheckControllerProvider
 }
 
 String _$uniformCheckControllerHash() =>
-    r'f24f977c2c6e0b79061e22cba09136cbf0fd4163';
+    r'9f829f2bd12440125f44be569f00460f5e5825a4';
 
 /// Drives a single real (geometry/pixel) uniform check from
 /// `ARScannerScreen`'s default capture button, via `cv-service`'s

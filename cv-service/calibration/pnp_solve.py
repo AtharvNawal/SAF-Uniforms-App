@@ -81,6 +81,63 @@ def _build_camera_matrix(image_width: int, image_height: int) -> np.ndarray:
     )
 
 
+def points_in_front(object_points: np.ndarray, rvec: np.ndarray, tvec: np.ndarray) -> bool:
+    """Cheirality check: every correspondence must have positive depth in
+    the solved camera frame. `solvePnP` can return a solution with the
+    body *behind* the camera that still reprojects with low error (a
+    point behind the camera projects mirrored) — that's exactly how a
+    left/right-swapped anchor set used to "fit" (see
+    utils/extract_anchors.py `_to_anatomical_sides`). A low reprojection
+    error alone is not enough to call a camera reliable."""
+    rotation, _ = cv2.Rodrigues(rvec)
+    depths = (object_points @ rotation.T + np.asarray(tvec).reshape(1, 3))[:, 2]
+    return bool(np.all(depths > 0))
+
+
+# A camera ~2.5 m in front of the body looking at it: OpenCV camera axes
+# (x right, y down, z forward) = world (+x, -y, -z) -> R = diag(1,-1,-1),
+# i.e. a 180° rotation about x. Used to seed the iterative solve so it
+# starts in the physically plausible basin.
+_FRONTAL_RVEC = np.array([[np.pi], [0.0], [0.0]])
+_FRONTAL_TVEC = np.array([[0.0], [1.0], [2.5]])
+
+
+def _reprojection_error(obj, img, rvec, tvec, camera_matrix, dist) -> float:
+    projected, _ = cv2.projectPoints(obj, rvec, tvec, camera_matrix, dist)
+    return float(np.mean(np.linalg.norm(projected.reshape(-1, 2) - img, axis=1)))
+
+
+def best_pnp_solution(obj, img, camera_matrix, dist):
+    """Runs a frontal-seeded iterative solve and SQPnP, and keeps the
+    lowest-error candidate that is physically valid (all points in front
+    of the camera). Falls back to the lowest-error candidate overall —
+    the caller's cheirality check then marks it unreliable."""
+    candidates = []
+    try:
+        ok, rvec, tvec = cv2.solvePnP(
+            obj, img, camera_matrix, dist,
+            rvec=_FRONTAL_RVEC.copy(), tvec=_FRONTAL_TVEC.copy(),
+            useExtrinsicGuess=True, flags=cv2.SOLVEPNP_ITERATIVE,
+        )
+        if ok:
+            candidates.append((rvec, tvec))
+    except cv2.error:
+        pass
+    try:
+        ok, rvec, tvec = cv2.solvePnP(obj, img, camera_matrix, dist, flags=cv2.SOLVEPNP_SQPNP)
+        if ok:
+            candidates.append((rvec, tvec))
+    except cv2.error:
+        pass
+    if not candidates:
+        return False, None, None
+    scored = sorted(
+        candidates,
+        key=lambda c: (not points_in_front(obj, c[0], c[1]), _reprojection_error(obj, img, c[0], c[1], camera_matrix, dist)),
+    )
+    return True, scored[0][0], scored[0][1]
+
+
 def solve_camera_pose(
     pose: PoseResult, anchors: dict | None = None, *, min_correspondences: int = 4
 ) -> CameraSolution:
@@ -133,13 +190,7 @@ def solve_camera_pose(
     camera_matrix = _build_camera_matrix(pose.image_width, pose.image_height)
     dist_coeffs = np.zeros((4, 1))  # assume negligible lens distortion
 
-    ok, rvec, tvec = cv2.solvePnP(
-        object_points_np,
-        image_points_np,
-        camera_matrix,
-        dist_coeffs,
-        flags=cv2.SOLVEPNP_ITERATIVE,
-    )
+    ok, rvec, tvec = best_pnp_solution(object_points_np, image_points_np, camera_matrix, dist_coeffs)
     if not ok:
         return CameraSolution(
             solved=False,
@@ -169,11 +220,18 @@ def solve_camera_pose(
         error_threshold_px = (
             max(pose.image_width, pose.image_height) * config.PNP_RELIABILITY_IMAGE_SIZE_FRACTION
         )
-    reliable = reprojection_error <= error_threshold_px
+    in_front = points_in_front(object_points_np, rvec, tvec)
+    reliable = reprojection_error <= error_threshold_px and in_front
+    if reliable:
+        reason = "ok"
+    elif not in_front:
+        reason = "points_behind_camera"
+    else:
+        reason = "high_reprojection_error"
 
     return CameraSolution(
         solved=True,
-        reason="ok" if reliable else "high_reprojection_error",
+        reason=reason,
         rotation_vec=rvec,
         translation_vec=tvec,
         camera_matrix=camera_matrix,
@@ -191,6 +249,8 @@ def project_point(
     if not camera.solved:
         raise ValueError("cannot project through an unsolved camera")
     object_point = np.array([point_xyz], dtype=np.float64)
+    if not points_in_front(object_point, camera.rotation_vec, camera.translation_vec):
+        raise ValueError("point is behind the camera")
     dist_coeffs = np.zeros((4, 1))
     projected, _ = cv2.projectPoints(
         object_point, camera.rotation_vec, camera.translation_vec, camera.camera_matrix, dist_coeffs

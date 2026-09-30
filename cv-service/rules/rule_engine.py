@@ -20,10 +20,12 @@ from typing import Any
 
 import re
 
+import numpy as np
+
 import config
 from calibration.pnp_solve import CameraSolution, project_point
 from pose.estimate_pose import PoseResult
-from segmentation.mask_geometry import angle_difference_deg, mask_centroid_px, mask_orientation_deg
+from segmentation.mask_geometry import angle_difference_deg, mask_centroid_px, mask_orientation_deg, mask_reference_point
 from segmentation.segment_uniform import SegmentationResult
 
 _RULES_PATH = Path(__file__).resolve().parent / "army_no3_male.json"
@@ -50,6 +52,12 @@ class CropBox:
     y1: float
     x2: float
     y2: float
+    # A4: local image scale at this rule's 3D point, from projecting 1 cm
+    # steps through the solved camera (None -> fall back to the global
+    # shoulder-width cm_per_px). A5: geometric uncertainty of `center_px`.
+    # See ChangeRequest/2026-09-28_accuracy-program-no-real-data.md.
+    px_per_cm: float | None = None
+    uncertainty_px: float = 0.0
 
 
 @dataclass(frozen=True)
@@ -72,6 +80,22 @@ def _strip_profile_prefix(field_name: str) -> str:
     never nested under a `"profile"` key). Strip it so the field name
     actually resolves."""
     return field_name[len("profile."):] if field_name.startswith("profile.") else field_name
+
+
+_OWN_CAP_BADGE_TIERS = {"col_me7", "bg_me8_and_above"}
+
+
+def with_derived_fields(profile: dict[str, Any]) -> dict[str, Any]:
+    """Adds `cap_badge_tier` — the cap-badge vocabulary the doctrine's
+    cap-badge conditions are written in — derived from the single
+    `rank_tier` the app sends (`enlistee`, `specialist`, `col_me7`, ...).
+    COL/ME7 and BG/ME8+ have their own badges; everyone else wears the
+    SLTC/ME6-and-below one. See rules/army_no3_male.json `_meta`."""
+    if "cap_badge_tier" in profile:
+        return profile
+    rank_tier = profile.get("rank_tier")
+    tier = rank_tier if rank_tier in _OWN_CAP_BADGE_TIERS else "sltc_me6_and_below"
+    return {**profile, "cap_badge_tier": tier}
 
 
 def _condition_matches(condition: str | None, profile: dict[str, Any]) -> bool:
@@ -180,6 +204,21 @@ def _apply_sleeve_fraction(
     )
 
 
+def _local_px_per_cm(point_3d: tuple[float, float, float], center_px: tuple[float, float], camera: CameraSolution) -> float | None:
+    """Pixels per cm at `point_3d`, measured by projecting 1 cm steps along
+    the body's horizontal and vertical axes through the solved camera and
+    averaging. Unlike the single shoulder-width scale, this accounts for
+    the point's own depth and for body rotation / foreshortening."""
+    distances = []
+    for step in ((0.01, 0.0, 0.0), (0.0, 0.01, 0.0)):
+        try:
+            qx, qy = project_point(tuple(p + d for p, d in zip(point_3d, step)), camera)
+        except ValueError:
+            continue
+        distances.append(math.hypot(qx - center_px[0], qy - center_px[1]))
+    return sum(distances) / len(distances) if distances else None
+
+
 def resolve_rules(
     camera: CameraSolution,
     cm_per_px: float,
@@ -193,7 +232,7 @@ def resolve_rules(
     `calibration.pnp_solve.scale_factor_cm_per_unit` — crop radii are
     stored in cm in the rule file and converted here.
     """
-    profile = profile or {}
+    profile = with_derived_fields(profile or {})
     rules = rules if rules is not None else load_rules()
     anchors = anchors if anchors is not None else load_anchors()
 
@@ -204,8 +243,8 @@ def resolve_rules(
 
         anchor_names = [n.strip() for n in rule["expected_anchor"].split(",")]
         radius_cm = _crop_radius_cm(rule)
-        radius_px = radius_cm / cm_per_px if cm_per_px else 40.0
         sleeve_fraction = _sleeve_length_fraction(rule)
+        geometric_uncertainty_px = config.UNCERTAINTY_REPROJECTION_WEIGHT * (camera.reprojection_error_px or 0.0)
 
         crops: list[CropBox] = []
         for anchor_name in anchor_names:
@@ -217,10 +256,15 @@ def resolve_rules(
                 px, py = project_point(point_3d, camera)
             except ValueError:
                 continue
+            px_per_cm = _local_px_per_cm(point_3d, (px, py), camera)
             if sleeve_fraction is not None:
                 px, py = _apply_sleeve_fraction(
                     (px, py), anchor_name, sleeve_fraction, pose
                 )
+            if px_per_cm:
+                radius_px = radius_cm * px_per_cm
+            else:
+                radius_px = radius_cm / cm_per_px if cm_per_px else 40.0
             crops.append(
                 CropBox(
                     anchor_name=anchor_name,
@@ -229,6 +273,8 @@ def resolve_rules(
                     y1=py - radius_px,
                     x2=px + radius_px,
                     y2=py + radius_px,
+                    px_per_cm=px_per_cm,
+                    uncertainty_px=geometric_uncertainty_px,
                 )
             )
 
@@ -260,10 +306,11 @@ def resolve_rules(
 # it — read that file before changing tolerances or status logic here).
 #
 # `None` here means "no segmentation class exists yet for this doctrine
-# category" — 5 of the 18 Army No.3 Male rules (name_tag, medal_ribbons,
-# saf_badges_chest, skill_tabs_sleeve, skill_badges_sleeve) plus socks
-# have no detector at all and are always reported `unverifiable`, never
-# guessed at. Several mapped classes are shared by multiple doctrine
+# category" — medal_ribbons, saf_badges_chest, skill_tabs_sleeve and
+# skill_badges_sleeve have no detector at all and are always reported
+# `unverifiable`, never guessed at. name_tag and socks map to classes that
+# only segmentation_v2+ has; with the 9-class v1 model loaded they are
+# `unverifiable` too (see `segmentation_class_for`). Several mapped classes are shared by multiple doctrine
 # variants (e.g. 3 cap-badge rank-tier rules all map to one `cap_badge`
 # class) — this engine can confirm presence + position for those, never
 # which variant is actually present.
@@ -277,12 +324,12 @@ CATEGORY_TO_SEGMENTATION_CLASS: dict[str, str | None] = {
     "arms_badge": "arms_badge",
     "belt": "belt",
     "footwear": "footwear",
-    "name_tag": None,
+    "name_tag": "name_tag",  # segmentation_v2+ only — see has_detector
     "medal_ribbons": None,
     "saf_badge": None,
     "skill_tab": None,
     "skill_badge": None,
-    "socks": None,
+    "socks": "socks",  # segmentation_v2+ only — see has_detector
 }
 
 _DEFAULT_MIN_SEGMENT_CONFIDENCE = config.MIN_SEGMENT_CONFIDENCE
@@ -310,6 +357,19 @@ class VerdictResult:
     detected_position_px: tuple[float, float] | None = None
     error_px: tuple[float, float] | None = None
     visibility: str = "uncertain"  # "visible" | "partially_visible" | "occluded" | "out_of_frame" | "uncertain"
+    # ChangeRequest/2026-09-28_accuracy-program-no-real-data.md: what
+    # drove a non-pass status (feeds the user-facing instruction, E18),
+    # the local scale for converting `error_px` to cm, the measured angle
+    # error, and the matched mask for the post-verdict checks (B8-B10).
+    # failure_kind: "position" | "orientation" | "missing" | "out_of_frame"
+    #   | "no_detector" | "camera" | "boundary" | "color" | "variant"
+    #   | "name_text" | None
+    failure_kind: str | None = None
+    px_per_cm: float | None = None
+    angle_error_deg: float | None = None
+    region_mask: np.ndarray | None = field(default=None, repr=False, compare=False)
+    detection_source: str | None = None  # SegmentedRegion.source of the matched region
+    tolerance_cm: float | None = None  # the doctrine tolerance the position was judged against
 
 
 @dataclass(frozen=True)
@@ -325,78 +385,176 @@ class _CropEvaluation:
     detected_position_px: tuple[float, float] | None
     error_px: tuple[float, float] | None
     visibility: str
+    failure_kind: str | None = None
+    px_per_cm: float | None = None
+    angle_error_deg: float | None = None
+    region_mask: np.ndarray | None = None
+    detection_source: str | None = None
+
+
+def segmentation_class_for(category: str, class_names: frozenset[str] | None = None) -> str | None:
+    """The segmentation class that detects this doctrine category, or
+    `None` when there is none — either no class is mapped, or the loaded
+    model doesn't have it (`class_names`, from
+    `SegmentationResult.class_names`; `None` = assume every mapped class)."""
+    segmentation_class = CATEGORY_TO_SEGMENTATION_CLASS.get(category)
+    if segmentation_class is None or (class_names is not None and segmentation_class not in class_names):
+        return None
+    return segmentation_class
+
+
+def has_detector(category: str, class_names: frozenset[str] | None = None) -> bool:
+    """Whether the trained segmenter has a class for this doctrine
+    category at all. `False` means every rule in the category is
+    structurally `unverifiable` — used by `api/response_schema.py` to
+    keep those out of the verification-coverage gate's denominator."""
+    return segmentation_class_for(category, class_names) is not None
 
 
 def _crop_in_bounds(crop: CropBox, image_width: int, image_height: int) -> bool:
     return crop.x1 >= 0 and crop.y1 >= 0 and crop.x2 <= image_width and crop.y2 <= image_height
 
 
-def _nearest_candidate(candidates: list, target_px: tuple[float, float]):
-    def distance(region) -> float:
+def _centroid_in_crop(centroid: tuple[float, float], crop: CropBox) -> bool:
+    return crop.x1 <= centroid[0] <= crop.x2 and crop.y1 <= centroid[1] <= crop.y2
+
+
+def _assign_regions_to_crops(crops: list[CropBox], candidates: list) -> list:
+    """One-to-one assignment of detected regions to a rule's crops.
+
+    A region is only eligible for a crop when its mask centroid lies
+    inside that crop's search box — a detection elsewhere in the photo
+    (a stray false positive, or the *other* side of a paired item) must
+    never stand in for this one. Greedy by distance (globally shortest
+    pair first), which is optimal for the 1-2 crops a rule has. Returns
+    one entry per crop: `(region, centroid)` or `None` when unmatched.
+    See ChangeRequest/2026-09-28_cv-service-coverage-gate-and-matching.md.
+    """
+    pairs: list[tuple[float, int, int, tuple[float, float]]] = []
+    for region_index, region in enumerate(candidates):
         centroid = mask_centroid_px(region.mask)
         if centroid is None:
-            return math.inf
-        return math.hypot(centroid[0] - target_px[0], centroid[1] - target_px[1])
+            continue
+        for crop_index, crop in enumerate(crops):
+            if _centroid_in_crop(centroid, crop):
+                distance = math.hypot(centroid[0] - crop.center_px[0], centroid[1] - crop.center_px[1])
+                pairs.append((distance, crop_index, region_index, centroid))
 
-    return min(candidates, key=distance)
+    assignment: list = [None] * len(crops)
+    used_regions: set[int] = set()
+    for _, crop_index, region_index, centroid in sorted(pairs, key=lambda p: p[0]):
+        if assignment[crop_index] is not None or region_index in used_regions:
+            continue
+        assignment[crop_index] = (candidates[region_index], centroid)
+        used_regions.add(region_index)
+    return assignment
 
 
-def _evaluate_one_crop(rule: ResolvedRule, crop: CropBox, candidates: list, cm_per_px: float) -> _CropEvaluation:
-    """Returns a `_CropEvaluation` for one crop of one rule, given the
-    segmentation regions matching that rule's class."""
-    nearest = _nearest_candidate(candidates, crop.center_px)
-    centroid = mask_centroid_px(nearest.mask)
-    if centroid is None:
+def _unmatched_crop(
+    crop: CropBox, candidates: list, segmentation_class: str, image_width: int, image_height: int
+) -> _CropEvaluation:
+    """Evaluation for a crop no detection could be assigned to."""
+    if not _crop_in_bounds(crop, image_width, image_height):
         return _CropEvaluation(
-            status="missing",
-            reason=f"{crop.anchor_name}: matched segment has an empty mask",
-            confidence=nearest.confidence,
-            bounding_box_px=nearest.bbox_px,
+            status="unverifiable",
+            reason=f"{crop.anchor_name}: expected region falls outside the photo",
+            confidence=None,
+            bounding_box_px=None,
             expected_position_px=crop.center_px,
             detected_position_px=None,
             error_px=None,
-            visibility="uncertain",
+            visibility="out_of_frame",
+            failure_kind="out_of_frame",
+            px_per_cm=crop.px_per_cm,
         )
 
-    distance_px = math.hypot(centroid[0] - crop.center_px[0], centroid[1] - crop.center_px[1])
+    reason = f"{crop.anchor_name}: no {segmentation_class} segment detected in the expected region"
+    centroids = [c for c in (mask_centroid_px(r.mask) for r in candidates) if c is not None]
+    if centroids:
+        nearest = min(math.hypot(c[0] - crop.center_px[0], c[1] - crop.center_px[1]) for c in centroids)
+        reason += f" (nearest {segmentation_class} detection is {nearest:.0f}px away, outside the search area)"
+    return _CropEvaluation(
+        status="missing",
+        reason=reason,
+        confidence=None,
+        bounding_box_px=None,
+        expected_position_px=crop.center_px,
+        detected_position_px=None,
+        error_px=None,
+        visibility="occluded",
+        failure_kind="missing",
+        px_per_cm=crop.px_per_cm,
+    )
+
+
+def _position_status(distance_px: float, uncertainty_px: float, tolerance_px: float) -> str:
+    """A5 — three-way decision that respects measurement uncertainty:
+    `pass` only if the item is inside tolerance even at the worst end of
+    the uncertainty, out-of-tolerance only if it's outside even at the
+    best end, otherwise the measurement can't tell (`unverifiable`)."""
+    band_px = tolerance_px * config.SLIGHT_MISALIGNMENT_BAND
+    if distance_px + uncertainty_px <= tolerance_px:
+        return "pass"
+    if distance_px - uncertainty_px > tolerance_px:
+        return "slightly_misaligned" if distance_px <= band_px else "fail"
+    return "unverifiable"
+
+
+def _evaluate_one_crop(
+    rule: ResolvedRule, crop: CropBox, region, centroid: tuple[float, float], cm_per_px: float
+) -> _CropEvaluation:
+    """Returns a `_CropEvaluation` for one crop of one rule, given the
+    detected region already assigned to it (centroid inside the crop)."""
+    # A3: measure the point doctrine actually names (e.g. the bottom edge
+    # of a name tag sits on the pocket's top edge), not the mask centroid.
+    reference_kind = rule.raw_rule.get("reference_point", "center")
+    measured = mask_reference_point(region.mask, reference_kind) or centroid
+    distance_px = math.hypot(measured[0] - crop.center_px[0], measured[1] - crop.center_px[1])
     tolerance_cm = rule.raw_rule.get("tolerance_cm")
+    px_per_cm = crop.px_per_cm or (1.0 / cm_per_px if cm_per_px else None)
+    failure_kind = None
     if tolerance_cm is not None:
-        tolerance_px = tolerance_cm / cm_per_px if cm_per_px else float("inf")
-        position_ok = distance_px <= tolerance_px
-        slightly_misaligned = (
-            not position_ok and distance_px <= tolerance_px * config.SLIGHT_MISALIGNMENT_BAND
+        tolerance_px = tolerance_cm * px_per_cm if px_per_cm else float("inf")
+        mask_uncertainty_px = config.UNCERTAINTY_MASK_FRACTION * math.sqrt(float(region.mask.sum()))
+        uncertainty_px = math.hypot(crop.uncertainty_px, mask_uncertainty_px)
+        status = _position_status(distance_px, uncertainty_px, tolerance_px)
+        where = "" if reference_kind == "center" else f" ({reference_kind.replace('_', ' ')})"
+        reason = (
+            f"{crop.anchor_name}{where}: {distance_px:.1f}px from expected position "
+            f"(doctrine tolerance {tolerance_px:.1f}px = {tolerance_cm}cm, measurement uncertainty ±{uncertainty_px:.1f}px)"
         )
-        reason = f"{crop.anchor_name}: {distance_px:.1f}px from expected position (doctrine tolerance {tolerance_px:.1f}px = {tolerance_cm}cm)"
+        if status == "unverifiable":
+            reason += " — too close to the tolerance boundary to call either way"
+            failure_kind = "boundary"
+        elif status != "pass":
+            failure_kind = "position"
     else:
-        # No doctrine cm figure — presence/region check only, using the
-        # crop's own already-sized bounds (search_radius_cm or the
-        # default), never a tighter check than doctrine itself specifies.
-        position_ok = crop.x1 <= centroid[0] <= crop.x2 and crop.y1 <= centroid[1] <= crop.y2
-        slightly_misaligned = False
-        reason = f"{crop.anchor_name}: presence/region check {'passed' if position_ok else 'failed'} (doctrine gives no cm tolerance for this item)"
-
-    if position_ok:
+        # No doctrine cm figure — presence/region check only. Assignment
+        # already guarantees the centroid lies inside the crop's own
+        # search box (search_radius_cm or the default), so presence in
+        # the expected region is established; never a tighter check than
+        # doctrine itself specifies.
         status = "pass"
-    elif slightly_misaligned:
-        status = "slightly_misaligned"
-    else:
-        status = "fail"
+        reason = f"{crop.anchor_name}: present in expected region (doctrine gives no cm tolerance for this item)"
 
+    angle_error = None
     angle_deg = rule.raw_rule.get("angle_deg")
     tolerance_deg = rule.raw_rule.get("tolerance_deg")
     if angle_deg is not None and tolerance_deg is not None:
-        measured_angle = mask_orientation_deg(nearest.mask)
+        measured_angle = mask_orientation_deg(region.mask)
         if measured_angle is None:
             reason += f"; {crop.anchor_name}: orientation unverifiable (mask shape too ambiguous to measure a reliable angle)"
             if status == "pass":
                 status = "unverifiable"
+                failure_kind = "boundary"
         else:
-            diff = angle_difference_deg(measured_angle, angle_deg)
-            reason += f"; {crop.anchor_name}: orientation {diff:.1f}° off doctrine (tolerance {tolerance_deg}°)"
-            if diff > tolerance_deg:
+            angle_error = angle_difference_deg(measured_angle, angle_deg)
+            reason += f"; {crop.anchor_name}: orientation {angle_error:.1f}° off doctrine (tolerance {tolerance_deg}°)"
+            if angle_error > tolerance_deg:
                 status = "fail"
+                failure_kind = "orientation" if failure_kind in (None, "boundary") else failure_kind
 
-    if nearest.confidence < config.MIN_SEGMENT_CONFIDENCE * config.PARTIAL_VISIBILITY_CONFIDENCE_MULTIPLIER:
+    if region.confidence < config.MIN_SEGMENT_CONFIDENCE * config.PARTIAL_VISIBILITY_CONFIDENCE_MULTIPLIER:
         visibility = "partially_visible"
     else:
         visibility = "visible"
@@ -404,12 +562,17 @@ def _evaluate_one_crop(rule: ResolvedRule, crop: CropBox, candidates: list, cm_p
     return _CropEvaluation(
         status=status,
         reason=reason,
-        confidence=nearest.confidence,
-        bounding_box_px=nearest.bbox_px,
+        confidence=region.confidence,
+        bounding_box_px=region.bbox_px,
         expected_position_px=crop.center_px,
-        detected_position_px=centroid,
-        error_px=(centroid[0] - crop.center_px[0], centroid[1] - crop.center_px[1]),
+        detected_position_px=measured,
+        error_px=(measured[0] - crop.center_px[0], measured[1] - crop.center_px[1]),
         visibility=visibility,
+        failure_kind=failure_kind,
+        px_per_cm=px_per_cm,
+        angle_error_deg=angle_error,
+        region_mask=region.mask,
+        detection_source=getattr(region, "source", "trained"),
     )
 
 
@@ -439,6 +602,7 @@ def evaluate_verdicts(
                 doctrine_ref=rule.doctrine_ref,
                 expected_position_px=rule.crops[0].center_px,
                 visibility="uncertain",
+                failure_kind="camera",
             )
             for rule in resolved_rules
         ]
@@ -446,7 +610,7 @@ def evaluate_verdicts(
     results: list[VerdictResult] = []
     for rule in resolved_rules:
         expected_position_px = rule.crops[0].center_px
-        segmentation_class = CATEGORY_TO_SEGMENTATION_CLASS.get(rule.category, None)
+        segmentation_class = segmentation_class_for(rule.category, segmentation.class_names)
         if segmentation_class is None:
             # Unlike the "detector exists but found nothing" branch below,
             # this is reported even for optional rules: "we have no way
@@ -463,6 +627,7 @@ def evaluate_verdicts(
                     doctrine_ref=rule.doctrine_ref,
                     expected_position_px=expected_position_px,
                     visibility="uncertain",
+                    failure_kind="no_detector",
                 )
             )
             continue
@@ -472,9 +637,10 @@ def evaluate_verdicts(
             for region in segmentation.regions
             if region.class_name == segmentation_class and region.confidence >= min_segment_confidence
         ]
-        any_crop_in_bounds = any(_crop_in_bounds(crop, image_width, image_height) for crop in rule.crops)
+        assignment = _assign_regions_to_crops(rule.crops, candidates)
 
-        if not candidates:
+        if all(match is None for match in assignment):
+            any_crop_in_bounds = any(_crop_in_bounds(crop, image_width, image_height) for crop in rule.crops)
             if not any_crop_in_bounds:
                 results.append(
                     VerdictResult(
@@ -484,24 +650,19 @@ def evaluate_verdicts(
                         doctrine_ref=rule.doctrine_ref,
                         expected_position_px=expected_position_px,
                         visibility="out_of_frame",
+                        failure_kind="out_of_frame",
                     )
                 )
-            elif not rule.required:
                 continue
-            else:
-                results.append(
-                    VerdictResult(
-                        accessory=rule.object_id,
-                        status="missing",
-                        reason=f"no {segmentation_class} segment detected in the expected (in-frame) region",
-                        doctrine_ref=rule.doctrine_ref,
-                        expected_position_px=expected_position_px,
-                        visibility="occluded",
-                    )
-                )
-            continue
+            if not rule.required:
+                continue
 
-        evaluations = [_evaluate_one_crop(rule, crop, candidates, cm_per_px) for crop in rule.crops]
+        evaluations = [
+            _unmatched_crop(crop, candidates, segmentation_class, image_width, image_height)
+            if match is None
+            else _evaluate_one_crop(rule, crop, match[0], match[1], cm_per_px)
+            for crop, match in zip(rule.crops, assignment)
+        ]
         worst = min(evaluations, key=lambda e: _STATUS_SEVERITY[e.status])
         reasons = "; ".join(e.reason for e in evaluations)
 
@@ -517,6 +678,12 @@ def evaluate_verdicts(
                 detected_position_px=worst.detected_position_px,
                 error_px=worst.error_px,
                 visibility=worst.visibility,
+                failure_kind=worst.failure_kind,
+                px_per_cm=worst.px_per_cm,
+                angle_error_deg=worst.angle_error_deg,
+                region_mask=worst.region_mask,
+                detection_source=worst.detection_source,
+                tolerance_cm=rule.raw_rule.get("tolerance_cm"),
             )
         )
 

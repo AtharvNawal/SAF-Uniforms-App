@@ -658,7 +658,82 @@ class AppLocalizationsEn extends AppLocalizations {
   String get arAligningSub => 'Stand 1.5 m from camera, face forward';
 
   @override
-  String get arAlignedSub => 'Hold still — capturing in 3…';
+  String get arAlignedSub => 'Tap capture — we take 3 quick frames';
+
+  @override
+  String get arHintNoPerson => 'Step into the frame';
+
+  @override
+  String get arHintNotFullBody => 'Show the whole body — head to feet';
+
+  @override
+  String get arHintTooFar => 'Move closer to the camera';
+
+  @override
+  String get arHintTooClose => 'Step back — keep head and feet in frame';
+
+  @override
+  String get arHintNotCentered => 'Centre the person in the frame';
+
+  @override
+  String get arHintFacingAway => 'Face the camera';
+
+  @override
+  String get arHintTurnedSideways => 'Turn to face the camera square-on';
+
+  @override
+  String get arHintArmsRaised => 'Relax your arms at your sides';
+
+  @override
+  String get arHintPhoneTilted => 'Hold the phone upright and level';
+
+  @override
+  String get arHintHoldStill => 'Hold still…';
+
+  @override
+  String get arHintUnavailable =>
+      'Live guidance unavailable — check the framing yourself';
+
+  @override
+  String get cvServerTitle => 'Analysis server';
+
+  @override
+  String get cvServerHint =>
+      'Address of the laptop running the uniform-scan service.';
+
+  @override
+  String get cvServerSave => 'Save';
+
+  @override
+  String get cvServerUsb => 'USB cable';
+
+  @override
+  String get cvServerReset => 'Default';
+
+  @override
+  String get cvServerTest => 'Test connection';
+
+  @override
+  String get cvServerTesting => 'Testing…';
+
+  @override
+  String get cvServerOk => 'Connected';
+
+  @override
+  String get cvServerFail => 'Can\'t reach it';
+
+  @override
+  String get cvServerInvalid => 'Not a valid address';
+
+  @override
+  String get cvServerUsbHelp =>
+      'USB cable: plug the phone into the laptop and run deploy/connect-phone-usb.sh there, then tap USB cable.';
+
+  @override
+  String get cvServerSaved => 'Saved';
+
+  @override
+  String get arServerSettings => 'Server settings';
 
   @override
   String get arRescan => 'Re-Scan';
@@ -837,6 +912,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get profileFieldMedalRows => 'Medal ribbon rows';
+
+  @override
+  String get profileFieldHeight => 'Height (cm)';
+
+  @override
+  String get profileHeightHint =>
+      'Optional — helps the uniform scan measure more accurately.';
 
   @override
   String get profileFullName => 'Full name';

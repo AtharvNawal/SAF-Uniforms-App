@@ -29,23 +29,41 @@ class UniformCheckRepository {
   final http.Client _client;
   final String _baseUrl;
 
+  /// One photo → `POST /check_uniform`; several frames of the same pose
+  /// → `POST /check_uniform_burst`, which combines them by per-item
+  /// majority (D17). The optional inputs each make the measurement more
+  /// accurate (`ChangeRequest/2026-09-28_accuracy-program-no-real-data.md`):
+  /// [wearerName] lets the service read and match the name tag,
+  /// [heightCm] scales the reference body to the wearer, and
+  /// [gravityUpCamera] (world-up in the back camera's frame, from
+  /// `DeviceTilt`) constrains the camera's pitch and roll. The camera's
+  /// focal length travels in the JPEG's own EXIF data.
   Future<UniformCheckResult> check({
-    required Uint8List photoBytes,
+    required List<Uint8List> photos,
     required String uniformType,
     required String rankTier,
     String gender = 'male',
     bool isSikh = false,
     int medalRowCount = 0,
     String bodyType = 'male',
-    String filename = 'photo.jpg',
+    String? wearerName,
+    int? heightCm,
+    List<double>? gravityUpCamera,
+    bool includeDebugImage = true,
   }) async {
+    if (photos.isEmpty) {
+      throw UniformCheckException('no photos to check', statusCode: null);
+    }
+    final burst = photos.length > 1;
+    final path = burst ? 'check_uniform_burst' : 'check_uniform';
     AppLog.i(
-      'check: POST /check_uniform  uniform=$uniformType  rank=$rankTier  '
-      'bytes=${photoBytes.length}',
+      'check: POST /$path  uniform=$uniformType  rank=$rankTier  '
+      'frames=${photos.length}  bytes=${photos.fold<int>(0, (n, p) => n + p.length)}  '
+      'height=${heightCm ?? '-'}  gravity=${gravityUpCamera != null}  name=${wearerName?.isNotEmpty == true}',
       tag: _tag,
     );
     try {
-      final uri = Uri.parse('$_baseUrl/check_uniform');
+      final uri = Uri.parse('$_baseUrl/$path');
       final request = http.MultipartRequest('POST', uri)
         ..fields['uniform_type'] = uniformType
         ..fields['rank_tier'] = rankTier
@@ -53,17 +71,41 @@ class UniformCheckRepository {
         ..fields['is_sikh'] = isSikh.toString()
         ..fields['medal_row_count'] = medalRowCount.toString()
         ..fields['body_type'] = bodyType
-        ..files.add(
-          http.MultipartFile.fromBytes('image', photoBytes, filename: filename),
-        );
+        ..fields['include_debug_image'] = includeDebugImage.toString();
+      if (wearerName != null && wearerName.trim().isNotEmpty) {
+        request.fields['wearer_name'] = wearerName.trim();
+      }
+      if (heightCm != null && heightCm > 0) {
+        request.fields['height_cm'] = heightCm.toString();
+      }
+      if (gravityUpCamera != null && gravityUpCamera.length == 3) {
+        request.fields['gravity_x'] = gravityUpCamera[0].toString();
+        request.fields['gravity_y'] = gravityUpCamera[1].toString();
+        request.fields['gravity_z'] = gravityUpCamera[2].toString();
+      }
+      for (var i = 0; i < photos.length; i++) {
+        request.files.add(http.MultipartFile.fromBytes(
+          burst ? 'images' : 'image',
+          photos[i],
+          filename: 'frame_$i.jpg',
+        ));
+      }
 
-      final streamed =
-          await _client.send(request).timeout(const Duration(seconds: 60));
+      final streamed = await _client
+          .send(request)
+          .timeout(Duration(seconds: burst ? 180 : 90));
       final response = await http.Response.fromStream(streamed);
+      // cv-service sends UTF-8 JSON without a charset parameter, and
+      // `Response.body` then falls back to Latin-1 — which garbles every
+      // "—" / "°" in the per-item instructions. Decode the bytes as UTF-8.
+      final responseText = utf8.decode(response.bodyBytes, allowMalformed: true);
 
       if (response.statusCode != 200) {
-        final body = _tryDecode(response.body);
-        final code = body?['error'] as String?;
+        final body = _tryDecode(responseText);
+        // The service returns its typed code under `status`
+        // (`{"success": false, "status": "IMAGE_TOO_BLURRY", ...}`);
+        // older/other handlers use `error`.
+        final code = (body?['status'] ?? body?['error']) as String?;
         final message = body?['message'] as String? ??
             body?['detail'] as String? ??
             'http_${response.statusCode}';
@@ -79,7 +121,7 @@ class UniformCheckRepository {
         );
       }
 
-      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      final data = jsonDecode(responseText) as Map<String, dynamic>;
       final result = _parse(data);
       AppLog.i(
         'check: OK  status=${result.overallStatus}  score=${result.overallScore}  '
@@ -91,7 +133,7 @@ class UniformCheckRepository {
       rethrow;
     } catch (e, st) {
       AppLog.e('check: FAILED', tag: _tag, error: e, st: st);
-      throw UniformCheckException(e.toString(), statusCode: null);
+      throw UniformCheckException('$_baseUrl — $e', statusCode: null);
     }
   }
 
@@ -110,6 +152,10 @@ class UniformCheckRepository {
         Map<String, dynamic>.from(data['person'] as Map? ?? const {});
     final summary =
         Map<String, dynamic>.from(data['summary'] as Map? ?? const {});
+    final coverage =
+        Map<String, dynamic>.from(data['coverage'] as Map? ?? const {});
+    final camera = Map<String, dynamic>.from(data['camera'] as Map? ?? const {});
+    final burst = data['burst'] is Map ? Map<String, dynamic>.from(data['burst'] as Map) : null;
 
     return UniformCheckResult(
       success: data['success'] as bool? ?? false,
@@ -128,11 +174,21 @@ class UniformCheckRepository {
             (summary['detected_accessories'] as num?)?.toInt() ?? 0,
         correct: (summary['correct'] as num?)?.toInt() ?? 0,
         incorrect: (summary['incorrect'] as num?)?.toInt() ?? 0,
+        slightlyMisaligned:
+            (summary['slightly_misaligned'] as num?)?.toInt() ?? 0,
         missing: (summary['missing'] as num?)?.toInt() ?? 0,
         uncertain: (summary['uncertain'] as num?)?.toInt() ?? 0,
         requiredAccessories:
             (summary['required_accessories'] as num?)?.toInt() ?? 0,
       ),
+      checkableRequired: (coverage['checkable_required'] as num?)?.toInt() ?? 0,
+      verifiedRequired: (coverage['verified_required'] as num?)?.toInt() ?? 0,
+      notCheckableRequired:
+          (coverage['not_checkable_required'] as num?)?.toInt() ?? 0,
+      debugImageBase64: data['debug_image_base64'] as String?,
+      burstFrames: (burst?['frames'] as num?)?.toInt(),
+      burstUsableFrames: (burst?['usable_frames'] as num?)?.toInt(),
+      focalSource: camera['focal_source'] as String?,
     );
   }
 
@@ -150,6 +206,11 @@ class UniformCheckRepository {
       error: _parsePoint(m['error']),
       doctrineRef: m['doctrine_ref'] as String? ?? '',
       message: m['message'] as String? ?? '',
+      instruction: m['instruction'] as String? ?? '',
+      required: m['required'] as bool? ?? false,
+      checkable: m['checkable'] as bool? ?? true,
+      detectionSource: m['detection_source'] as String?,
+      frameAgreement: m['frame_agreement'] as String?,
     );
   }
 
