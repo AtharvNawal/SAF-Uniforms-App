@@ -39,8 +39,9 @@ from fastapi.responses import JSONResponse
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from api.response_schema import build_check_uniform_response  # noqa: E402
-from api.validation import validate_image  # noqa: E402
+import config  # noqa: E402
+from api.burst import aggregate_burst  # noqa: E402
+from api.pipeline import SUPPORTED_UNIFORM_TYPES, CheckError, CheckParams, run_check  # noqa: E402
 from calibration.pnp_solve import scale_factor_cm_per_unit, solve_camera_pose  # noqa: E402
 from detectors.vision_crop_inspector import inspect_resolved_rules  # noqa: E402
 from geometry.project_rules import cm_per_px_from_anchor_pose  # noqa: E402
@@ -52,14 +53,12 @@ from reporting.report import (  # noqa: E402
     build_report,
     combine_item_verdicts,
     render_annotated_image_b64,
-    render_debug_image_b64,
 )
 from rules.rule_engine import evaluate_verdicts, resolve_rules  # noqa: E402
 from segmentation.segment_uniform import segment_uniform  # noqa: E402
 
 # Only doctrine this service has today — see rules/army_no3_male.json.
 # Any other uniform_type is a hard 422, not a silent fallback.
-SUPPORTED_UNIFORM_TYPES = {"army_no3_male"}
 
 app = FastAPI(
     title="SAF Uniform Compliance — cv-service (MVP)",
@@ -226,6 +225,26 @@ def _error(status_code: int, status: str, message: str, **extra) -> JSONResponse
     return JSONResponse(status_code=status_code, content={"success": False, "status": status, "message": message, **extra})
 
 
+def _gravity(gravity_x: float | None, gravity_y: float | None, gravity_z: float | None) -> tuple[float, float, float] | None:
+    """World-up in OpenCV camera coordinates (x right, y down, z forward),
+    as the app computes it from the accelerometer — all three or none."""
+    if gravity_x is None or gravity_y is None or gravity_z is None:
+        return None
+    return (float(gravity_x), float(gravity_y), float(gravity_z))
+
+
+def _params(**kwargs) -> CheckParams:
+    gravity = _gravity(kwargs.pop("gravity_x"), kwargs.pop("gravity_y"), kwargs.pop("gravity_z"))
+    return CheckParams(**kwargs, gravity_up_cam=gravity)
+
+
+async def _save_upload(image: UploadFile) -> str:
+    suffix = Path(image.filename or "photo.jpg").suffix or ".jpg"
+    with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
+        tmp.write(await image.read())
+        return tmp.name
+
+
 @app.post("/check_uniform")
 async def check_uniform(
     image: UploadFile = File(...),
@@ -237,106 +256,90 @@ async def check_uniform(
     view: str = Form("front"),
     body_type: str = Form("male"),
     include_debug_image: bool = Form(False),
+    wearer_name: str | None = Form(None),
+    height_cm: float | None = Form(None),
+    focal_length_px: float | None = Form(None),
+    gravity_x: float | None = Form(None),
+    gravity_y: float | None = Form(None),
+    gravity_z: float | None = Form(None),
 ):
-    """Full compliance check against the `POST /check_uniform` contract.
+    """Full compliance check against the `POST /check_uniform` contract —
+    see `api/pipeline.py` for every stage.
 
     `uniform_type` must be one of `SUPPORTED_UNIFORM_TYPES` (today, only
-    `"army_no3_male"` — the only doctrine transcribed so far). The
-    doctrine rules genuinely need `rank_tier`/`gender`/`is_sikh`/
-    `medal_row_count` to resolve which items apply to this wearer — see
-    `rules/army_no3_male.json`'s `condition` fields. `view`/`body_type`
-    are accepted for forward-compatibility but only `"front"`/`"male"`
-    are backed by doctrine today; anything else degrades to an advisory
-    rather than a hard failure, since the geometry pipeline itself is
-    view-agnostic (it measures whatever pose it's given).
+    `"army_no3_male"`). The doctrine rules need `rank_tier`/`gender`/
+    `is_sikh`/`medal_row_count` to resolve which items apply to this
+    wearer. Optional, each improving accuracy (ChangeRequest/
+    2026-09-28_accuracy-program-no-real-data.md): `wearer_name` (full name, for name-tag OCR
+    match), `height_cm` (scales the reference body), `focal_length_px`
+    (else read from EXIF), `gravity_x/y/z` (phone accelerometer
+    world-up in camera coordinates — constrains camera tilt).
 
-    Unlike `/inspect`, every failure here is a hard error — this is the
-    endpoint's primary path, not a best-effort secondary pass — and the
-    whole pipeline runs with **no Anthropic dependency** (pure geometry +
-    the trained segmentation model).
+    Every failure is a hard, typed error, and the whole pipeline runs with
+    **no Anthropic dependency**.
     """
-    if uniform_type not in SUPPORTED_UNIFORM_TYPES:
-        return _error(
-            422, "UNSUPPORTED_UNIFORM",
-            f"'{uniform_type}' is not a supported uniform_type. Supported: {sorted(SUPPORTED_UNIFORM_TYPES)}.",
-        )
-
-    suffix = Path(image.filename or "photo.jpg").suffix or ".jpg"
-    with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
-        tmp.write(await image.read())
-        tmp_path = tmp.name
-
+    params = _params(
+        uniform_type=uniform_type, rank_tier=rank_tier, gender=gender, is_sikh=is_sikh,
+        medal_row_count=medal_row_count, view=view, body_type=body_type,
+        include_debug_image=include_debug_image, wearer_name=wearer_name, height_cm=height_cm,
+        focal_length_px=focal_length_px, gravity_x=gravity_x, gravity_y=gravity_y, gravity_z=gravity_z,
+    )
+    tmp_path = await _save_upload(image)
     try:
-        validation = validate_image(tmp_path)
-        if not validation.usable:
-            return _error(422, validation.status, validation.message)
-
-        detection = detect_person(tmp_path)
-        if not detection.accepted:
-            status = "NO_PERSON_DETECTED" if detection.reason == "no_person_detected" else "MULTIPLE_PEOPLE_DETECTED"
-            message = (
-                "No person was detected in the photo. Please retake with the full "
-                "body clearly visible."
-                if status == "NO_PERSON_DETECTED"
-                else "Multiple people were detected. Please retake with only the "
-                "wearer in frame."
-            )
-            return _error(422, status, message, candidate_count=detection.candidate_count)
-
-        anchor_pose = estimate_anchor_pose(tmp_path)
-        image_bgr = cv2.imread(tmp_path)
-        camera = solve_camera_pose_v2(anchor_pose, image_bgr.shape[1], image_bgr.shape[0])
-        if not camera.solved or not camera.reliable:
-            return _error(
-                422, "POSE_UNRELIABLE",
-                "Could not reliably determine the camera angle from this photo. "
-                "Please retake per the capture protocol: front-facing, arms relaxed "
-                "at sides, full torso visible.",
-                reprojection_error_px=camera.reprojection_error_px,
-            )
-
-        cm_per_px = cm_per_px_from_anchor_pose(anchor_pose)
-        if not cm_per_px:
-            return _error(
-                422, "SCALE_UNAVAILABLE",
-                "Could not determine physical scale from this photo (shoulders not "
-                "clearly visible). Please retake with both shoulders in frame.",
-            )
-
-        profile = {
-            "rank_tier": rank_tier,
-            "gender": gender,
-            "isSikh": is_sikh,
-            "medalRowCount": medal_row_count,
-        }
-        resolved = resolve_rules(camera, cm_per_px, profile=profile)
-        if not resolved:
-            raise HTTPException(status_code=500, detail="no rules resolved for this profile")
-
-        try:
-            seg_result = segment_uniform(tmp_path)
-        except FileNotFoundError:
-            return _error(
-                503, "SEGMENTER_UNAVAILABLE",
-                "The uniform segmentation model is not installed on this server.",
-            )
-
-        verdicts = evaluate_verdicts(
-            resolved, seg_result, cm_per_px, image_bgr.shape[1], image_bgr.shape[0],
-            camera_reliable=camera.reliable,
-        )
-
-        response = build_check_uniform_response(
-            resolved, verdicts, detection, validation.usable, validation.confidence,
-        )
-        if view != "front" or body_type != "male":
-            response["image_quality"]["note"] = (
-                f"view='{view}', body_type='{body_type}' — only front/male doctrine exists today; "
-                "results may be unreliable."
-            )
-        if include_debug_image:
-            response["debug_image_base64"] = render_debug_image_b64(image_bgr, verdicts)
-
-        return response
+        return run_check(tmp_path, params)
+    except CheckError as err:
+        return _error(err.status_code, err.status, err.message, **err.extra)
     finally:
         Path(tmp_path).unlink(missing_ok=True)
+
+
+@app.post("/check_uniform_burst")
+async def check_uniform_burst(
+    images: list[UploadFile] = File(...),
+    uniform_type: str = Form(...),
+    rank_tier: str = Form(...),
+    gender: str = Form("male"),
+    is_sikh: bool = Form(False),
+    medal_row_count: int = Form(0),
+    view: str = Form("front"),
+    body_type: str = Form("male"),
+    include_debug_image: bool = Form(False),
+    wearer_name: str | None = Form(None),
+    height_cm: float | None = Form(None),
+    focal_length_px: float | None = Form(None),
+    gravity_x: float | None = Form(None),
+    gravity_y: float | None = Form(None),
+    gravity_z: float | None = Form(None),
+):
+    """D17 — the same check over 2-`BURST_MAX_FRAMES` frames of one pose,
+    combined by per-item strict majority (`api/burst.py`). Frames the
+    pipeline rejects are skipped and reported under `burst.frame_errors`;
+    if every frame is rejected, the first frame's error is returned."""
+    if not 1 <= len(images) <= config.BURST_MAX_FRAMES:
+        return _error(422, "BAD_BURST", f"Send between 1 and {config.BURST_MAX_FRAMES} images.")
+    if params_error := (None if uniform_type in SUPPORTED_UNIFORM_TYPES else uniform_type):
+        return _error(422, "UNSUPPORTED_UNIFORM",
+                      f"'{params_error}' is not a supported uniform_type. Supported: {sorted(SUPPORTED_UNIFORM_TYPES)}.")
+    params = _params(
+        uniform_type=uniform_type, rank_tier=rank_tier, gender=gender, is_sikh=is_sikh,
+        medal_row_count=medal_row_count, view=view, body_type=body_type,
+        include_debug_image=include_debug_image, wearer_name=wearer_name, height_cm=height_cm,
+        focal_length_px=focal_length_px, gravity_x=gravity_x, gravity_y=gravity_y, gravity_z=gravity_z,
+    )
+    results: list[dict | None] = []
+    errors: list[dict | None] = []
+    first_error: CheckError | None = None
+    for index, image in enumerate(images):
+        tmp_path = await _save_upload(image)
+        try:
+            results.append(run_check(tmp_path, params))
+            errors.append(None)
+        except CheckError as err:
+            first_error = first_error or err
+            results.append(None)
+            errors.append({"frame": index, "status": err.status, "message": err.message})
+        finally:
+            Path(tmp_path).unlink(missing_ok=True)
+    if all(r is None for r in results):
+        return _error(first_error.status_code, first_error.status, first_error.message, **first_error.extra)
+    return aggregate_burst(results, errors)

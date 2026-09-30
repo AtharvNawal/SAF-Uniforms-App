@@ -632,7 +632,80 @@ class AppLocalizationsZh extends AppLocalizations {
   String get arAligningSub => '距摄像头 1.5 米,面向前方';
 
   @override
-  String get arAlignedSub => '请保持不动 — 3 秒后捕捉…';
+  String get arAlignedSub => '点击拍摄——将连续拍摄 3 张';
+
+  @override
+  String get arHintNoPerson => '请走进画面';
+
+  @override
+  String get arHintNotFullBody => '请露出全身——从头到脚';
+
+  @override
+  String get arHintTooFar => '请靠近镜头';
+
+  @override
+  String get arHintTooClose => '请后退——头和脚都要在画面内';
+
+  @override
+  String get arHintNotCentered => '请让人物位于画面中央';
+
+  @override
+  String get arHintFacingAway => '请面向镜头';
+
+  @override
+  String get arHintTurnedSideways => '请正面面对镜头';
+
+  @override
+  String get arHintArmsRaised => '双臂自然下垂放在身体两侧';
+
+  @override
+  String get arHintPhoneTilted => '请将手机竖直并保持水平';
+
+  @override
+  String get arHintHoldStill => '请保持不动…';
+
+  @override
+  String get arHintUnavailable => '实时引导不可用——请自行检查取景';
+
+  @override
+  String get cvServerTitle => '分析服务器';
+
+  @override
+  String get cvServerHint => '运行制服扫描服务的笔记本电脑地址。';
+
+  @override
+  String get cvServerSave => '保存';
+
+  @override
+  String get cvServerUsb => 'USB 数据线';
+
+  @override
+  String get cvServerReset => '默认';
+
+  @override
+  String get cvServerTest => '测试连接';
+
+  @override
+  String get cvServerTesting => '测试中…';
+
+  @override
+  String get cvServerOk => '已连接';
+
+  @override
+  String get cvServerFail => '无法连接';
+
+  @override
+  String get cvServerInvalid => '地址无效';
+
+  @override
+  String get cvServerUsbHelp =>
+      'USB 数据线：用数据线连接手机和电脑，在电脑上运行 deploy/connect-phone-usb.sh，然后点“USB 数据线”。';
+
+  @override
+  String get cvServerSaved => '已保存';
+
+  @override
+  String get arServerSettings => '服务器设置';
 
   @override
   String get arRescan => '重新扫描';
@@ -807,6 +880,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get profileFieldMedalRows => '勋表排数';
+
+  @override
+  String get profileFieldHeight => '身高（厘米）';
+
+  @override
+  String get profileHeightHint => '选填——可提高制服扫描的测量精度。';
 
   @override
   String get profileFullName => '全名';

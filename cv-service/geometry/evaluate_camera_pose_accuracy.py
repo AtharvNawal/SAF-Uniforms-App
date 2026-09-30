@@ -26,7 +26,7 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from geometry.solve_camera_pose import solve_camera_pose  # noqa: E402
-from labeling.render_standins import VARIANTS  # noqa: E402
+from labeling.render_standins import HEIGHT as RENDER_HEIGHT, VARIANTS, YFOV_DEG  # noqa: E402
 from pose.anchor_mapping import estimate_anchor_pose  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -40,16 +40,34 @@ def _true_camera_translation(subject_id: str) -> tuple[float, float, float]:
     raise KeyError(f"no VARIANTS entry for {subject_id}")
 
 
+# The stand-ins are rendered by pyrender with an identity camera
+# rotation in the OpenGL convention (camera looks down world -z, +y up).
+# In OpenCV's camera convention (x right, y DOWN, z FORWARD) that same
+# camera is R = diag(1, -1, -1). An earlier version of this evaluator
+# compared the solved rotation against identity, which is the rotation of
+# a camera looking the *other* way — it graded the left/right-mirrored,
+# body-behind-the-camera solution (see utils/extract_anchors.py
+# `_to_anatomical_sides`) as near-perfect and attributed the resulting
+# error to depth ambiguity. See
+# ChangeRequest/2026-09-28_accuracy-program-no-real-data.md.
+_EXPECTED_ROTATION = np.diag([1.0, -1.0, -1.0])
+
+
 def _rotation_error_deg(rotation_vec: np.ndarray) -> float:
-    """Angle between the solved rotation and identity (the render used
-    identity rotation — camera axes aligned with world axes)."""
+    """Angle of the relative rotation between solved and true camera."""
     rotation_matrix, _ = cv2.Rodrigues(rotation_vec)
-    trace = np.trace(rotation_matrix)
-    cos_angle = np.clip((trace - 1) / 2, -1.0, 1.0)
+    relative = rotation_matrix @ _EXPECTED_ROTATION.T
+    cos_angle = np.clip((np.trace(relative) - 1) / 2, -1.0, 1.0)
     return math.degrees(math.acos(cos_angle))
 
 
-def evaluate_one_standin(subject_id: str) -> dict:
+def true_focal_px() -> float:
+    """The stand-ins' actual render focal length — what a phone photo's
+    EXIF focal length gives `/check_uniform` (api/intrinsics.py)."""
+    return (RENDER_HEIGHT / 2) / math.tan(math.radians(YFOV_DEG) / 2)
+
+
+def evaluate_one_standin(subject_id: str, *, use_true_focal: bool = False) -> dict:
     subject_dir = REAL_PHOTOS_DIR / subject_id
     photos = list(subject_dir.glob("*.jpg"))
     assert len(photos) == 1, f"expected exactly one photo in {subject_dir}"
@@ -59,20 +77,20 @@ def evaluate_one_standin(subject_id: str) -> dict:
     image = cv2.imread(str(photo_path))
     height, width = image.shape[:2]
 
-    camera = solve_camera_pose(anchor_pose, image_width=width, image_height=height)
+    camera = solve_camera_pose(
+        anchor_pose, image_width=width, image_height=height,
+        focal_px=true_focal_px() if use_true_focal else None,
+    )
     if not camera.solved:
         return {"subject_id": subject_id, "solved": False, "reason": camera.reason}
 
-    true_translation = np.array(_true_camera_translation(subject_id))
-    # R = identity in the render, so world-to-camera translation t = -C
-    # (camera_point = R @ world_point + t; setting world_point = C, the
-    # camera's own position, must give camera_point = 0). Confirmed
-    # empirically (not just derived): the solved rotation is near-identity
-    # and the solved tvec's X/Y components land close to -C's, exactly as
-    # this hypothesis predicts — see the plan file's verification notes.
-    expected_tvec_m = -true_translation
-    solved_tvec_m = camera.translation_vec.flatten()
-    error_vec_cm = (solved_tvec_m - expected_tvec_m) * 100.0
+    # Compare camera CENTRES in world coordinates (C = -R^T t) — independent
+    # of the rotation convention. The camera looks along world -z, so the
+    # z component is the depth (distance) error and x/y are lateral.
+    true_centre = np.array(_true_camera_translation(subject_id))
+    rotation_matrix, _ = cv2.Rodrigues(camera.rotation_vec)
+    solved_centre = -rotation_matrix.T @ camera.translation_vec.reshape(3)
+    error_vec_cm = (solved_centre - true_centre) * 100.0
     translation_error_cm = float(np.linalg.norm(error_vec_cm))
     rotation_error_deg = _rotation_error_deg(camera.rotation_vec)
 

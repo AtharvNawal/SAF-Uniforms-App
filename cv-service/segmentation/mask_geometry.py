@@ -72,3 +72,23 @@ def angle_difference_deg(measured: float, target: float) -> float:
     modulo 180° (see `mask_orientation_deg`'s docstring)."""
     diff = abs(measured - target) % 180.0
     return min(diff, 180.0 - diff)
+
+
+def mask_reference_point(mask: np.ndarray, kind: str = "center") -> tuple[float, float] | None:
+    """The point of a mask that a doctrine rule measures from (A3):
+    `center` (centroid), `top_edge` / `bottom_edge` (the centroid's x,
+    and the median over the mask's columns of each column's top-most /
+    bottom-most pixel — robust to a ragged outline in a way a single
+    extreme pixel isn't). `None` for an empty mask."""
+    centroid = mask_centroid_px(mask)
+    if centroid is None or kind == "center":
+        return centroid
+    ys, xs = np.nonzero(mask)
+    columns = np.unique(xs)
+    if kind == "top_edge":
+        edge = [ys[xs == c].min() for c in columns]
+    elif kind == "bottom_edge":
+        edge = [ys[xs == c].max() for c in columns]
+    else:
+        return centroid
+    return (centroid[0], float(np.median(edge)))

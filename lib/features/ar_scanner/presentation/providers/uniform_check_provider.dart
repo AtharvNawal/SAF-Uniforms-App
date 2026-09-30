@@ -6,6 +6,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../../core/utils/app_logger.dart';
 import '../../data/uniform_check_repository.dart';
 import '../../domain/entities/uniform_check_result.dart';
+import 'cv_service_url_provider.dart';
 
 part 'uniform_check_provider.g.dart';
 
@@ -13,7 +14,8 @@ const String _tag = 'arScanner.uniformCheck.ctl';
 
 @Riverpod(keepAlive: true)
 UniformCheckRepository uniformCheckRepository(Ref ref) {
-  return UniformCheckRepository(client: http.Client());
+  // Rebuilt whenever the user changes the analysis-server address.
+  return UniformCheckRepository(client: http.Client(), baseUrl: ref.watch(cvServiceUrlProvider));
 }
 
 /// Drives a single real (geometry/pixel) uniform check from
@@ -33,26 +35,35 @@ class UniformCheckController extends _$UniformCheckController {
   Future<UniformCheckResult?> build() async => null;
 
   Future<void> check({
-    required Uint8List photoBytes,
+    required List<Uint8List> photos,
     required String uniformType,
     required String rankTier,
     String gender = 'male',
     bool isSikh = false,
     int medalRowCount = 0,
     String bodyType = 'male',
+    String? wearerName,
+    int? heightCm,
+    List<double>? gravityUpCamera,
   }) async {
-    AppLog.i('check: start  uniform=$uniformType  rank=$rankTier', tag: _tag);
+    AppLog.i(
+      'check: start  uniform=$uniformType  rank=$rankTier  frames=${photos.length}',
+      tag: _tag,
+    );
     state = const AsyncLoading<UniformCheckResult?>();
     state = await AsyncValue.guard(() async {
       final repo = ref.read(uniformCheckRepositoryProvider);
       final result = await repo.check(
-        photoBytes: photoBytes,
+        photos: photos,
         uniformType: uniformType,
         rankTier: rankTier,
         gender: gender,
         isSikh: isSikh,
         medalRowCount: medalRowCount,
         bodyType: bodyType,
+        wearerName: wearerName,
+        heightCm: heightCm,
+        gravityUpCamera: gravityUpCamera,
       );
       AppLog.i(
         'check: done  status=${result.overallStatus}  score=${result.overallScore}',

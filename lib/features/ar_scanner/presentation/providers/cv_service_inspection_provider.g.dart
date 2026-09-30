@@ -58,7 +58,7 @@ final class CvServiceInspectionRepositoryProvider
 }
 
 String _$cvServiceInspectionRepositoryHash() =>
-    r'161e9fd29b10482282ad502d695a2c0c2d858d4b';
+    r'613169c7f59bfad64b3104f7b45ccc6261bc3f89';
 
 /// Drives a single Phase-2 `cv-service` inspection. Same shape as
 /// `UniformComplianceController` (Phase 1) deliberately — state is

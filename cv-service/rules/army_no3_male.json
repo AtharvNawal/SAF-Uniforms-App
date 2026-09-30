@@ -6,7 +6,10 @@
     "schema_version": 1,
     "source": "SAF No.3 Dress doctrine PDF (Army section, pp.1-14), cross-referenced against assets/data/accessory_library.v1.json render_logic where a 3D anchor already exists for the same accessory",
     "anchor_file": "cv-service/rules/anchors.male.json",
-    "note": "Every rule below carries a doctrine_ref pointing at the specific PDF picture/page it was transcribed from. Where the Army section has no explicit cm figure for an item (e.g. cap badge on beret), that is stated rather than invented — see the item's doctrine_ref."
+    "note": "Every rule below carries a doctrine_ref pointing at the specific PDF picture/page it was transcribed from. Where the Army section has no explicit cm figure for an item (e.g. cap badge on beret), that is stated rather than invented — see the item's doctrine_ref.",
+    "reference_point_note": "reference_point (A3, ChangeRequest/2026-09-28_accuracy-program-no-real-data.md): which point of the detected item the rule's anchor+offset locates — 'center' (default), 'top_edge' or 'bottom_edge'. Set only where the doctrine text names an edge (name tag / medal ribbons / SAF badges sit 'immediately above ... the top edge of the pocket'; skill tabs sit '1cm below the shoulder seam').",
+    "cap_badge_tier_note": "cap_badge_tier (ChangeRequest/2026-09-28_accuracy-program-no-real-data.md) is derived by rules/rule_engine.py from rank_tier: 'col_me7' and 'bg_me8_and_above' map to themselves, every other tier (enlistee, specialist, officer cadet, WO/officers up to SLTC) wears the SLTC/ME6-and-below badge. Before this, cap-badge conditions tested rank_tier against 'sltc_me6_and_below' — a value the app never sends — so no enlistee or specialist ever had their cap badge checked, and the Sikh-turban condition compared against 'col_me7_and_above', which also never occurs.",
+    "expected_color_note": "expected_color (B10): set only where the doctrine text states the colour AND a brightness-relative-to-shirt check can verify it — shoes ('Plain black leather') and socks ('Plain black socks'), per accessory_library.v1.json. The Army beret is 'dark_green' (formation-dependent) and the Army nylon belt's colour isn't stated, so neither is colour-checked."
   },
   "rules": [
     {
@@ -25,7 +28,7 @@
       "category": "headdress_sikh_turban",
       "doctrine_ref": "Army No.3, Accessories p.4",
       "required": false,
-      "condition": "profile.isSikh == true AND rank_tier != col_me7_and_above",
+      "condition": "profile.isSikh == true AND cap_badge_tier == sltc_me6_and_below",
       "mutually_exclusive_with": ["army_beret", "army_sikh_turban_col_me7_above"],
       "expected_anchor": "head_top",
       "search_radius_cm": 14.0,
@@ -36,7 +39,7 @@
       "category": "cap_badge",
       "doctrine_ref": "Army section has no explicit cap-badge placement picture; convention cross-referenced from the DIS section's 'Position of Cap Badges' (p.46: 'pinned centrally on the backing of the beret, approximately 1.3cm above the bottom edge of the band') and the current render_logic offset (anchor=cap_band_front, offset_y_cm=-1.0, offset_z_cm=3.0)",
       "required": true,
-      "condition": "rank_tier == sltc_me6_and_below",
+      "condition": "cap_badge_tier == sltc_me6_and_below",
       "expected_anchor": "cap_band_front",
       "offset_x_cm": 0, "offset_y_cm": -1.0, "offset_z_cm": 3.0,
       "angle_deg": 0,
@@ -48,7 +51,7 @@
       "category": "cap_badge",
       "doctrine_ref": "Army No.3, Accessories p.4 ('COL/ME7 and General (BG/ME8 and above) will wear the respective embroidered cap badges')",
       "required": true,
-      "condition": "rank_tier == col_me7",
+      "condition": "cap_badge_tier == col_me7",
       "expected_anchor": "cap_band_front",
       "offset_x_cm": 0, "offset_y_cm": 1.3, "offset_z_cm": 3.0,
       "tolerance_cm": 1.3
@@ -58,7 +61,7 @@
       "category": "cap_badge",
       "doctrine_ref": "Army No.3, Accessories p.4",
       "required": true,
-      "condition": "rank_tier == bg_me8_and_above",
+      "condition": "cap_badge_tier == bg_me8_and_above",
       "expected_anchor": "cap_band_front",
       "offset_x_cm": 0, "offset_y_cm": 1.3, "offset_z_cm": 3.0,
       "tolerance_cm": 1.3
@@ -124,6 +127,7 @@
     },
     {
       "object": "name_tag_standard",
+      "reference_point": "bottom_edge",
       "category": "name_tag",
       "doctrine_ref": "Army No.3, Picture C-6, p.10",
       "required": true,
@@ -135,6 +139,7 @@
     },
     {
       "object": "medal_ribbons",
+      "reference_point": "bottom_edge",
       "category": "medal_ribbons",
       "doctrine_ref": "Army No.3, Awards & Badges notes, p.11",
       "required": false,
@@ -147,6 +152,7 @@
     },
     {
       "object": "saf_badges_chest",
+      "reference_point": "bottom_edge",
       "category": "saf_badge",
       "doctrine_ref": "Army No.3, Picture D-7..D-10 notes, p.12",
       "required": false,
@@ -162,6 +168,7 @@
     },
     {
       "object": "skill_tabs_sleeve",
+      "reference_point": "top_edge",
       "category": "skill_tab",
       "doctrine_ref": "Army No.3, Picture D-13/D-14 notes, p.12",
       "required": false,
@@ -202,6 +209,7 @@
     },
     {
       "object": "leather_shoes_low_cut",
+      "expected_color": "black",
       "category": "footwear",
       "doctrine_ref": "Army No.3, Accessories p.7 ('Black leather low-cut shoes for men')",
       "required": true,
@@ -212,6 +220,7 @@
     },
     {
       "object": "black_socks",
+      "expected_color": "black",
       "category": "socks",
       "doctrine_ref": "Army No.3, Accessories p.7",
       "required": true,

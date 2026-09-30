@@ -76,9 +76,13 @@ class CvServiceInspectionRepository {
             const Duration(seconds: 60),
           );
       final response = await http.Response.fromStream(streamed);
+      // cv-service sends UTF-8 JSON without a charset parameter, and
+      // `Response.body` then falls back to Latin-1 — which garbles every
+      // "—" / "°" in the per-item instructions. Decode the bytes as UTF-8.
+      final responseText = utf8.decode(response.bodyBytes, allowMalformed: true);
 
       if (response.statusCode != 200) {
-        final body = _tryDecode(response.body);
+        final body = _tryDecode(responseText);
         final error = body?['error'] as String? ?? 'http_${response.statusCode}';
         AppLog.e(
           'inspect: non-200  status=${response.statusCode}  error=$error',
@@ -88,7 +92,7 @@ class CvServiceInspectionRepository {
         throw CvServiceInspectionException(error, statusCode: response.statusCode);
       }
 
-      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      final data = jsonDecode(responseText) as Map<String, dynamic>;
       final result = _parseResult(data);
       AppLog.i(
         'inspect: OK  score=${result.overallScore}  status=${result.status}  '

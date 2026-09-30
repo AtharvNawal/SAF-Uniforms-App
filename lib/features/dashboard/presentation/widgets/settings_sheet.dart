@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../ar_scanner/presentation/widgets/cv_server_settings.dart';
 import '../../../../core/design/app_colors.dart';
 import '../../../../core/design/app_spacing.dart';
 import '../../../../core/design/app_text_styles.dart';
@@ -132,6 +133,10 @@ class _SettingsSheetBody extends ConsumerWidget {
             ),
           ],
         ),
+        const SizedBox(height: 20),
+        // AR Scanner's analysis-server address — editable on the phone so an
+        // IP change or a USB connection doesn't need an APK rebuild.
+        const CvServerSettings(),
         const SizedBox(height: 8),
       ],
     );

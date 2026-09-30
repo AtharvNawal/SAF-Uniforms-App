@@ -104,6 +104,16 @@ class UniformProfileNotifier extends _$UniformProfileNotifier {
     _scheduleSync();
   }
 
+  /// `0` clears it; anything outside a plausible adult range (140-210 cm)
+  /// is treated as not given rather than sent to the measurement.
+  void setHeightCm(int heightCm) {
+    final value = (heightCm >= 140 && heightCm <= 210) ? heightCm : 0;
+    if (state.heightCm == value) return;
+    state = state.copyWith(heightCm: value);
+    AppLog.d('setHeightCm  heightCm=$value', tag: _tag);
+    _scheduleSync();
+  }
+
   void toggleBadge(String badgeId) {
     final next = Set<String>.from(state.selectedBadgeIds);
     if (next.contains(badgeId)) {

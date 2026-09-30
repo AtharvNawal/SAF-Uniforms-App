@@ -27,12 +27,14 @@ class AppTextField extends StatelessWidget {
     this.placeholder,
     this.onChanged,
     this.height = AppSpacing.fieldHeight,
+    this.keyboardType,
   });
 
   final TextEditingController controller;
   final String? placeholder;
   final ValueChanged<String>? onChanged;
   final double height;
+  final TextInputType? keyboardType;
 
   @override
   Widget build(BuildContext context) {
@@ -42,6 +44,7 @@ class AppTextField extends StatelessWidget {
       child: TextField(
         controller: controller,
         onChanged: onChanged,
+        keyboardType: keyboardType,
         style: AppTextStyles.body(
           color: isDark ? AppColors.ink : AppColors.inkDark,
           fontSize: 14,

@@ -26,6 +26,7 @@ class ProfileTab extends ConsumerStatefulWidget {
 
 class _ProfileTabState extends ConsumerState<ProfileTab> {
   final TextEditingController _nameCtrl = TextEditingController();
+  final TextEditingController _heightCtrl = TextEditingController();
 
   static const List<_BadgeDef> _badgeDefs = [
     _BadgeDef('ippt', 'badgeIppt', []),
@@ -40,12 +41,15 @@ class _ProfileTabState extends ConsumerState<ProfileTab> {
   @override
   void initState() {
     super.initState();
-    _nameCtrl.text = ref.read(uniformProfileProvider).fullName;
+    final profile = ref.read(uniformProfileProvider);
+    _nameCtrl.text = profile.fullName;
+    _heightCtrl.text = profile.heightCm > 0 ? '${profile.heightCm}' : '';
   }
 
   @override
   void dispose() {
     _nameCtrl.dispose();
+    _heightCtrl.dispose();
     super.dispose();
   }
 
@@ -159,6 +163,19 @@ class _ProfileTabState extends ConsumerState<ProfileTab> {
                     placeholder: l.profileFullName,
                     height: 38,
                     onChanged: notifier.setFullName,
+                  ),
+                  const SizedBox(height: 6),
+                  AppTextField(
+                    controller: _heightCtrl,
+                    placeholder: l.profileFieldHeight,
+                    height: 38,
+                    keyboardType: TextInputType.number,
+                    onChanged: (v) => notifier.setHeightCm(int.tryParse(v.trim()) ?? 0),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    l.profileHeightHint,
+                    style: AppTextStyles.body(color: AppColors.inkSubtle, fontSize: 11),
                   ),
                 ],
               ),

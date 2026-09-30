@@ -68,3 +68,20 @@ import '../../data/uniform_check_repository.dart';
   }
   return (l.arCheckFailed, l.arCheckFailedSub);
 }
+
+
+/// Technical detail for "couldn't reach cv-service" failures — the address
+/// the app called and the underlying error (socket refused, timeout, DNS…),
+/// so a failed scan can be diagnosed from a screenshot. `null` for every
+/// other failure (those already carry a human-readable reason).
+String? captureErrorDetail(Object? error) {
+  final String? message;
+  if (error is UniformCheckException && error.statusCode == null) {
+    message = error.message;
+  } else if (error is CvServiceInspectionException && error.statusCode == null) {
+    message = error.reason;
+  } else {
+    return null;
+  }
+  return message;
+}

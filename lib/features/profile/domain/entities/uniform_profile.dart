@@ -19,6 +19,13 @@ abstract class UniformProfile with _$UniformProfile {
     @Default('') String fullName,
     @Default('Infantry') String vocation,
     @Default(0) int medalRowCount,
+
+    /// Standing height in cm, `0` = not given. Optional; sent to
+    /// `cv-service` so the reference body is scaled to the wearer, which
+    /// makes the uniform measurements more accurate (see
+    /// `ChangeRequest/2026-09-28_accuracy-program-no-real-data.md`, D16).
+    /// Not part of the 3D-model profile hash.
+    @Default(0) int heightCm,
     @Default(<String>{}) Set<String> selectedBadgeIds,
     @Default(<String>{}) Set<String> selectedAccessoryIds,
     @Default(<String, Set<String>>{})

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:developer' as developer;
+import 'dart:io' show Platform;
 import 'dart:typed_data';
 
 import 'package:camera/camera.dart';
@@ -11,8 +12,10 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/design/app_colors.dart';
 import '../../../../core/design/app_spacing.dart';
 import '../../../../core/design/app_text_styles.dart';
+import '../../../../core/design/widgets/app_bottom_sheet.dart';
 import '../../../../core/design/widgets/app_buttons.dart';
 import '../../../../core/design/widgets/app_chip.dart';
+import '../../../../core/l10n/generated/app_localizations.dart';
 import '../../../../core/l10n/l10n_extensions.dart';
 import '../../../../core/routing/routes.dart';
 import '../../../../core/theme/branch_theme_extension.dart';
@@ -21,6 +24,8 @@ import '../../../profile/domain/entities/rank.dart';
 import '../../../profile/domain/entities/uniform_profile.dart';
 import '../../../profile/presentation/providers/uniform_provider.dart';
 import '../../data/capture_quality_gate.dart';
+import '../../data/device_tilt.dart';
+import '../../data/live_pose_guide.dart';
 import '../../domain/entities/cv_inspection_result.dart';
 import '../../domain/entities/uniform_check_result.dart';
 import '../providers/cv_service_inspection_provider.dart';
@@ -31,6 +36,7 @@ import '../providers/uniform_check_provider.dart';
 // in `uniform_compliance_provider.dart` is commented out in full.
 // import '../providers/uniform_compliance_provider.dart';
 import '../utils/capture_error_message.dart';
+import '../widgets/cv_server_settings.dart';
 
 const String _tag = 'arScanner.screen';
 
@@ -109,7 +115,29 @@ class ARScannerScreen extends ConsumerStatefulWidget {
 class _ARScannerScreenState extends ConsumerState<ARScannerScreen>
     with WidgetsBindingObserver {
   _ArPhase _phase = _ArPhase.aligning;
-  Timer? _timer;
+
+  /// D15 — live capture guidance: ML Kit pose on the camera stream decides
+  /// when the shot meets the capture protocol (replaces a fixed 1.8 s
+  /// "aligned" timer that unlocked capture regardless of framing). See
+  /// `live_pose_guide.dart` and
+  /// `ChangeRequest/2026-09-28_accuracy-program-no-real-data.md`.
+  final LivePoseGuide _guide = LivePoseGuide();
+  CaptureHint _hint = CaptureHint.noPerson;
+
+  /// Set when the live guide produced no result within
+  /// [_guideWatchdogDelay] of the preview starting (ML Kit unsupported on
+  /// this device / simulator): capture is unlocked so the user is never
+  /// stuck, and the post-capture [CaptureQualityGate] still applies.
+  bool _guideUnavailable = false;
+  bool _guideSeenFrame = false;
+  Timer? _guideWatchdog;
+  static const Duration _guideWatchdogDelay = Duration(seconds: 4);
+
+  /// D16 — phone pitch/roll for the guidance and the server's camera solve.
+  final DeviceTilt _tilt = DeviceTilt();
+
+  /// D17 — frames per capture, combined server-side by per-item majority.
+  static const int _burstFrames = 3;
 
   /// True while the in-flight check is the Phase-2 `cv-service` path
   /// rather than the default Phase-1 (`checkUniformCompliance`) path —
@@ -141,17 +169,16 @@ class _ARScannerScreenState extends ConsumerState<ARScannerScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _tilt.start();
     unawaited(_initCamera());
-    // Auto transition to aligned after 1.8s for demo
-    _timer = Timer(const Duration(milliseconds: 1800), () {
-      if (mounted) setState(() => _phase = _ArPhase.aligned);
-    });
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _timer?.cancel();
+    _guideWatchdog?.cancel();
+    unawaited(_guide.close());
+    unawaited(_tilt.stop());
     _captureGate.close();
     unawaited(_cameraController?.dispose());
     super.dispose();
@@ -181,13 +208,16 @@ class _ARScannerScreenState extends ConsumerState<ARScannerScreen>
     try {
       final cameras = await availableCameras();
       final camera = cameras.firstWhere(
-        (c) => c.lensDirection == CameraLensDirection.back,
+        (c) => c.lensDirection == CameraLensDirection.back, 
         orElse: () => cameras.first,
       );
       final controller = CameraController(
         camera,
         ResolutionPreset.high,
         enableAudio: false,
+        // Single-plane formats ML Kit accepts directly from the stream.
+        imageFormatGroup:
+            Platform.isAndroid ? ImageFormatGroup.nv21 : ImageFormatGroup.bgra8888,
       );
       await controller.initialize();
       if (!mounted) {
@@ -199,11 +229,112 @@ class _ARScannerScreenState extends ConsumerState<ARScannerScreen>
         _cameraUnavailable = false;
       });
       developer.log('initCamera: ready', name: _tag, level: 800);
+      unawaited(_startGuide());
     } catch (e, st) {
       developer.log('initCamera: failed',
           name: _tag, error: e, stackTrace: st, level: 1000);
       if (mounted) setState(() => _cameraUnavailable = true);
     }
+  }
+
+  /// Starts live pose guidance on the camera stream. Safe to call again
+  /// (no-op while already streaming).
+  Future<void> _startGuide() async {
+    final controller = _cameraController;
+    if (controller == null ||
+        !controller.value.isInitialized ||
+        controller.value.isStreamingImages) {
+      return;
+    }
+    developer.log('startGuide', name: _tag, level: 800);
+    _guide.reset();
+    _guideSeenFrame = false;
+    _guideWatchdog?.cancel();
+    _guideWatchdog = Timer(_guideWatchdogDelay, () {
+      if (!mounted || _guideSeenFrame) return;
+      developer.log('startGuide: no guide result — unlocking capture',
+          name: _tag, level: 900);
+      setState(() {
+        _guideUnavailable = true;
+        if (_phase == _ArPhase.aligning) _phase = _ArPhase.aligned;
+      });
+    });
+    try {
+      await controller.startImageStream((image) async {
+        final hint = await _guide.process(
+          image,
+          controller.description,
+          controller.value.deviceOrientation,
+          pitchDeg: _tilt.pitchDeg,
+          rollDeg: _tilt.rollDeg,
+        );
+        if (hint == null || !mounted) return;
+        _guideSeenFrame = true;
+        if (_phase != _ArPhase.aligning && _phase != _ArPhase.aligned) return;
+        final next = hint == CaptureHint.ready ? _ArPhase.aligned : _ArPhase.aligning;
+        if (hint != _hint || next != _phase || _guideUnavailable) {
+          setState(() {
+            _hint = hint;
+            _phase = next;
+            _guideUnavailable = false;
+          });
+        }
+      });
+    } catch (e, st) {
+      developer.log('startGuide: stream failed',
+          name: _tag, error: e, stackTrace: st, level: 1000);
+      if (mounted) {
+        setState(() {
+          _guideUnavailable = true;
+          if (_phase == _ArPhase.aligning) _phase = _ArPhase.aligned;
+        });
+      }
+    }
+  }
+
+  /// The camera can't take a still while streaming frames on every
+  /// platform — stop the guide first.
+  Future<void> _stopGuide() async {
+    _guideWatchdog?.cancel();
+    final controller = _cameraController;
+    if (controller == null || !controller.value.isStreamingImages) return;
+    try {
+      await controller.stopImageStream();
+    } catch (e, st) {
+      developer.log('stopGuide: failed',
+          name: _tag, error: e, stackTrace: st, level: 1000);
+    }
+  }
+
+  /// D17 — [_burstFrames] stills a moment apart. The first is run through
+  /// the on-device [CaptureQualityGate]; `null` means nothing to send.
+  Future<List<Uint8List>?> _takeBurst() async {
+    final controller = _cameraController;
+    if (controller == null || !controller.value.isInitialized) {
+      developer.log('takeBurst: camera not ready', name: _tag, level: 900);
+      return null;
+    }
+    await _stopGuide();
+    final frames = <XFile>[];
+    for (var i = 0; i < _burstFrames; i++) {
+      try {
+        frames.add(await controller.takePicture());
+      } catch (e, st) {
+        developer.log('takeBurst: frame $i failed',
+            name: _tag, error: e, stackTrace: st, level: 1000);
+        break;
+      }
+      if (i < _burstFrames - 1) {
+        await Future<void>.delayed(const Duration(milliseconds: 150));
+      }
+    }
+    developer.log('takeBurst: ${frames.length} frames', name: _tag, level: 800);
+    if (!mounted) return null;
+    if (frames.isEmpty || !await _passesCaptureGate(frames.first.path) || !mounted) {
+      unawaited(_startGuide());
+      return null;
+    }
+    return Future.wait(frames.map((f) => f.readAsBytes()));
   }
 
   /// Returns `false` (and shows a SnackBar explaining why) when the
@@ -239,6 +370,7 @@ class _ARScannerScreenState extends ConsumerState<ARScannerScreen>
       developer.log('$logTag: camera not ready', name: _tag, level: 900);
       return null;
     }
+    await _stopGuide();
     XFile picked;
     try {
       picked = await controller.takePicture();
@@ -249,7 +381,10 @@ class _ARScannerScreenState extends ConsumerState<ARScannerScreen>
     }
     if (!mounted) return null;
 
-    if (!await _passesCaptureGate(picked.path) || !mounted) return null;
+    if (!await _passesCaptureGate(picked.path) || !mounted) {
+      unawaited(_startGuide());
+      return null;
+    }
 
     return picked.readAsBytes();
   }
@@ -262,22 +397,26 @@ class _ARScannerScreenState extends ConsumerState<ARScannerScreen>
   /// lands on `_ArPhase.failed` with an explicit message.
   Future<void> _capture() async {
     developer.log('capture: start', name: _tag, level: 800);
-    final bytes = await _takePhoto(logTag: 'capture');
-    if (bytes == null || !mounted) return;
+    final photos = await _takeBurst();
+    if (photos == null || !mounted) return;
 
     final profile = ref.read(uniformProfileProvider);
+    final gravity = _tilt.gravityUpCamera;
     setState(() {
       _usingCvService = false;
       _phase = _ArPhase.analyzing;
     });
     await ref.read(uniformCheckControllerProvider.notifier).check(
-          photoBytes: bytes,
+          photos: photos,
           uniformType: _uniformTypeWireValue(profile),
           rankTier: _rankTierWireValue(profile.rank),
           gender: _uniformGenderWireValue(profile.gender),
           isSikh: profile.isSikh,
           medalRowCount: profile.medalRowCount,
           bodyType: _bodyTypeWireValue(profile.gender),
+          wearerName: profile.fullName,
+          heightCm: profile.heightCm > 0 ? profile.heightCm : null,
+          gravityUpCamera: gravity,
         );
   }
 
@@ -309,14 +448,13 @@ class _ARScannerScreenState extends ConsumerState<ARScannerScreen>
   void _rescan() {
     ref.read(uniformCheckControllerProvider.notifier).reset();
     ref.read(cvServiceInspectionControllerProvider.notifier).reset();
-    _timer?.cancel();
     setState(() {
       _usingCvService = false;
       _phase = _ArPhase.aligning;
+      _hint = CaptureHint.noPerson;
+      _guideUnavailable = false;
     });
-    _timer = Timer(const Duration(milliseconds: 1800), () {
-      if (mounted) setState(() => _phase = _ArPhase.aligned);
-    });
+    unawaited(_startGuide());
   }
 
   @override
@@ -384,6 +522,8 @@ class _ARScannerScreenState extends ConsumerState<ARScannerScreen>
       case _ArPhase.aligned:
         return _ScanningPhase(
           aligned: _phase == _ArPhase.aligned,
+          hint: _hint,
+          guideUnavailable: _guideUnavailable,
           cameraController: _cameraController,
           cameraUnavailable: _cameraUnavailable,
           onCapture: _capture,
@@ -397,6 +537,8 @@ class _ARScannerScreenState extends ConsumerState<ARScannerScreen>
 class _ScanningPhase extends StatelessWidget {
   const _ScanningPhase({
     required this.aligned,
+    required this.hint,
+    required this.guideUnavailable,
     required this.cameraController,
     required this.cameraUnavailable,
     required this.onCapture,
@@ -404,6 +546,10 @@ class _ScanningPhase extends StatelessWidget {
     required this.onClose,
   });
   final bool aligned;
+
+  /// Live guidance: what to fix next ([CaptureHint.ready] once aligned).
+  final CaptureHint hint;
+  final bool guideUnavailable;
 
   /// Live in-app preview — `null` while initializing (falls back to the
   /// dark-gradient placeholder) or after [cameraUnavailable] (permission
@@ -557,7 +703,9 @@ class _ScanningPhase extends StatelessWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          aligned ? l.arAlignedSub : l.arAligningSub,
+                          aligned
+                              ? (guideUnavailable ? l.arHintUnavailable : l.arAlignedSub)
+                              : _hintText(l, hint),
                           style: AppTextStyles.body(
                             color: Colors.white.withValues(alpha: 0.7),
                             fontSize: 12,
@@ -699,6 +847,7 @@ class _FailedPhase extends StatelessWidget {
     final l = context.l10n;
     final branchTheme = context.branchTheme;
     final (title, subtitle) = describeCaptureError(error, l);
+    final detail = captureErrorDetail(error);
     return Scaffold(
       backgroundColor: const Color(0xFF0A0A0A),
       body: Stack(
@@ -732,6 +881,17 @@ class _FailedPhase extends StatelessWidget {
                       fontSize: 12.5,
                     ),
                   ),
+                  if (detail != null) ...[
+                    const SizedBox(height: 12),
+                    SelectableText(
+                      detail,
+                      textAlign: TextAlign.center,
+                      style: AppTextStyles.mono(
+                        fontSize: 10,
+                        color: Colors.white.withValues(alpha: 0.45),
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 24),
                   PrimaryButton(
                     label: l.arRetry,
@@ -740,6 +900,19 @@ class _FailedPhase extends StatelessWidget {
                     icon: const Icon(Icons.refresh, size: 14),
                     onPressed: onRetry,
                   ),
+                  if (detail != null) ...[
+                    const SizedBox(height: 10),
+                    // Couldn't reach cv-service: let the user fix the
+                    // address (or switch to USB) right here, then retry.
+                    GhostButton(
+                      label: l.arServerSettings,
+                      icon: const Icon(Icons.settings_ethernet, size: 14),
+                      onPressed: () => showAppBottomSheet<void>(
+                        context: context,
+                        builder: (_) => const CvServerSettings(),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -840,12 +1013,14 @@ class _RealScorecard extends StatelessWidget {
     final score = result.overallScore.round();
     final color = result.passed
         ? AppColors.ok
-        : score >= 70
+        : result.incomplete || score >= 70
             ? AppColors.warn
             : AppColors.err;
     final issues = result.issues;
     final passes = result.passes;
-    final uncertain = result.uncertain;
+    final couldNotCheck = result.couldNotCheck;
+    final checkByEye = result.checkByEye;
+    final overlay = _decodeOverlay(result.debugImageBase64);
 
     return Scaffold(
       backgroundColor: AppColors.charcoal,
@@ -865,7 +1040,11 @@ class _RealScorecard extends StatelessWidget {
                       accentColor: branchTheme.bright,
                     ),
                     Text(
-                      result.passed ? 'PASS' : 'FAIL',
+                      result.passed
+                          ? 'PASS'
+                          : result.incomplete
+                              ? 'INCOMPLETE'
+                              : 'FAIL',
                       style: AppTextStyles.mono(
                         fontSize: 11,
                         color: color,
@@ -890,6 +1069,27 @@ class _RealScorecard extends StatelessWidget {
                         fontSize: 12.5,
                       ),
                     ),
+                    if (result.focalSource == 'assumed') ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        'Camera lens info was missing from the photo — distances are less precise.',
+                        textAlign: TextAlign.center,
+                        style: AppTextStyles.body(color: AppColors.warn, fontSize: 11.5),
+                      ),
+                    ],
+                    if (overlay != null) ...[
+                      const SizedBox(height: 16),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                        child: Image.memory(overlay, fit: BoxFit.contain, gaplessPlayback: true),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Where each item should be vs. where it was found',
+                        textAlign: TextAlign.center,
+                        style: AppTextStyles.body(color: AppColors.inkSubtle, fontSize: 11),
+                      ),
+                    ],
                     if (!result.personDetected || !result.imageQualityUsable) ...[
                       const SizedBox(height: 8),
                       Text(
@@ -940,23 +1140,45 @@ class _RealScorecard extends StatelessWidget {
                         ),
                       const SizedBox(height: 10),
                     ],
-                    if (uncertain.isNotEmpty) ...[
+                    if (couldNotCheck.isNotEmpty) ...[
                       Text(
-                        '${uncertain.length} COULD NOT VERIFY',
+                        '${couldNotCheck.length} COULD NOT CHECK — A RETAKE MAY HELP',
                         style: AppTextStyles.bodyStrong(
                             color: AppColors.inkMuted, fontSize: 14),
                       ),
                       const SizedBox(height: 8),
-                      for (final item in uncertain)
+                      for (final item in couldNotCheck)
                         Padding(
                           padding: const EdgeInsets.only(bottom: 8),
                           child: _IssueCard(
                             title: _prettyName(item.name),
-                            body: item.message.isNotEmpty
-                                ? item.message
-                                : 'Not visible enough to measure.',
+                            body: _accessoryBody(item),
                             color: AppColors.inkMuted,
                             icon: Icons.help_outline,
+                          ),
+                        ),
+                      const SizedBox(height: 10),
+                    ],
+                    if (checkByEye.isNotEmpty) ...[
+                      Text(
+                        '${checkByEye.length} CHECK BY EYE',
+                        style: AppTextStyles.bodyStrong(
+                            color: AppColors.inkMuted, fontSize: 14),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Not measured automatically yet — compare with the doctrine diagram.',
+                        style: AppTextStyles.body(color: AppColors.inkSubtle, fontSize: 11.5),
+                      ),
+                      const SizedBox(height: 8),
+                      for (final item in checkByEye)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 6),
+                          child: _IssueCard(
+                            title: _prettyName(item.name),
+                            body: item.doctrineRef.isNotEmpty ? 'Ref: ${item.doctrineRef}' : 'See the doctrine diagram.',
+                            color: AppColors.inkSubtle,
+                            icon: Icons.visibility_outlined,
                           ),
                         ),
                       const SizedBox(height: 10),
@@ -976,11 +1198,17 @@ class _RealScorecard extends StatelessWidget {
                           value:
                               '${(result.personConfidence * 100).round()}%',
                         ),
-                        _MetaTile(
-                          label: 'IMG QUALITY',
-                          value:
-                              '${(result.imageQualityConfidence * 100).round()}%',
-                        ),
+                        if (result.burstFrames != null)
+                          _MetaTile(
+                            label: 'FRAMES',
+                            value: '${result.burstUsableFrames ?? 0}/${result.burstFrames}',
+                          )
+                        else
+                          _MetaTile(
+                            label: 'IMG QUALITY',
+                            value:
+                                '${(result.imageQualityConfidence * 100).round()}%',
+                          ),
                       ],
                     ),
                   ],
@@ -1005,24 +1233,60 @@ class _RealScorecard extends StatelessWidget {
   }
 }
 
+String _hintText(AppLocalizations l, CaptureHint hint) => switch (hint) {
+      CaptureHint.noPerson => l.arHintNoPerson,
+      CaptureHint.notFullBody => l.arHintNotFullBody,
+      CaptureHint.tooFar => l.arHintTooFar,
+      CaptureHint.tooClose => l.arHintTooClose,
+      CaptureHint.notCentered => l.arHintNotCentered,
+      CaptureHint.facingAway => l.arHintFacingAway,
+      CaptureHint.turnedSideways => l.arHintTurnedSideways,
+      CaptureHint.armsRaised => l.arHintArmsRaised,
+      CaptureHint.phoneTilted => l.arHintPhoneTilted,
+      CaptureHint.holdStill => l.arHintHoldStill,
+      CaptureHint.ready => l.arAlignedSub,
+    };
+
 String _summaryLine(UniformCheckResult r) {
   final s = r.summary;
   if (s.requiredAccessories == 0) {
     return 'No doctrine rules resolved for this profile.';
   }
-  return '${s.correct} of ${s.requiredAccessories} required items correct · '
-      '${s.incorrect} off · ${s.missing} missing · ${s.uncertain} unverified.';
+  final line = '${s.correct} of ${s.requiredAccessories} required items correct · '
+      '${s.incorrect} off · ${s.slightlyMisaligned} slightly off · '
+      '${s.missing} missing · ${s.uncertain} unverified.';
+  if (r.incomplete) {
+    return 'Too few items could be checked from this photo to give a result. '
+        'Retake front-facing with your full body in frame.\n$line';
+  }
+  return line;
 }
 
+/// The instruction first — what to do, in cm and the wearer's own
+/// left/right — then how solid the call is and the doctrine reference.
+/// Falls back to the technical message for older service versions.
 String _accessoryBody(UniformCheckAccessory a) {
   final parts = <String>[];
-  if (a.message.isNotEmpty) parts.add(a.message);
-  final err = a.errorMagnitudePx;
-  if (err != null && err > 0) {
-    parts.add('${err.round()}px from the expected position.');
+  final instruction = a.instruction;
+  if (instruction.isNotEmpty) {
+    final colon = instruction.indexOf(': ');
+    parts.add(colon >= 0 ? instruction.substring(colon + 2) : instruction);
+  } else if (a.message.isNotEmpty) {
+    parts.add(a.message);
   }
+  if (a.frameAgreement != null) parts.add('${a.frameAgreement} frames agree.');
   if (a.doctrineRef.isNotEmpty) parts.add('Ref: ${a.doctrineRef}');
   return parts.isEmpty ? 'Out of doctrine tolerance.' : parts.join('\n');
+}
+
+Uint8List? _decodeOverlay(String? base64Image) {
+  if (base64Image == null || base64Image.isEmpty) return null;
+  try {
+    return base64Decode(base64Image);
+  } catch (e, st) {
+    developer.log('decodeOverlay: failed', name: _tag, error: e, stackTrace: st, level: 1000);
+    return null;
+  }
 }
 
 String _statusLabel(UniformCheckStatus s) => switch (s) {

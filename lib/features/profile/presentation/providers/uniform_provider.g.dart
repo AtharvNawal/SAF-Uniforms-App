@@ -60,7 +60,7 @@ final class UniformProfileNotifierProvider
 }
 
 String _$uniformProfileNotifierHash() =>
-    r'7772a34c548a73a4d0831d9f3140f40d704dd7f5';
+    r'413a38afcae3edf7d4a19850d5ba3713b7be795b';
 
 /// Manages the global state of the user's current uniform profile:
 /// branch, rank, gender, dress code, Sikh status, and selected accessories.

@@ -42,6 +42,7 @@ class LocalStorageService {
   static const String _kLastBranchId = 'saf.lastBranchId';
   static const String _kThemeAccent = 'saf.themeAccent';
   static const String _kLastRoute = 'saf.lastRoute';
+  static const String _kCvServiceUrl = 'saf.cvServiceUrl';
 
   Future<String?> readDeviceId() async {
     try {
@@ -150,6 +151,35 @@ class LocalStorageService {
       }
     } catch (e, st) {
       developer.log('writeThemeAccent failed', name: _logName,
+          error: e, stackTrace: st, level: 1000);
+    }
+  }
+
+  /// User-set address of the dev `cv-service` (AR Scanner analysis
+  /// server), overriding the compiled-in `kCvServiceBaseUrl`. `null` =
+  /// no override. See `cvServiceUrlProvider`.
+  Future<String?> readCvServiceUrl() async {
+    try {
+      final prefs = await _preferences;
+      return prefs.getString(_kCvServiceUrl);
+    } catch (e, st) {
+      developer.log('readCvServiceUrl failed', name: _logName,
+          error: e, stackTrace: st, level: 1000);
+      return null;
+    }
+  }
+
+  Future<void> writeCvServiceUrl(String? url) async {
+    try {
+      final prefs = await _preferences;
+      if (url == null) {
+        await prefs.remove(_kCvServiceUrl);
+      } else {
+        await prefs.setString(_kCvServiceUrl, url);
+      }
+      developer.log('writeCvServiceUrl: ${url ?? '(cleared)'}', name: _logName, level: 800);
+    } catch (e, st) {
+      developer.log('writeCvServiceUrl failed', name: _logName,
           error: e, stackTrace: st, level: 1000);
     }
   }

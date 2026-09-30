@@ -24,6 +24,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import json
 from pathlib import Path
 
 from ultralytics import YOLO
@@ -36,13 +37,16 @@ def main() -> None:
     parser.add_argument("--imgsz", type=int, default=512)
     parser.add_argument("--device", type=str, default="mps")
     parser.add_argument("--out", type=str, default="cv-service/models/segmentation_v1")
+    parser.add_argument("--model", type=str, default="yolov8n-seg.pt", help="base weights, e.g. yolov8s-seg.pt")
+    parser.add_argument("--batch", type=int, default=16)
+    parser.add_argument("--patience", type=int, default=15)
     args = parser.parse_args()
 
     repo_root = Path(__file__).resolve().parents[2]
     out_dir = repo_root / args.out
     out_dir.parent.mkdir(parents=True, exist_ok=True)
 
-    model = YOLO("yolov8n-seg.pt")
+    model = YOLO(args.model)
     results = model.train(
         data=args.data,
         epochs=args.epochs,
@@ -50,7 +54,9 @@ def main() -> None:
         device=args.device,
         project=str(out_dir.parent),
         name=out_dir.name,
-        patience=15,
+        patience=args.patience,
+        batch=args.batch,
+        exist_ok=True,
         verbose=True,
     )
 
@@ -67,6 +73,20 @@ def main() -> None:
 
     best_weights = out_dir / "weights" / "best.pt"
     print(f"\nBest weights: {best_weights}")
+
+    # Only now is the model complete — segmentation/segment_uniform.py
+    # won't load a model directory without this marker.
+    (out_dir / "training_complete.json").write_text(json.dumps({
+        "base_model": args.model,
+        "data": args.data,
+        "epochs_requested": args.epochs,
+        "imgsz": args.imgsz,
+        "val_mask_map50": round(float(metrics.seg.map50), 4),
+        "val_mask_map50_95": round(float(metrics.seg.map), 4),
+        "per_class_mask_map50": {name: round(float(metrics.seg.ap50[i]), 4) for i, name in model.names.items()
+                                 if i < len(metrics.seg.ap50)},
+        "validated_on": "synthetic val split only — no real photos",
+    }, indent=2) + "\n")
 
 
 if __name__ == "__main__":

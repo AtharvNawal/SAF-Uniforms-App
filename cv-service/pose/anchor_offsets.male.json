@@ -1,0 +1,103 @@
+{
+  "fitted_on": "60 synthetic near-frontal renders of assets/3d/bodies/male_apose.glb, dressed in randomised No.3 accessories (seed 7)",
+  "units": "fraction of detected shoulder width; outward = away from body midline (mirrored per side, image +x for midline anchors); down = along the torso axis",
+  "real_photos_used": 0,
+  "offsets": {
+    "belt_center": {
+      "outward": -0.0158,
+      "down": -0.3921,
+      "residual_std": 0.0576,
+      "n": 60
+    },
+    "cap_band_front": {
+      "outward": -0.019,
+      "down": -0.2671,
+      "residual_std": 0.0171,
+      "n": 60
+    },
+    "chest_center": {
+      "outward": -0.0166,
+      "down": -0.3105,
+      "residual_std": 0.0682,
+      "n": 60
+    },
+    "head_top": {
+      "outward": -0.0163,
+      "down": -0.1792,
+      "residual_std": 0.0261,
+      "n": 60
+    },
+    "left_ankle": {
+      "outward": -0.1169,
+      "down": 0.0358,
+      "residual_std": 0.0264,
+      "n": 60
+    },
+    "left_chest_pocket": {
+      "outward": -0.2079,
+      "down": -0.3112,
+      "residual_std": 0.0674,
+      "n": 60
+    },
+    "left_collar_tip": {
+      "outward": -0.1287,
+      "down": -0.4082,
+      "residual_std": 0.0744,
+      "n": 60
+    },
+    "left_foot_top": {
+      "outward": -0.2529,
+      "down": -0.0617,
+      "residual_std": 0.0309,
+      "n": 58
+    },
+    "left_shoulder_seam": {
+      "outward": -0.0416,
+      "down": -0.2263,
+      "residual_std": 0.0497,
+      "n": 60
+    },
+    "left_sleeve_upper": {
+      "outward": 0.2341,
+      "down": 0.0091,
+      "residual_std": 0.021,
+      "n": 60
+    },
+    "right_ankle": {
+      "outward": -0.1002,
+      "down": 0.0383,
+      "residual_std": 0.0305,
+      "n": 60
+    },
+    "right_chest_pocket": {
+      "outward": -0.1748,
+      "down": -0.3099,
+      "residual_std": 0.0681,
+      "n": 60
+    },
+    "right_collar_tip": {
+      "outward": -0.092,
+      "down": -0.4001,
+      "residual_std": 0.0751,
+      "n": 60
+    },
+    "right_foot_top": {
+      "outward": -0.238,
+      "down": -0.0682,
+      "residual_std": 0.0328,
+      "n": 57
+    },
+    "right_shoulder_seam": {
+      "outward": -0.0054,
+      "down": -0.2101,
+      "residual_std": 0.051,
+      "n": 60
+    },
+    "right_sleeve_upper": {
+      "outward": 0.2758,
+      "down": 0.0317,
+      "residual_std": 0.0212,
+      "n": 60
+    }
+  }
+}

@@ -131,6 +131,13 @@ Run whenever a reference body GLB changes:
   --out cv-service/rules/anchors.male.json
 ```
 
+Left/right anchors are named by the **wearer's anatomy** (`left_*` = the
+wearer's left = +x, image-right in a front photo — the same convention as
+MediaPipe's landmarks), regardless of the GLB's socket names, which are
+swapped on `male_apose.glb`; `glb_socket_names_swapped` in the output
+records which pairs were renamed. After regenerating, re-fit the
+landmark→socket offsets: `.venv-tools/bin/python cv-service/pose/calibrate_anchor_offsets.py --n 60`.
+
 ## Generating synthetic training data (bounding boxes)
 
 ```bash
@@ -267,6 +274,19 @@ limitation (near-frontal body landmarks barely constrain depth), not a
 bug. Good enough for 2D crop-region placement (what `project_rules.py`
 needs); not yet trustworthy for anything depending on recovered depth
 alone. **0 real photos**, so this whole table is synthetic-only.
+
+> **Correction (2026-09-28, `ChangeRequest/2026-09-28_accuracy-program-no-real-data.md`):**
+> the depth error above was a bug, not a single-view limitation.
+> `anchors.male.json` inherited the GLB's socket names, which are
+> left/right-swapped relative to the wearer (CLAUDE.md §8 pass 8), while
+> MediaPipe names landmarks anatomically — so every PnP solve paired
+> mirrored points and converged to a camera with the body *behind* it,
+> and this evaluator compared the solved rotation against identity (the
+> wrong convention), grading that mirrored solution as near-perfect. With
+> anatomical anchor names, a behind-camera guard, the true focal length
+> and fitted landmark→socket offsets, the same three stand-ins solve to
+> **1-4 cm depth error, 0.4-7° rotation, 1.5-6.7 px reprojection**. See
+> "Accuracy program" below.
 
 ## Segmentation real-vs-synthetic comparison (tooling only — 0 real photos)
 

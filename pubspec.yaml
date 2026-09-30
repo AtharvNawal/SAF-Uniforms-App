@@ -75,6 +75,7 @@ dependencies:
   # tool/seed_firestore.dart's --upload-images idempotency check.
   crypto: ^3.0.0
   http: ^1.6.0
+  sensors_plus: ^7.1.0
 
 dev_dependencies:
   flutter_test:
