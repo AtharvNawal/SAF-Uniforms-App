@@ -49,9 +49,14 @@ import {
   createComposeIO,
   detachNodeByName,
   FEET_NODE,
+  findNodeByName,
   HAIR_NODE,
   mergeUniform,
   NAME_TAG_MATERIAL,
+  planBakedDetaches,
+  planBakedSkips,
+  readBakedSlots,
+  SlotAccessory,
 } from "./glb_compose";
 
 const SCHEMA_VERSION = 1;
@@ -418,7 +423,7 @@ export const composeUniformModel = onCall(
 
       // Compose the full ordered list of accessories that should land on
       // the model: mandatory (always) + optional that the user ticked.
-      const includeAccessories: ResolvedAccessory[] = [
+      let includeAccessories: ResolvedAccessory[] = [
         ...split.mandatory,
         ...optionalChecked,
       ];
@@ -444,6 +449,42 @@ export const composeUniformModel = onCall(
         bodyBytes = Buffer.from(await io.writeBinary(emptyDoc));
       }
       const bodyDoc = await io.readBinary(new Uint8Array(bodyBytes));
+
+      // ---- 1b. Baked slots (unified dressed figures only) ----
+      // A figure that already models some accessories (RSAF No.4: beret +
+      // badge, boots, rank tab, sleeve patches) declares them in its root
+      // extras. Matching accessories are skipped so nothing doubles up; a
+      // mandatory accessory that differs (Sikh turban, COL/BG cap badge,
+      // cadet rank tab) removes the built-in node and attaches normally.
+      // Figures without the declaration (all others) are untouched.
+      if (isUnified) {
+        try {
+          const slots = readBakedSlots(bodyDoc);
+          if (Object.keys(slots).length > 0) {
+            const mandatoryIds = new Set(split.mandatory.map((a) => a.id));
+            const planned: SlotAccessory[] = includeAccessories.map((a) => ({
+              id: a.id,
+              category: a.record.category ?? "",
+              mandatory: mandatoryIds.has(a.id),
+            }));
+            const exists = (name: string) => findNodeByName(bodyDoc, name) !== null;
+            const detach = planBakedDetaches(slots, planned, exists);
+            for (const node of detach) detachNodeByName(bodyDoc, node);
+            const skip = planBakedSkips(slots, planned, exists);
+            includeAccessories = includeAccessories.filter((a) => !skip.has(a.id));
+            logger.info("baked slots applied", {
+              slots: Object.keys(slots),
+              detached: detach,
+              skipped: [...skip],
+              attaching: includeAccessories.map((a) => a.id),
+            });
+          }
+        } catch (e) {
+          logger.warn("baked-slot planning failed; attaching every accessory", {
+            error: (e as Error).message,
+          });
+        }
+      }
 
       logger.info("composeUniformModel: planned assets", {
         uid,

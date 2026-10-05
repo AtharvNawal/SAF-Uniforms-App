@@ -282,7 +282,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get dressNo3Tag => '办公 / 检阅 · 日常';
 
   @override
-  String get dressNo4Tag => '工作 · 长袖';
+  String get dressNo4Tag => '工作 · 数码迷彩';
 
   @override
   String get dressNo5Tag => '作战 · 战斗';
@@ -374,7 +374,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get checklistDressNo3Desc => '办公 / 检阅 · 日常';
 
   @override
-  String get checklistDressNo4Desc => '工作 · 长袖';
+  String get checklistDressNo4Desc => '工作 · 数码迷彩';
 
   @override
   String get checklistDressNo5Desc => '作战 · 战斗';

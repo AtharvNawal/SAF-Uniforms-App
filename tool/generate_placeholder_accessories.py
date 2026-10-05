@@ -16,7 +16,13 @@ GLBs land, not production assets.
 USAGE:
 
     .venv-tools/bin/pip install trimesh numpy Pillow
-    .venv-tools/bin/python tool/generate_placeholder_accessories.py
+    .venv-tools/bin/python tool/generate_placeholder_accessories.py [--only-missing]
+
+`--only-missing` writes a GLB only when `assets/3d/accessories/{id}.glb`
+doesn't exist yet. Use it whenever new library entries land: several
+committed GLBs are hand-tuned or artist-delivered (the from-scratch
+`army_beret`, the user-provided `nylon_belt`, `leather_shoes_low_cut`,
+…) and a full run would overwrite them with procedural stand-ins.
 
 OUTPUT:
 
@@ -26,7 +32,9 @@ OUTPUT:
 Categories supported (most of No.3's resolver output):
     headdress_beret, headdress_sikh_turban, headdress_ladies_hat,
     cap_badge, cap_embellishment, sleeve_rank_specialist,
-    sleeve_rank_enlistee, epaulette, lanyard, arms_badge, vocation_badge
+    sleeve_rank_enlistee, epaulette, lanyard, arms_badge, vocation_badge,
+    belt, socks, footwear (incl. No.4 boots via `render_logic.style`),
+    rank_epaulette_chest (No.4 chest rank tab), sleeve_patch (No.4)
 
 Out of scope (skipped — see ChangeRequest 2026-05-09):
     footwear, socks, belt (no body sockets), gorgette, collar_rank_pin,
@@ -35,6 +43,7 @@ Out of scope (skipped — see ChangeRequest 2026-05-09):
 """
 from __future__ import annotations
 
+import argparse
 import json
 import sys
 from pathlib import Path
@@ -79,6 +88,9 @@ COLOR_NAMES = {
                                               # as gold under model_viewer_plus's blue-ish
                                               # ambient lighting instead of looking olive
     "khaki":      (0.62, 0.54, 0.34, 1.0),
+    "olive_green": (0.30, 0.33, 0.20, 1.0),
+    "grey":       (0.42, 0.43, 0.45, 1.0),
+    "blue":       (0.22, 0.36, 0.52, 1.0),
 }
 
 
@@ -322,7 +334,11 @@ def _build_belt(entry: dict) -> list[tuple[str, trimesh.Trimesh]]:
     `belt_center` socket places it at the waist plane; the torus's
     major-axis ring sits in the XZ plane so it encircles the body
     when oriented +Y up."""
-    color = COLOR_NAMES["black"] if "leather" in entry["id"] else (0.30, 0.30, 0.32, 1.0)
+    rules_color = (entry.get("rules") or {}).get("color")
+    if rules_color in COLOR_NAMES:
+        color = COLOR_NAMES[rules_color]
+    else:
+        color = COLOR_NAMES["black"] if "leather" in entry["id"] else (0.30, 0.30, 0.32, 1.0)
     belt = trimesh.creation.torus(major_radius=0.14, minor_radius=0.012)
     # Default torus is in the XY plane; rotate to lay in XZ plane so it
     # rings around the body's vertical axis.
@@ -341,8 +357,11 @@ def _build_socks(entry: dict) -> list[tuple[str, trimesh.Trimesh]]:
     sock.apply_transform(
         trimesh.transformations.rotation_matrix(np.pi / 2, [1, 0, 0])
     )
+    sock_color = COLOR_NAMES.get(
+        (entry.get("render_logic") or {}).get("color", "black"), COLOR_NAMES["black"]
+    )
     return [
-        ("sock", _coloured(sock, "sock_mat", COLOR_NAMES["black"], roughness=0.85)),
+        ("sock", _coloured(sock, "sock_mat", sock_color, roughness=0.85)),
     ]
 
 
@@ -363,12 +382,48 @@ def _build_footwear(entry: dict) -> list[tuple[str, trimesh.Trimesh]]:
         ("shoe_sole", _coloured(sole, "shoe_sole_mat", color, roughness=0.5)),
         ("shoe_upper", _coloured(upper, "shoe_upper_mat", color, roughness=0.5, metallic=0.1)),
     ]
+    style = (entry.get("render_logic") or {}).get("style")
+    if style in ("boot_high", "boot_mid"):
+        # No.4 combat / safety boots: a cylinder shaft rising from the
+        # instep up the lower leg (covers the sock, as on the real boot).
+        shaft_h = 0.18 if style == "boot_high" else 0.11
+        shaft = trimesh.creation.cylinder(radius=0.048, height=shaft_h, sections=20)
+        shaft.apply_transform(
+            trimesh.transformations.rotation_matrix(np.pi / 2, [1, 0, 0])
+        )
+        shaft.apply_translation([0, shaft_h / 2, -0.045])
+        parts.append(("boot_shaft", _coloured(shaft, "boot_shaft_mat", color, roughness=0.5)))
     if is_court:
         # Ladies court shoes have a visible low heel — add a small block.
         heel = trimesh.creation.box(extents=[0.045, 0.04, 0.04])
         heel.apply_translation([0, -0.040, 0.080])
         parts.append(("shoe_heel", _coloured(heel, "shoe_heel_mat", color, roughness=0.5)))
     return parts
+
+
+def _build_rank_epaulette_chest(entry: dict) -> list[tuple[str, trimesh.Trimesh]]:
+    """No.4 chest-centre rank tab: a flat slab facing +Z (camera-front),
+    taller than wide, in the branch camo colour with a contrasting bar —
+    white for the cadet / trainee variant, black otherwise."""
+    color = pick_color(entry)
+    # 3.2 x 5.2 cm — the size of the rank tab modelled on the RSAF No.4
+    # dressed figures, so a swapped-in cadet tab covers the same spot.
+    tab = trimesh.creation.box(extents=[0.032, 0.052, 0.004])
+    bar_color = COLOR_NAMES["white"] if "cadet" in entry["id"] else COLOR_NAMES["black"]
+    bar = trimesh.creation.box(extents=[0.024, 0.006, 0.002])
+    bar.apply_translation([0, -0.012, 0.003])
+    return [
+        ("rank_tab", _coloured(tab, "rank_tab_mat", color, roughness=0.7)),
+        ("rank_bar", _coloured(bar, "rank_bar_mat", bar_color, roughness=0.5)),
+    ]
+
+
+def _build_sleeve_patch(entry: dict) -> list[tuple[str, trimesh.Trimesh]]:
+    """No.4 RSAF / DIS upper-sleeve patch. Thin plate whose face points
+    ±X (outward from the arm) like the sleeve insignia."""
+    patch = trimesh.creation.box(extents=[0.004, 0.065, 0.06])
+    color = pick_color(entry)
+    return [("sleeve_patch", _coloured(patch, "sleeve_patch_mat", color, roughness=0.6))]
 
 
 # ---------------------------------------------------------------------------
@@ -391,6 +446,8 @@ CATEGORY_BUILDERS = {
     "belt": _build_belt,
     "socks": _build_socks,
     "footwear": _build_footwear,
+    "rank_epaulette_chest": _build_rank_epaulette_chest,
+    "sleeve_patch": _build_sleeve_patch,
 }
 
 
@@ -399,7 +456,15 @@ CATEGORY_BUILDERS = {
 # ---------------------------------------------------------------------------
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument(
+        "--only-missing",
+        action="store_true",
+        help="skip ids whose GLB already exists (protects artist / hand-tuned files)",
+    )
+    args = parser.parse_args(argv)
+
     if not LIBRARY_JSON.exists():
         print(f"ERROR: {LIBRARY_JSON} not found", file=sys.stderr)
         return 1
@@ -413,6 +478,7 @@ def main() -> int:
     written = 0
     skipped_legacy = 0
     skipped_oos = 0
+    skipped_existing = 0
     by_category: dict[str, int] = {}
 
     for entry in entries:
@@ -427,11 +493,15 @@ def main() -> int:
             skipped_oos += 1
             continue
 
+        out_path = OUT_DIR / f"{entry['id']}.glb"
+        if args.only_missing and out_path.exists():
+            skipped_existing += 1
+            continue
+
         scene = trimesh.Scene()
         for sub_name, geom in builder(entry):
             scene.add_geometry(geom, geom_name=sub_name, node_name=sub_name)
 
-        out_path = OUT_DIR / f"{entry['id']}.glb"
         scene.export(out_path)
         written += 1
         by_category[category] = by_category.get(category, 0) + 1
@@ -441,6 +511,8 @@ def main() -> int:
         print(f"  {n:>3}  {cat}")
     print(f"Skipped {skipped_legacy} legacy placeholder(s) "
           f"and {skipped_oos} out-of-scope categor(ies).")
+    if args.only_missing:
+        print(f"Skipped {skipped_existing} id(s) whose GLB already exists (--only-missing).")
     print()
     print("Next: tool/upload_models.py --only 'accessories/*' to push these to Storage.")
     return 0

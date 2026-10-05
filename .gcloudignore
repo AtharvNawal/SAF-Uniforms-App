@@ -1,0 +1,25 @@
+# What `gcloud builds submit` uploads for the cv-service image
+# (deploy/deploy-cv-service-cloudrun.sh). Without this file gcloud falls
+# back to .gitignore, which drops cv-service/models/ — the image would ship
+# without its weights. Whitelist only what cv-service/Dockerfile copies;
+# .dockerignore then filters the build context the same way.
+/*
+!/.dockerignore
+!/cv-service/
+!/assets/
+
+# Never upload: real-photo intake / labels (may contain photos of real
+# servicemembers), bulky training output, local caches.
+/cv-service/data/real_photos/
+/cv-service/data/labels/
+/cv-service/synthetic_data/
+/cv-service/logs/
+/cv-service/.pytest_cache/
+**/__pycache__/
+/cv-service/models/segmentation_v1/*.png
+/cv-service/models/segmentation_v1/*.jpg
+/cv-service/models/segmentation_v2/*.png
+/cv-service/models/segmentation_v2/*.jpg
+/cv-service/models/segmentation_v2/weights/last.pt
+/assets/3d_raw/
+/assets/3d/accessories/

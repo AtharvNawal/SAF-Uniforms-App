@@ -24,6 +24,25 @@ cv-service/models/*
 !cv-service/models/detection_v1/
 !cv-service/models/detection_v1/weights/
 !cv-service/models/detection_v1/weights/best.pt
+# segmentation_v2 is the default segmenter; segment_uniform.py only picks it
+# when training_complete.json sits next to the weights.
+!cv-service/models/segmentation_v2/
+!cv-service/models/segmentation_v2/weights/
+!cv-service/models/segmentation_v2/weights/best.pt
+!cv-service/models/segmentation_v2/training_complete.json
+# Pretrained weights: ship the exact files the test suite ran against
+# instead of re-downloading at build time.
+!cv-service/models/*.pt
+!cv-service/models/*.task
+!cv-service/models/warm_cache.py
 cv-service/synthetic_data/
 cv-service/.pytest_cache/
 **/__pycache__/
+# Real-photo intake + labels may hold photos of real servicemembers —
+# never ship them in an image (see cv-service/data/real_photos/README.md).
+cv-service/data/real_photos/
+cv-service/data/labels/
+cv-service/logs/
+cv-service/tests/
+assets/3d_raw/
+assets/3d/accessories/

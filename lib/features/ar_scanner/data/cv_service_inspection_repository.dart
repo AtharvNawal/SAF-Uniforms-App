@@ -39,15 +39,46 @@ const String kCvServiceBaseUrl = String.fromEnvironment(
 /// [UniformComplianceRepository] (Phase 1, the shipped Node/Claude
 /// flow), not a replacement — nothing here is wired into the default
 /// capture flow.
+/// Returns the signed-in user's Firebase ID token (or `null`). The deployed
+/// `cv-service` (Cloud Run, `CV_SERVICE_REQUIRE_AUTH=1`) rejects analysis
+/// requests without one; a local service ignores it. Injected so the
+/// repositories stay testable without Firebase.
+typedef IdTokenProvider = Future<String?> Function();
+
+/// Adds `Authorization: Bearer <token>` when [idToken] yields one. A token
+/// failure is logged and the request goes out without it — the service then
+/// answers with a typed 401 the scanner already explains to the user.
+Future<void> attachIdToken(
+  http.BaseRequest request,
+  IdTokenProvider? idToken, {
+  required String tag,
+}) async {
+  if (idToken == null) return;
+  try {
+    final token = await idToken();
+    if (token != null && token.isNotEmpty) {
+      request.headers['Authorization'] = 'Bearer $token';
+      AppLog.d('auth: ID token attached', tag: tag);
+    } else {
+      AppLog.d('auth: no signed-in user; sending without ID token', tag: tag);
+    }
+  } catch (e, st) {
+    AppLog.e('auth: could not get ID token; sending without it', tag: tag, error: e, st: st);
+  }
+}
+
 class CvServiceInspectionRepository {
   CvServiceInspectionRepository({
     required http.Client client,
     String baseUrl = kCvServiceBaseUrl,
+    IdTokenProvider? idToken,
   })  : _client = client,
-        _baseUrl = baseUrl;
+        _baseUrl = baseUrl,
+        _idToken = idToken;
 
   final http.Client _client;
   final String _baseUrl;
+  final IdTokenProvider? _idToken;
 
   Future<CvInspectionResult> inspect({
     required Uint8List photoBytes,
@@ -71,6 +102,7 @@ class CvServiceInspectionRepository {
         ..files.add(
           http.MultipartFile.fromBytes('photo', photoBytes, filename: filename),
         );
+      await attachIdToken(request, _idToken, tag: _tag);
 
       final streamed = await _client.send(request).timeout(
             const Duration(seconds: 60),

@@ -98,6 +98,21 @@ function pickHeaddress(
   headdress: Record<string, unknown>,
   profile: ResolverProfile,
 ): string | null {
+  // Gender-neutral shape (DIS No.3, all of No.4): { unisex, sikh,
+  // sikh_col_me7_above }.
+  if ("unisex" in headdress) {
+    if (profile.isSikh) {
+      const colAbove = headdress["sikh_col_me7_above"];
+      if (COL_OR_ABOVE.has(profile.rank) && typeof colAbove === "string") {
+        return colAbove;
+      }
+      const sikh = headdress["sikh"];
+      if (typeof sikh === "string") return sikh;
+    }
+    const unisex = headdress["unisex"];
+    return typeof unisex === "string" ? unisex : null;
+  }
+
   if (profile.gender === "female" || profile.gender === "maternity") {
     const ladies = headdress["ladies"];
     if (!ladies || typeof ladies !== "object") return null;
@@ -198,11 +213,23 @@ export function resolveAccessorySplit(
   function addOptional(raw: unknown): void {
     if (typeof raw === "string" && raw.length > 0) optionalIds.add(raw);
   }
+  function addOptionalAll(raw: unknown): void {
+    if (Array.isArray(raw)) {
+      for (const item of raw) addOptional(item);
+    } else {
+      addOptional(raw);
+    }
+  }
 
-  // headdress
+  // headdress — gendered or gender-neutral selector, plus optional
+  // `alternatives` / `sikh_alternatives` id lists (No.4 jockey cap /
+  // jungle hat / helmet / green field turban).
   const headdress = override["headdress"];
   if (headdress && typeof headdress === "object") {
-    addMandatory(pickHeaddress(headdress as Record<string, unknown>, profile));
+    const h = headdress as Record<string, unknown>;
+    addMandatory(pickHeaddress(h, profile));
+    addOptionalAll(h["alternatives"]);
+    if (profile.isSikh) addOptionalAll(h["sikh_alternatives"]);
   }
 
   // cap_badge
@@ -242,6 +269,17 @@ export function resolveAccessorySplit(
     );
   } else {
     addMandatory(epaulettes);
+  }
+
+  // rank_epaulette: { standard, cadet_trainee } — No.4's chest-centre
+  // rank tab, worn by every rank. Officer Cadets get the cadet variant.
+  const rankEpaulette = override["rank_epaulette"];
+  if (rankEpaulette && typeof rankEpaulette === "object") {
+    const m = rankEpaulette as Record<string, unknown>;
+    const key = profile.rank === "OCT" ? "cadet_trainee" : "standard";
+    addMandatory(m[key] ?? m["standard"]);
+  } else {
+    addMandatory(rankEpaulette);
   }
 
   // name_tag: mandatory for all branches. Handled by bakeNameTag() in
@@ -293,6 +331,14 @@ export function resolveAccessorySplit(
   addOptional(override["lanyard"]);
   addOptional(override["arms_badge"]);
   addOptional(override["vocation_badge"]);
+
+  // additional_mandatory / additional_optional — plain id lists (No.4
+  // Singapore tag, inner T-shirt, chest / sleeve badges, unit patches).
+  const extraMandatory = override["additional_mandatory"];
+  if (Array.isArray(extraMandatory)) {
+    for (const item of extraMandatory) addMandatory(item);
+  }
+  addOptionalAll(override["additional_optional"]);
 
   const mandatory = hydrate(mandatoryIds, libraryById, profile.gender);
   const optionalOnly = new Set<string>();

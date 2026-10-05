@@ -54,7 +54,10 @@ admin-portal/.env.local
 # cv-service — model checkpoints and rendered synthetic-data batches are
 # large, generated, and versioned separately (Git LFS / Cloud Storage).
 # Source files (cv-service/utils, rules, api, etc.) are tracked normally.
-cv-service/models/
+cv-service/models/*
+# …except the scripts the image build runs (cv-service/Dockerfile).
+!cv-service/models/download_models.sh
+!cv-service/models/warm_cache.py
 cv-service/synthetic_data/
 
 # cv-service — real (or stand-in) intake photos and the ground-truth

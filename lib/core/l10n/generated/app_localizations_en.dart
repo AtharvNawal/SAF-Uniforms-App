@@ -292,7 +292,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dressNo3Tag => 'Office / parades · Daily';
 
   @override
-  String get dressNo4Tag => 'Working · long sleeve';
+  String get dressNo4Tag => 'Working · Pixelised';
 
   @override
   String get dressNo5Tag => 'Operations · combat';
@@ -385,7 +385,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get checklistDressNo3Desc => 'Office / parades · Daily';
 
   @override
-  String get checklistDressNo4Desc => 'Working · long sleeve';
+  String get checklistDressNo4Desc => 'Working · Pixelised';
 
   @override
   String get checklistDressNo5Desc => 'Operations · combat';

@@ -1,0 +1,86 @@
+{
+  "description": "RSAF No.4 dressed figures (rsaf_no4_male / rsaf_no4_female). Consumed by tool/prepare_unified_figure.mjs.",
+  "groups": {
+    "rank_tab_assembly": [
+      "rank_tab",
+      "rank_insignia",
+      "rank_bar"
+    ],
+    "wing_badge_assembly": [
+      "wing_badge_plate",
+      "wing_badge",
+      "wing_badge_boss"
+    ]
+  },
+  "baked_slots": {
+    "headdress": {
+      "node": "beret",
+      "accessory": "rsaf_beret"
+    },
+    "cap_badge": {
+      "node": "beret_badge",
+      "accessory": "rsaf_cap_badge_sltc_me6_below"
+    },
+    "rank_epaulette_chest": {
+      "node": "rank_tab_assembly",
+      "accessory": "rsaf_no4_rank_epaulette"
+    },
+    "footwear": {
+      "node": "boots",
+      "accessory": "safety_boots"
+    },
+    "socks": {
+      "node": "boots",
+      "accessory": null
+    },
+    "belt": {
+      "node": "shirt_hem",
+      "accessory": null
+    },
+    "sleeve_patch": {
+      "node": "shoulder_patch_left",
+      "accessory": "rsaf_unit_patch"
+    },
+    "country_tag": {
+      "node": "country_tape",
+      "accessory": "singapore_tag"
+    },
+    "saf_badge": {
+      "node": "wing_badge_assembly",
+      "accessory": "saf_badges_chest",
+      "optional": true
+    }
+  },
+  "name_tape_material": "name_tape",
+  "replacement_alignment": {
+    "head_top": {
+      "accessory": "rsaf_sikh_turban",
+      "node": "beret",
+      "xz_node": "head",
+      "mode": "top"
+    },
+    "cap_band_front": {
+      "accessory": "rsaf_cap_badge_col_me7",
+      "node": "beret_badge",
+      "mode": "center"
+    },
+    "belt_center": {
+      "accessory": "rsaf_no4_rank_epaulette_cadet_trainee",
+      "node": "rank_tab",
+      "mode": "center"
+    }
+  },
+  "parts": {
+    "head": "head",
+    "shoulders": "shoulder_form",
+    "collar_left": "collar_point_left",
+    "collar_right": "collar_point_right",
+    "pocket_left": "chest_pocket_left",
+    "pocket_right": "chest_pocket_right",
+    "sleeve_patch_left": "shoulder_patch_left",
+    "sleeve_patch_right": "shoulder_patch_right",
+    "boot_left": "boot_collar_left",
+    "boot_right": "boot_collar_right",
+    "name_tape": "name_tape"
+  }
+}

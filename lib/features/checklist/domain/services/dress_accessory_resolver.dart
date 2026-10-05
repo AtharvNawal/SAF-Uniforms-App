@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import '../../../profile/domain/entities/accessory.dart';
 import '../../../profile/domain/entities/gender.dart';
 import '../../../profile/domain/entities/rank.dart';
@@ -17,7 +19,7 @@ typedef AccessorySplit = ({
 /// Resolves the accessories applicable to a given [UniformProfile] from a
 /// branch-merged [DressRequirement] document.
 ///
-/// The No. 3 dress doctrine (the only fully-aligned dress code today, see
+/// The No. 3 and No. 4 dress doctrines (the fully-aligned dress codes, see
 /// `assets/data/dress_requirements.v1.json` `branch_overrides`) splits each
 /// per-branch override into structured keys whose values are either
 /// accessory ids (strings) or nested selectors keyed by gender / rank tier
@@ -26,7 +28,7 @@ typedef AccessorySplit = ({
 /// objects from the supplied library.
 ///
 /// Accessories whose `render_logic.legacy_placeholder == true` (the
-/// No.1/2/4/5 generic placeholders flagged "pending doctrine review" in
+/// No.1/2/5 generic placeholders flagged "pending doctrine review" in
 /// CLAUDE.md §8) are skipped — callers that consume the resolver output
 /// will see only doctrine-aligned entries.
 class DressAccessoryResolver {
@@ -71,15 +73,30 @@ class DressAccessoryResolver {
       if (raw is String && raw.isNotEmpty) optionalIds.add(raw);
     }
 
-    // headdress: { men: { default, sikh, sikh_col_me7_above },
-    //              ladies: { officer_wo_me3_to_me8,
-    //                        specialist_enlistee_me1_me2 } }
+    void addOptionalAll(Object? raw) {
+      if (raw is List) {
+        for (final item in raw) {
+          addOptional(item);
+        }
+      } else {
+        addOptional(raw);
+      }
+    }
+
+    // headdress, either gendered (No.3 Army/Navy/RSAF):
+    //   { men: { default, sikh, sikh_col_me7_above },
+    //     ladies: { officer_wo_me3_to_me8, specialist_enlistee_me1_me2 } }
+    // or gender-neutral (DIS No.3, all of No.4):
+    //   { unisex, sikh, sikh_col_me7_above }
+    // plus optional `alternatives` / `sikh_alternatives` id lists (No.4
+    // jockey cap / jungle hat / helmet / green field turban), surfaced as
+    // optional because doctrine picks them by occasion, not by profile.
     final headdress = override['headdress'];
     if (headdress is Map) {
-      addMandatory(_pickHeaddress(
-        Map<String, dynamic>.from(headdress),
-        profile,
-      ));
+      final h = Map<String, dynamic>.from(headdress);
+      addMandatory(_pickHeaddress(h, profile));
+      addOptionalAll(h['alternatives']);
+      if (profile.isSikh) addOptionalAll(h['sikh_alternatives']);
     }
 
     // cap_badge: { sltc_me6_below, col_me7, col_me7_above,
@@ -123,6 +140,18 @@ class DressAccessoryResolver {
       ));
     } else {
       addMandatory(epaulettes);
+    }
+
+    // rank_epaulette: { standard, cadet_trainee } — No.4's single
+    // chest-centre rank tab, worn by every rank (no sleeve chevrons or
+    // collar pins in No.4). Officer Cadets wear the white-bar variant.
+    final rankEpaulette = override['rank_epaulette'];
+    if (rankEpaulette is Map) {
+      final m = Map<String, dynamic>.from(rankEpaulette);
+      final key = profile.rank == Rank.oct ? 'cadet_trainee' : 'standard';
+      addMandatory(m[key] ?? m['standard']);
+    } else {
+      addMandatory(rankEpaulette);
     }
 
     // name_tag: mandatory for all branches. Rendered via texture bake in
@@ -174,11 +203,29 @@ class DressAccessoryResolver {
     addOptional(override['arms_badge']);
     addOptional(override['vocation_badge']);
 
+    // additional_mandatory / additional_optional: plain id lists for items
+    // with no selector logic (No.4 Singapore tag, inner T-shirt, chest /
+    // sleeve badges, unit patches).
+    final extraMandatory = override['additional_mandatory'];
+    if (extraMandatory is List) {
+      for (final item in extraMandatory) {
+        addMandatory(item);
+      }
+    }
+    addOptionalAll(override['additional_optional']);
+
     final mandatory = _hydrate(mandatoryIds, libraryById, profile.gender);
     final optional = _hydrate(
       optionalIds.difference(mandatoryIds),
       libraryById,
       profile.gender,
+    );
+    log(
+      'resolveSplit: dress=${requirement.id} branch=${profile.branch.wireName} '
+      'rank=${profile.rank.code} mandatory=${mandatory.length} '
+      'optional=${optional.length}',
+      name: 'checklist.resolver',
+      level: 500,
     );
     return (mandatory: mandatory, optional: optional);
   }
@@ -203,6 +250,18 @@ class DressAccessoryResolver {
     Map<String, dynamic> headdress,
     UniformProfile profile,
   ) {
+    if (headdress.containsKey('unisex')) {
+      if (profile.isSikh) {
+        final colAbove = headdress['sikh_col_me7_above'];
+        if (_isColOrAboveMe7Plus(profile.rank) && colAbove is String) {
+          return colAbove;
+        }
+        final sikh = headdress['sikh'];
+        if (sikh is String) return sikh;
+      }
+      return headdress['unisex'] as String?;
+    }
+
     if (profile.gender == Gender.female) {
       final ladies = headdress['ladies'];
       if (ladies is Map) {

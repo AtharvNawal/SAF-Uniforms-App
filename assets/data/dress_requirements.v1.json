@@ -673,143 +673,268 @@
       "id": "no_4_dress_requirements",
       "dress_name": "No. 4 Dress",
       "display_name": "Smart No. 4",
-      "subtitle": "Working · Long sleeve",
-      "doctrine_status": "stub_pending_pdf",
+      "subtitle": "Working · Pixelised",
+      "doctrine_status": "pdf_aligned",
+      "doctrine_source": "SAF No.4 Dress specification PDF (Army, Navy, RSAF, DIS)",
       "mandatory_rules": [
         {
           "category": "Headdress",
-          "selection_logic": "Select 1 based on religion and gender",
-          "options": {
-            "standard_men": [
-              "beret_standard"
-            ],
-            "standard_ladies": [
-              "beret_standard"
-            ],
-            "sikh_personnel": [
-              "turban_sikh"
-            ]
-          }
+          "selection_logic": "Beret for all personnel (men and ladies); Sikh personnel wear a turban of the branch colour with cap badge.",
+          "resolution": "see branch_overrides[branchId].headdress (unisex / sikh / sikh_col_me7_above); jockey cap / jungle hat / helmet / green field turban listed under alternatives (optional)."
+        },
+        {
+          "category": "Cap_Badge",
+          "selection_logic": "Per-branch + per-rank-tier; same badges as No. 3.",
+          "resolution": "see branch_overrides[branchId].cap_badge",
+          "notes": [
+            "Officer Cadets have a white round backing (53 mm) behind the cap badge.",
+            "COL/ME7 and BG and above wear the respective embroidered cap badge."
+          ]
         },
         {
           "category": "Identification",
           "required_for_all": [
-            "name_tag"
+            "name_tag_standard",
+            "singapore_tag"
           ]
         },
         {
           "category": "Rank_Insignia",
-          "logic": "Rank-group specific mapping",
-          "mapping": [
-            {
-              "condition": "rank_group == 'Officer_ME'",
-              "required": [
-                "collar_rank_pins"
-              ]
-            },
-            {
-              "condition": "rank_group == 'Warrant_Officer'",
-              "required": [
-                "collar_rank_pins"
-              ]
-            },
-            {
-              "condition": "rank_group == 'Specialist'",
-              "required": [
-                "rank_insignia_sleeve"
-              ]
-            },
-            {
-              "condition": "rank_group == 'Enlistee_Rating'",
-              "required": [
-                "rank_insignia_sleeve"
-              ]
-            }
-          ]
+          "logic": "Single chest-centre rank epaulette for every rank; white cadet/trainee variant for Officer Cadets, Specialist Cadets and ME Trainees. No sleeve insignia or collar pins.",
+          "resolution": "see branch_overrides[branchId].rank_epaulette (standard / cadet_trainee)"
+        },
+        {
+          "category": "Inner_Shirt",
+          "logic": "Navy grey, RSAF blue, DIS grey inner T-shirt (Army: not specified in the PDF).",
+          "resolution": "see branch_overrides[branchId].additional_mandatory"
         },
         {
           "category": "Belt",
-          "required_for_all": [
-            "nylon_belt"
-          ]
+          "logic": "Army olive-green webbing belt; Navy / RSAF / DIS black webbing belt."
         },
         {
           "category": "Socks",
-          "required_for_all": [
-            "black_socks"
-          ]
+          "logic": "Black socks for all branches; Army may alternatively wear green socks (optional)."
         },
         {
           "category": "Footwear",
-          "required_for_all": [
-            "leather_shoes_low_cut"
-          ]
+          "logic": "Army combat boots; Navy mid-cut safety boots; RSAF and DIS safety boots. Doctrine alternatives (Navy low-cut safety shoes / combat boots; RSAF and DIS combat boots) are optional."
         }
       ],
       "optional_logic": {
         "vocation": [
-          "arms_badge_vocation"
+          "arms_badge / vocation_badge per branch (Army arms badge, RSAF collar vocation badge, DIS arms + vocation badges)"
         ],
         "skills": [
-          "skill_tabs_sleeve",
-          "skill_badges_sleeve"
+          "saf_badges_chest (max 3, left chest)",
+          "skill_tabs_sleeve (max 2, left sleeve)",
+          "skill_badges_sleeve (max 2, left sleeve)"
+        ],
+        "awards": [
+          "foreign_badges (right side)"
+        ],
+        "headdress_alternatives": [
+          "jockey cap",
+          "jungle hat",
+          "Kevlar helmet (Navy)",
+          "ball cap (RSAF)",
+          "green field turban (Sikh, Army/Navy)"
         ]
       },
       "branch_overrides": {
         "army": {
-          "belt": {
-            "men": "nylon_belt",
-            "ladies": "leather_belt"
-          },
-          "socks": "black_socks",
-          "footwear": {
-            "men": [
-              "leather_shoes_low_cut",
-              "patent_shoes_low_cut"
+          "headdress": {
+            "unisex": "army_beret",
+            "sikh": "army_sikh_turban_standard",
+            "sikh_col_me7_above": "army_sikh_turban_col_me7_above",
+            "alternatives": [
+              "army_jockey_cap",
+              "army_jungle_hat"
             ],
-            "ladies": "court_shoes"
+            "sikh_alternatives": [
+              "sikh_field_turban_green"
+            ]
+          },
+          "cap_badge": {
+            "sltc_me6_below": "army_cap_badge_sltc_me6_below",
+            "col_me7": "army_cap_badge_col_me7",
+            "bg_me8_above": "army_cap_badge_bg_me8_above"
+          },
+          "rank_epaulette": {
+            "standard": "army_no4_rank_epaulette",
+            "cadet_trainee": "army_no4_rank_epaulette_cadet_trainee"
+          },
+          "name_tag": "name_tag_standard",
+          "arms_badge": "army_arms_badge",
+          "belt": "army_no4_belt",
+          "socks": "black_socks",
+          "footwear": "combat_boots",
+          "additional_mandatory": [
+            "singapore_tag"
+          ],
+          "additional_optional": [
+            "green_socks",
+            "saf_badges_chest",
+            "skill_tabs_sleeve",
+            "skill_badges_sleeve",
+            "foreign_badges"
+          ],
+          "chest_badges": {
+            "max_count": 3,
+            "placement": "Centred directly above the top edge of the left chest pocket."
+          },
+          "sleeve_badges": {
+            "max_tabs": 2,
+            "max_badges": 2,
+            "first_offset_below_seam_cm": 1.0,
+            "ippt_gap_cm": 0.5
+          },
+          "foreign_badge_rules": {
+            "side": "right",
+            "max_chest_count": 3,
+            "max_sleeve_tabs": 1,
+            "max_sleeve_badges": 2
           }
         },
         "navy": {
-          "belt": {
-            "men": "nylon_belt",
-            "ladies": "leather_belt"
-          },
-          "socks": "black_socks",
-          "footwear": {
-            "men": [
-              "leather_shoes_low_cut",
-              "patent_shoes_low_cut"
+          "headdress": {
+            "unisex": "navy_beret",
+            "sikh": "navy_sikh_turban_standard",
+            "alternatives": [
+              "navy_jockey_cap",
+              "navy_jungle_hat",
+              "navy_kevlar_helmet"
             ],
-            "ladies": "court_shoes"
+            "sikh_alternatives": [
+              "sikh_field_turban_green"
+            ]
+          },
+          "cap_badge": {
+            "sltc_me6_below": "navy_cap_badge_sltc_me6_below",
+            "col_me7_above": "navy_cap_badge_col_me7_above"
+          },
+          "rank_epaulette": {
+            "standard": "navy_no4_rank_epaulette",
+            "cadet_trainee": "navy_no4_rank_epaulette_cadet_trainee"
+          },
+          "name_tag": "name_tag_standard",
+          "belt": "no4_belt_black",
+          "socks": "black_socks",
+          "footwear": "safety_boots_mid_cut",
+          "additional_mandatory": [
+            "singapore_tag",
+            "navy_no4_inner_shirt_grey"
+          ],
+          "additional_optional": [
+            "safety_shoes_low_cut",
+            "combat_boots",
+            "saf_badges_chest",
+            "skill_tabs_sleeve",
+            "skill_badges_sleeve",
+            "foreign_badges"
+          ],
+          "chest_badges": {
+            "max_count": 3,
+            "offset_above_pocket_cm": 3.0,
+            "exception": "If two of PWO / CIC Sup / Submariner badges are held, only two may be displayed, in stacking order."
+          },
+          "foreign_badge_rules": {
+            "side": "right",
+            "max_chest_count": 3,
+            "max_sleeve_tabs": 2,
+            "max_sleeve_badges": 2
           }
         },
         "rsaf": {
-          "belt": {
-            "men": "nylon_belt",
-            "ladies": "leather_belt"
+          "headdress": {
+            "unisex": "rsaf_beret",
+            "sikh": "rsaf_sikh_turban",
+            "alternatives": [
+              "rsaf_jockey_cap",
+              "rsaf_ball_cap"
+            ]
           },
+          "cap_badge": {
+            "sltc_me6_below": "rsaf_cap_badge_sltc_me6_below",
+            "col_me7": "rsaf_cap_badge_col_me7",
+            "bg_me8_above": "rsaf_cap_badge_bg_me8_above_beret"
+          },
+          "rank_epaulette": {
+            "standard": "rsaf_no4_rank_epaulette",
+            "cadet_trainee": "rsaf_no4_rank_epaulette_cadet_trainee"
+          },
+          "name_tag": "name_tag_standard",
+          "vocation_badge": "rsaf_vocation_badge",
+          "belt": "no4_belt_black",
           "socks": "black_socks",
-          "footwear": {
-            "men": [
-              "leather_shoes_low_cut",
-              "patent_shoes_low_cut"
-            ],
-            "ladies": "court_shoes"
-          }
+          "footwear": "safety_boots",
+          "additional_mandatory": [
+            "singapore_tag",
+            "rsaf_no4_inner_tshirt",
+            "rsaf_unit_patch"
+          ],
+          "additional_optional": [
+            "combat_boots",
+            "saf_badges_chest",
+            "skill_tabs_sleeve",
+            "skill_badges_sleeve",
+            "foreign_badges"
+          ],
+          "collar_vocation_offset_mm": 10,
+          "sleeve_patch_offset_mm": 20,
+          "proficiency_badge_gap_mm": 5
         },
         "dis": {
-          "belt": {
-            "men": "nylon_belt",
-            "ladies": "leather_belt"
+          "headdress": {
+            "unisex": "dis_beret",
+            "sikh": "dis_sikh_turban"
           },
+          "cap_badge": {
+            "sltc_me6_below": "dis_cap_badge_sltc_me6_below",
+            "col_me7": "dis_cap_badge_col_me7",
+            "bg_me8_above": "dis_cap_badge_bg_me8_radm_above"
+          },
+          "rank_epaulette": {
+            "standard": "dis_no4_rank_epaulette",
+            "cadet_trainee": "dis_no4_rank_epaulette_cadet_trainee"
+          },
+          "name_tag": "name_tag_standard",
+          "arms_badge": "dis_arms_badge",
+          "vocation_badge": "dis_vocation_badge",
+          "belt": "no4_belt_black",
           "socks": "black_socks",
-          "footwear": {
-            "men": [
-              "leather_shoes_low_cut",
-              "patent_shoes_low_cut"
-            ],
-            "ladies": "court_shoes"
+          "footwear": "safety_boots",
+          "additional_mandatory": [
+            "singapore_tag",
+            "dis_no4_inner_tshirt",
+            "dis_service_patch"
+          ],
+          "additional_optional": [
+            "combat_boots",
+            "dis_formation_patch",
+            "saf_badges_chest",
+            "skill_tabs_sleeve",
+            "skill_badges_sleeve",
+            "foreign_badges"
+          ],
+          "arms_badge_collar_offset_cm": 1.0,
+          "chest_badges": {
+            "max_count": 3,
+            "placement": "Centred directly above the top edge of the Singapore tag."
+          },
+          "sleeve_badges": {
+            "max_tabs": 2,
+            "max_badges": 2,
+            "tabs_limit_badges_to": 1,
+            "min_tab_offset_below_seam_cm": 0.5,
+            "patch_badge_gap_cm": 0.4,
+            "tab_gap_cm": 0.5
+          },
+          "foreign_badge_rules": {
+            "side": "right",
+            "max_chest_count": 3,
+            "max_sleeve_tabs": 1,
+            "max_sleeve_badges": 2
           }
         }
       }

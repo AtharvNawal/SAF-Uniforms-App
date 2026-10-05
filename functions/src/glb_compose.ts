@@ -31,6 +31,7 @@ import { Document, NodeIO, Node, Scene } from "@gltf-transform/core";
 import {
   EXTTextureWebP,
   KHRDracoMeshCompression,
+  KHRTextureTransform,
 } from "@gltf-transform/extensions";
 import {
   dedup,
@@ -81,7 +82,10 @@ export async function createComposeIO(): Promise<NodeIO> {
     draco3d.createDecoderModule(),
   ]);
   return new NodeIO()
-    .registerExtensions([KHRDracoMeshCompression, EXTTextureWebP])
+    // KHRTextureTransform: artist figures (RSAF No.4) tile their fabric /
+    // skin normal + roughness maps with it; an unregistered extension is
+    // silently dropped on read, which made the weave 14x too coarse.
+    .registerExtensions([KHRDracoMeshCompression, EXTTextureWebP, KHRTextureTransform])
     .registerDependencies({
       "draco3d.encoder": encoder,
       "draco3d.decoder": decoder,
@@ -384,13 +388,18 @@ export async function bakeNameTag(
   }
 
   // Render text as SVG and let sharp rasterise it. The font size is sized
-  // to ~50% of the texture height so the surname fills the patch.
+  // to ~50% of the texture height so the surname fills the patch. Text
+  // colour follows the tape: dark text on light tapes (the placeholder
+  // bodies' white patch), white text on dark tapes (RSAF No.4 figure).
   const fontSize = Math.round(height * 0.55);
+  const textFill = (await meanLuminance(baseImage)) < 110
+    ? "rgb(238,238,232)"
+    : "rgb(15,15,15)";
   const safeText = escapeXmlText(fullName.toUpperCase());
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
     <rect width="100%" height="100%" fill="rgba(0,0,0,0)"/>
     <text x="50%" y="50%" font-family="sans-serif" font-size="${fontSize}" font-weight="700"
-          fill="rgb(15,15,15)" text-anchor="middle" dominant-baseline="middle"
+          fill="${textFill}" text-anchor="middle" dominant-baseline="middle"
           letter-spacing="6">${safeText}</text>
   </svg>`;
 
@@ -410,6 +419,13 @@ export async function bakeNameTag(
     material.setBaseColorTexture(tex);
   }
   return true;
+}
+
+/** Mean Rec.601 luminance (0-255) of an encoded image. */
+async function meanLuminance(image: Buffer): Promise<number> {
+  const { channels } = await sharp(image).stats();
+  const [r, g, b] = [channels[0], channels[1] ?? channels[0], channels[2] ?? channels[0]];
+  return 0.299 * r.mean + 0.587 * g.mean + 0.114 * b.mean;
 }
 
 function escapeXmlText(value: string): string {
@@ -548,4 +564,117 @@ export async function compressForWeb(
   consolidateBuffersToOne(doc);
 
   return { dracoApplied, webpApplied };
+}
+
+
+// ---------------------------------------------------------------------------
+// Baked slots — accessories already modelled into a unified dressed figure
+// ---------------------------------------------------------------------------
+
+/** Root `extras` key a unified figure uses to declare its built-in parts. */
+export const BAKED_SLOTS_EXTRAS_KEY = "saf_baked_slots";
+
+/**
+ * One built-in part of a unified figure. `node` is the scene node holding
+ * it; `accessory` is the accessory_library id it represents, or `null` when
+ * the slot is merely *covered* (socks inside boots, a belt under an
+ * untucked shirt) and nothing should ever attach there. `optional` marks a
+ * part doctrine only shows when held (a chest wing badge): it is removed
+ * unless the profile includes an accessory for that slot.
+ */
+export interface BakedSlot {
+  node: string;
+  accessory: string | null;
+  optional?: boolean;
+}
+
+/** Accessory as seen by the baked-slot planner. */
+export interface SlotAccessory {
+  id: string;
+  category: string;
+  mandatory: boolean;
+}
+
+/**
+ * Reads `extras.saf_baked_slots` from the GLB root. Returns `{}` for every
+ * figure that doesn't declare one (all pre-existing bodies), which makes
+ * the planners below no-ops.
+ */
+export function readBakedSlots(doc: Document): Record<string, BakedSlot> {
+  const raw = (doc.getRoot().getExtras() as Record<string, unknown>)[BAKED_SLOTS_EXTRAS_KEY];
+  if (!raw || typeof raw !== "object") return {};
+  const out: Record<string, BakedSlot> = {};
+  for (const [slot, value] of Object.entries(raw as Record<string, unknown>)) {
+    if (!value || typeof value !== "object") continue;
+    const v = value as Record<string, unknown>;
+    if (typeof v["node"] !== "string") continue;
+    out[slot] = {
+      node: v["node"] as string,
+      accessory: typeof v["accessory"] === "string" ? (v["accessory"] as string) : null,
+      ...(v["optional"] === true && { optional: true }),
+    };
+  }
+  return out;
+}
+
+/**
+ * Slot an accessory category competes for. Every headdress variant
+ * (beret, Sikh turban, ladies' hat, jockey cap, …) shares one head.
+ */
+export function slotOf(category: string): string {
+  return category.startsWith("headdress") ? "headdress" : category;
+}
+
+/**
+ * Built-in nodes to remove:
+ * - a *mandatory* accessory for the slot differs from what the figure
+ *   carries — e.g. a Sikh profile's turban replaces the modelled beret, a
+ *   COL's cap badge replaces the default one. Optional alternatives never
+ *   trigger a swap (a ticked "combat boots" must not strip the modelled
+ *   boots);
+ * - an `optional` built-in part the profile doesn't include (no chest wing
+ *   badge unless the wearer ticked one).
+ */
+export function planBakedDetaches(
+  slots: Record<string, BakedSlot>,
+  accessories: SlotAccessory[],
+  nodeExists: (name: string) => boolean,
+): string[] {
+  const detach: string[] = [];
+  for (const baked of Object.entries(slots)) {
+    const [slot, v] = baked;
+    if (!v.optional || !nodeExists(v.node)) continue;
+    if (!accessories.some((a) => slotOf(a.category) === slot) && !detach.includes(v.node)) {
+      detach.push(v.node);
+    }
+  }
+  for (const acc of accessories) {
+    const baked = slots[slotOf(acc.category)];
+    if (!baked || baked.accessory === null || !acc.mandatory) continue;
+    if (baked.accessory !== acc.id && nodeExists(baked.node) && !detach.includes(baked.node)) {
+      detach.push(baked.node);
+    }
+  }
+  return detach;
+}
+
+/**
+ * Accessory ids to skip because the figure already shows them. Call after
+ * the detaches from `planBakedDetaches` have been applied: a slot whose
+ * node is gone (detached directly, or as a child of a detached node — the
+ * beret's badge goes with the beret) is open again and its accessory
+ * attaches normally.
+ */
+export function planBakedSkips(
+  slots: Record<string, BakedSlot>,
+  accessories: SlotAccessory[],
+  nodeExists: (name: string) => boolean,
+): Set<string> {
+  const skip = new Set<string>();
+  for (const acc of accessories) {
+    const baked = slots[slotOf(acc.category)];
+    if (!baked) continue;
+    if (baked.accessory === null || nodeExists(baked.node)) skip.add(acc.id);
+  }
+  return skip;
 }
