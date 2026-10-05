@@ -34,12 +34,13 @@ from pathlib import Path
 
 import cv2
 import numpy as np
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import Depends, FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.responses import JSONResponse
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import config  # noqa: E402
+from api.auth import AuthError, auth_error_handler, require_user  # noqa: E402
 from api.burst import aggregate_burst  # noqa: E402
 from api.pipeline import SUPPORTED_UNIFORM_TYPES, CheckError, CheckParams, run_check  # noqa: E402
 from calibration.pnp_solve import scale_factor_cm_per_unit, solve_camera_pose  # noqa: E402
@@ -68,6 +69,7 @@ app = FastAPI(
         "the not-yet-trained accessory detector. See cv-service/README.md."
     ),
 )
+app.add_exception_handler(AuthError, auth_error_handler)
 
 
 @app.get("/health")
@@ -75,7 +77,7 @@ def health() -> dict:
     return {"status": "ok"}
 
 
-@app.post("/inspect")
+@app.post("/inspect", dependencies=[Depends(require_user)])
 async def inspect(
     photo: UploadFile = File(...),
     rank_tier: str = Form(...),
@@ -245,7 +247,7 @@ async def _save_upload(image: UploadFile) -> str:
         return tmp.name
 
 
-@app.post("/check_uniform")
+@app.post("/check_uniform", dependencies=[Depends(require_user)])
 async def check_uniform(
     image: UploadFile = File(...),
     uniform_type: str = Form(...),
@@ -293,7 +295,7 @@ async def check_uniform(
         Path(tmp_path).unlink(missing_ok=True)
 
 
-@app.post("/check_uniform_burst")
+@app.post("/check_uniform_burst", dependencies=[Depends(require_user)])
 async def check_uniform_burst(
     images: list[UploadFile] = File(...),
     uniform_type: str = Form(...),

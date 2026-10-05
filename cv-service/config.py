@@ -31,6 +31,18 @@ def _int_env(name: str, default: int) -> int:
     return int(raw) if raw is not None else default
 
 
+def _bool_env(name: str, default: bool) -> bool:
+    raw = os.environ.get(f"CV_SERVICE_{name}")
+    return raw.strip().lower() in ("1", "true", "yes") if raw is not None else default
+
+
+# --- Deployment: auth (api/auth.py) ------------------------------------------
+# Require a Firebase ID token on every analysis endpoint. Off locally / in
+# tests; the Cloud Run deployment sets CV_SERVICE_REQUIRE_AUTH=1.
+REQUIRE_AUTH = _bool_env("REQUIRE_AUTH", False)
+FIREBASE_PROJECT_ID = os.environ.get("CV_SERVICE_FIREBASE_PROJECT_ID", "saf-uniforms")
+
+
 # --- Stage 1: person detection (pose/detect_person.py) ---------------------
 MIN_PERSON_CONFIDENCE = _float_env("MIN_PERSON_CONFIDENCE", 0.6)
 

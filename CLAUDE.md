@@ -173,9 +173,16 @@ SAF-Uniforms/
 │   ├── seed_firestore.dart            # Pure-Dart Firebase Admin SDK seeder; bypasses Firestore rules. Run via `dart run tool/seed_firestore.dart <service-account.json>` to push the four reference collections. The `--upload-images` flag exists but is unreliable — use `tool/upload_accessory_images.py` for image uploads (see §5.5).
 │   ├── upload_accessory_images.py     # Python uploader for `assets/accessories/<id>/{image,placement}.png` → Firebase Storage. Replaces the broken Dart upload path. Idempotent via per-object SHA-256 metadata. Run with `GOOGLE_APPLICATION_CREDENTIALS=<svc>.json python3 tool/upload_accessory_images.py --bucket saf-uniforms.firebasestorage.app`.
 │   ├── extract_pdf_accessories.py     # One-shot Python tool: crops per-accessory PNGs out of the rendered SAF No.3 Dress PDF and writes them to `assets/accessories/<id>/{image,placement}.png`. Re-run when the doctrine PDF changes; details in `assets/accessories/README.md`.
+│   ├── extract_pdf_accessories_no4.py # No.4 sibling of the above: renders exact clip rectangles (PDF points) out of the SAF No.4 Dress PDF with PyMuPDF (`.venv-tools/bin/pip install pymupdf`; no `pdftoppm` needed) and writes `assets/accessories/<id>/{image,placement}.png` for the No.4-only ids. Shared No.3 items keep their No.3 imagery. Run via `.venv-tools/bin/python tool/extract_pdf_accessories_no4.py <SAF_No_4_Dress.pdf>`.
 │   ├── generate_placeholder_bodies.py # Python (trimesh + Pillow) generator for stand-in humanoid GLBs. Outputs `assets/3d/bodies/{male,female,female_maternity}_apose.glb` + `assets/3d/placeholder.glb`. Composes primitives (head sphere, torso box, arms, legs, beret, name-tag patch, medal ribbons) per variant, plus a textured `name_tag` mesh with a `name_tag_mat` material (1024×256 white base-color texture — Phase-2 bake target) and 11 named socket markers (`head_top`, `cap_band_front`, `left/right_collar_tip`, `left/right_chest_pocket`, `left/right_shoulder_seam`, `left/right_sleeve_upper`, `belt_center`) that the merger looks up by name. Visibly humanoid but explicitly NOT production. Run via `python3 -m venv .venv-tools && .venv-tools/bin/pip install trimesh numpy Pillow && .venv-tools/bin/python tool/generate_placeholder_bodies.py`. Replace with real MakeHuman exports per `docs/3d-body-authoring.md` when ready.
-│   ├── generate_placeholder_accessories.py # Python (trimesh) generator for procedural accessory GLBs. Reads `assets/data/accessory_library.v1.json`, dispatches each non-legacy entry to a per-category builder (beret = truncated cone, sikh turban = ovoid, cap badge = flat oval gold, sleeve insignia = chevron stripes, epaulette = slab, lanyard = cord + loop, etc.), writes `assets/3d/accessories/{id}.glb` centred on origin. The merger applies the per-anchor offset translation when re-parenting under a body socket. Each placeholder is visibly distinct + branch-coloured but obviously not production. Output: 55 GLBs covering headdress / cap badges / cap embellishments / sleeve insignia / epaulettes / lanyards / arms badges / vocation badges. Skips out-of-scope categories (footwear, gorgettes, medal_ribbons, etc.). Run via `.venv-tools/bin/python tool/generate_placeholder_accessories.py`.
+│   ├── generate_placeholder_accessories.py # Python (trimesh) generator for procedural accessory GLBs. Reads `assets/data/accessory_library.v1.json`, dispatches each non-legacy entry to a per-category builder (beret = truncated cone, sikh turban = ovoid, cap badge = flat oval gold, sleeve insignia = chevron stripes, epaulette = slab, lanyard = cord + loop, etc.), writes `assets/3d/accessories/{id}.glb` centred on origin. The merger applies the per-anchor offset translation when re-parenting under a body socket. Each placeholder is visibly distinct + branch-coloured but obviously not production. Output: 55 GLBs covering headdress / cap badges / cap embellishments / sleeve insignia / epaulettes / lanyards / arms badges / vocation badges. Also builds belt / socks / footwear (No.4 boots get a shaft via `render_logic.style: boot_high|boot_mid`), `rank_epaulette_chest` and `sleeve_patch`. Skips out-of-scope categories (gorgettes, medal_ribbons, etc.). Run via `.venv-tools/bin/python tool/generate_placeholder_accessories.py --only-missing` — **always pass `--only-missing`**: without it the script overwrites every GLB, including the hand-tuned / artist files (`army_beret`, `nylon_belt`, `leather_shoes_low_cut`, …).
 │   ├── inject_accessory.py            # Python tool that takes a raw artist-authored accessory GLB (Tripo / Meshy / Luma export, arbitrary scale + orientation) and emits a contract-compliant accessory GLB ready to drop under `assets/3d/accessories/{id}.glb`. Loads via `trimesh.load(force="mesh")` to bake node transforms, auto-orients so the bbox's thinnest extent aligns with Z (so the accessory's flat face points +Z, matching the merger's body-front sockets), scales uniformly to a target size (default 5 cm widest dim — appropriate for cap badges; bump to 0.07-0.20 m for sleeve insignia / headdress), and recentres at origin so the merger's per-accessory `render_logic.offset_*_cm` translation lands as designed. CLI: `--in <raw.glb> --out <accessory.glb> [--target-size METRES] [--rotate-{x,y,z} DEG] [--no-auto-orient]`. The `--rotate-y 180` flag is the one-flag fix when the auto-oriented badge ends up facing the camera-back rather than camera-front. Raw artist sources are preserved at `assets/3d_raw/` (gitignored).
+│   ├── prepare_unified_figure.mjs     # Node (gltf-transform from `functions/node_modules`) prep for artist-delivered *dressed figures* (body + uniform + modelled accessories in one GLB) bound for the unified `models/bodies/{branch}_{dress}_{gender}.glb` path. Keeps the scene graph intact, unlike `inject_sockets.py`, which flattens. It does four things:
+│   │                                  #   - adds the 15 sockets + `name_tag`, measured from the figure's own parts;
+│   │                                  #   - solves the sockets a replacement accessory may use (`head_top`, `cap_band_front`, `belt_center`) so the replacement lands on the built-in part;
+│   │                                  #   - groups multi-node parts (rank tab + insignia);
+│   │                                  #   - blanks, V-flips and renames the name tape to `name_tag_mat` so the surname bakes upright, and writes `extras.saf_baked_slots`.
+│   │                                  #   Per-figure config: `assets/3d/figures/<figure>.json`. Run `node tool/prepare_unified_figure.mjs --config assets/3d/figures/rsaf_no4.json --in assets/3d_raw/rsaf_no4_male_source.glb --out assets/3d/bodies/rsaf_no4_male.glb`.
 │   ├── inject_sockets.py              # Python tool to make a raw Tripo / Meshy / Luma body GLB satisfy the Phase-2 merger contract. Loads via `trimesh.load(force="mesh")` (bakes node transforms), normalises to target height (default 1.75m) with feet at y=0 and centred on x/z, then injects 14 named scene-graph nodes via `transform=` parameter on `add_geometry` so the SOCKET NODE TRANSFORMS carry the world position (NOT vertex coordinates — the merger's `socket.addChild(accRoot)` inherits world transform). Front-side socket Z-offsets are anatomic constants (chest=0.10m, head_front=0.08m, name_tag=0.105m), NOT bbox fractions, because Tripo bodies' A-pose depth (~0.64m) would otherwise put chest features ~25cm in front of the shirt surface. Supports `--up-axis {y,z,-z}` for non-glTF-standard exports and `--target-height` to override the 1.75m default (use 1.65 for female / maternity).
 │   └── upload_models.py               # Python uploader for `assets/3d/**/*.glb` → Firebase Storage `models/**`. Mirrors `upload_accessory_images.py`'s pattern (urllib + openssl signing, idempotent SHA-256, persistent download tokens). Run via `GOOGLE_APPLICATION_CREDENTIALS=<svc>.json python3 tool/upload_models.py --bucket saf-uniforms.firebasestorage.app`. Supports `--dry-run` and `--only <glob>` for targeted uploads.
 ├── functions/             # Firebase Cloud Functions (TypeScript, Node 20). Three HTTPS callables: `claimDeviceIdentity` and `markProfileComplete` back the device-bound identity flow; `composeUniformModel` runs the Phase-2 multi-asset 3D merger (uniform + accessories + name-tag bake + Draco/WebP compression) via the helpers in `src/glb_compose.ts`. Deployed via `firebase deploy --only functions`. Tests: `npm test` (Node 20 built-in `node:test` runner over `lib/*.test.js`).
@@ -502,8 +509,9 @@ Each feature follows a Clean-style split:
   `epaulettes`, `name_tag`, `lanyard`, `arms_badge`, `vocation_badge`) via
   `DressAccessoryResolver` to pick the accessories that apply to the
   active `(branch, rank, gender, isSikh)`. Legacy-placeholder accessories
-  (`render_logic.legacy_placeholder == true`) are filtered out, so No.1/2/4/5
-  return empty until their doctrine PDFs land.
+  (`render_logic.legacy_placeholder == true`) are filtered out, so No.1/2/5
+  return empty until their doctrine PDFs land. No.3 and No.4 are
+  doctrine-aligned.
 - `DressAccessoryResolver` exposes `resolveSplit(...)` returning
   `({mandatory, optional})` where headdress / cap_badge / cap_embellishment
   / rank_insignia_sleeve / epaulettes / name_tag / belt / socks / footwear
@@ -514,7 +522,18 @@ Each feature follows a Clean-style split:
   handles name_tag via texture bake (`bakeNameTag` in `composeUniformModel`)
   rather than mesh attachment — the resolver surfaces it in the Wardrobe
   checklist only. `resolve(...)` is a backwards-compatible flatten of the
-  same split. Consumed by the Wardrobe tab to render per-row
+  same split. Override shapes added for No.4 (2026-10-02,
+  `ChangeRequest/2026-10-02_no4-dress-doctrine-alignment.md`), mirrored
+  in the TS port:
+  - `headdress` may be gender-neutral, `{unisex, sikh,
+    sikh_col_me7_above}`. This also fixed DIS No.3, whose `{unisex,
+    sikh}` headdress had never resolved.
+  - `headdress.alternatives` / `sikh_alternatives` are optional.
+  - `rank_epaulette: {standard, cadet_trainee}` is mandatory for every
+    rank. `Rank.oct` gets `cadet_trainee`.
+  - `additional_mandatory` / `additional_optional` are plain id lists.
+  - Unknown override keys (e.g. No.4's `chest_badges`,
+    `sleeve_badges`, `foreign_badge_rules` cm metadata) are ignored. Consumed by the Wardrobe tab to render per-row
   `MANDATORY` / `OPTIONAL` chips.
 - `dressAccessoriesByIdProvider(String dressId)`
   (`AsyncValue<AccessorySplit>`) is the parameterised version that returns
@@ -675,8 +694,23 @@ whitelist). On iOS the keychain entries persist by default.
     `firebase.json` and a `.firebaserc`), tuned via
     `admin-portal/apphosting.yaml`, and triggered automatically by
     GitHub pushes to the linked live branch.
-  - The Python `cv-service` has **no hosted deployment** — it runs
-    locally via `deploy/run-cv-service-local.sh` (or `cv-service/Dockerfile`),
+  - **`cv-service` on Cloud Run** (2026-10-02,
+    `ChangeRequest/2026-10-02_cv-service-cloud-run-deploy.md`):
+    - Deployed to `https://cv-service-612500938654.asia-southeast1.run.app`
+      by `deploy/deploy-cv-service-cloudrun.sh`, which uses Cloud Build,
+      `deploy/cloudbuild.cv-service.yaml` and `.gcloudignore`.
+    - Runtime: 4 vCPU / 8 GiB, concurrency 1, 0–2 instances.
+    - `CV_SERVICE_REQUIRE_AUTH=1`, so `api/auth.py` requires a Firebase ID
+      token on the analysis endpoints. The app's two clients attach one via
+      an `IdTokenProvider`.
+    - Public at the Cloud Run level since 2026-10-05, granted by an
+      Owner (Editors can't), like the Firebase functions. Live
+      smoke-tested: no-token and forged-token scans get 401, real-token
+      scan and burst get 200.
+    - Release APKs point at it with
+      `--dart-define=CV_SERVICE_BASE_URL=<that URL>`.
+  - Locally, `cv-service` runs
+    via `deploy/run-cv-service-local.sh` (or `cv-service/Dockerfile`),
     and the Flutter app reaches it over the LAN, or over the USB cable via
     `deploy/connect-phone-usb.sh` (`adb reverse tcp:8001 tcp:8001` + the
     app's "USB cable" preset). The address is compiled in
@@ -768,7 +802,30 @@ whitelist). On iOS the keychain entries persist by default.
     "GLB must have 0–1 buffers". The helper reassigns every
     accessor's buffer to the first one and disposes the rest.
     Runtime: `2 GiB` memory, 120s timeout, region
-    `asia-southeast1`. The bundle version (`MODEL_BUNDLE_VERSION = 15`)
+    `asia-southeast1`.
+
+    **Baked slots** (2026-10-02,
+    `ChangeRequest/2026-10-02_rsaf-no4-unified-figures.md`): a unified
+    dressed figure can declare the accessories it already models in its
+    root `extras.saf_baked_slots`, as `{slot: {node, accessory | null,
+    optional?}}`. Before attaching, compose applies
+    `planBakedDetaches` / `planBakedSkips` from `glb_compose.ts`:
+    - It skips accessories the figure already shows.
+    - A *mandatory* accessory that differs from the built-in one detaches
+      that node and attaches normally: Sikh turban for beret, COL/BG cap
+      badge, cadet rank tab. A detached parent takes its children with it.
+    - Optional alternatives never strip a built-in part.
+    - `accessory: null` slots are just covered (socks in boots, belt under
+      an untucked shirt).
+    - `optional: true` parts (the RSAF chest wing badge) are removed
+      unless the profile ticked one.
+
+    Figures without the key behave exactly as before. `bakeNameTag` picks
+    white or dark text from the tape's luminance. `createComposeIO`
+    registers `KHR_texture_transform`; it used to drop it silently,
+    which coarsened artist fabric tiling.
+
+    The bundle version (`MODEL_BUNDLE_VERSION = 15`)
     flushes every existing per-user cached GLB on first GhostScreen
     open after deploy. Profile-hash logic is shared with the client
     via the parallel implementation in
@@ -896,10 +953,10 @@ whitelist). On iOS the keychain entries persist by default.
     pointing to the per-id PNGs uploaded by `tool/seed_firestore.dart
     --upload-images` from `assets/accessories/<id>/{image,placement}.png`.
     Empty strings on entries whose images have not been sourced yet
-    (legacy No.1/2/4/5 placeholders, plus any new doctrine-aligned entry
+    (legacy No.1/2/5 placeholders, plus any new doctrine-aligned entry
     awaiting an upload) — the app degrades gracefully to the category
     icon fallback. v3 holds
-    82 entries grouped by `category` (e.g. `headdress_beret`,
+    113 entries (82 + 31 No.4 entries added 2026-10-02) grouped by `category` (e.g. `headdress_beret`,
     `headdress_sikh_turban`, `headdress_ladies_hat`, `cap_badge`,
     `cap_embellishment`, `epaulette`, `gorgette`,
     `sleeve_rank_specialist`, `sleeve_rank_enlistee`, `arms_badge`,
@@ -909,7 +966,21 @@ whitelist). On iOS the keychain entries persist by default.
     + per-rank-tier (e.g. `army_sikh_turban_col_me7_above`,
     `navy_cap_embellishment_bg_me8_above`,
     `rsaf_ladies_hat_specialist_me1_me2_cadet_me_trainee`).
-    For No. 1, 2, 4, 5 dress, the original generic entries
+    For **No. 4 dress** (2026-10-02, SAF No.4 Dress PDF):
+    - The Army/Navy/RSAF/DIS berets (now unisex, since ladies wear them
+      in No.4), Sikh turbans and cap badges are reused from No.3.
+    - New: alternative headdress (jockey caps, jungle hats, Navy Kevlar
+      helmet, RSAF ball cap, `sikh_field_turban_green`). These have no
+      `anchor`, so they appear in the Wardrobe only and are never
+      rendered.
+    - New: per-branch chest rank tabs (`<branch>_no4_rank_epaulette[_cadet_trainee]`,
+      category `rank_epaulette_chest`, anchored `belt_center` +20 cm).
+    - New: `singapore_tag`, inner T-shirts (Navy/RSAF/DIS),
+      `army_no4_belt` / `no4_belt_black`, `combat_boots`,
+      `safety_boots[_mid_cut]`, `safety_shoes_low_cut`, `green_socks`,
+      `rsaf_vocation_badge`, `rsaf_unit_patch`, `dis_service_patch`,
+      `dis_formation_patch`.
+    For No. 1, 2, 5 dress, the original generic entries
     (`beret_standard`, `turban_sikh`, `ladies_service_hat_a` /
     `_b`, `name_tag`, `epaulettes`, `gorgettes_ladies_only`,
     `rank_insignia_sleeve`, `arms_badge_vocation`, `lanyard_ma_sa`)
@@ -2114,7 +2185,41 @@ These are not policies, just pointers for whoever picks up the next plan:
   badges / cap embellishments / sleeve insignia / lanyards / epaulettes
   / arms or vocation badges for Army, Navy, RSAF, DIS — see
   [ChangeRequest/2026-05-02_no3-dress-asset-alignment.md](ChangeRequest/2026-05-02_no3-dress-asset-alignment.md)).
-  No. 1, 2, 4, 5 still reference legacy generic placeholder accessories
+  **No. 4 dress** is aligned with the SAF No.4 Dress PDF
+  (`ChangeRequest/2026-10-02_no4-dress-doctrine-alignment.md`):
+  - All ranks wear one chest-centre rank tab; there are no sleeve
+    chevrons, collar pins or shoulder epaulettes.
+  - Berets for men and ladies; boots instead of shoes; per-branch belt,
+    socks and inner shirt.
+  - The PDF's cm placement rules (chest/sleeve badges, RSAF 10/20/5 mm,
+    DIS patches) are stored as metadata in `branch_overrides`.
+  - **RSAF No.4** (2026-10-02,
+    `ChangeRequest/2026-10-02_rsaf-no4-unified-figures.md`): it uses the
+    artist dressed figures `models/bodies/rsaf_no4_{male,female}.glb`,
+    prepared by `tool/prepare_unified_figure.mjs` from
+    `assets/3d_raw/rsaf_no4_*_source.glb`. They're uploaded and
+    `composeUniformModel` is deployed.
+    - The operator's misnamed `models/uniforms/rasf_no4_*.glb` uploads
+      are unused and can be deleted.
+    - The Sikh turban swapped in is the light-blue procedural placeholder.
+    - The built-in rank tab shows one insignia for all non-cadet ranks.
+  - The other branches' No.4 models are still the generic body +
+    accessories until their figures are delivered.
+  - cv-service has no No.4 rules, so `/check_uniform` returns
+    `UNSUPPORTED_UNIFORM` for No.4. That is a separate follow-up.
+  - **The device keeps showing the old No.4 stub until the operator runs
+    `upload_accessory_images.py`, `seed_firestore.dart` and
+    `upload_models.py --only 'accessories/*'`.**
+
+  Known No.3 data quirks, left unchanged because fixing them changes
+  existing models:
+  - DIS `cap_badge.bg_me8_radm_above`, RSAF `bg_me8_above_beret` /
+    `_service_hat` and DIS `epaulettes {standard, me_trainee}` keys are
+    never picked by `_pickByOfficerTier`.
+  - The Dart resolver treats `Gender.maternity` as men; the TS port
+    treats it as ladies.
+
+  No. 1, 2, 5 still reference legacy generic placeholder accessories
   (`beret_standard`, `turban_sikh`, `ladies_service_hat_a` / `_b`,
   `name_tag`, `epaulettes`, `gorgettes_ladies_only`,
   `rank_insignia_sleeve`, `arms_badge_vocation`, `lanyard_ma_sa`)
@@ -2133,7 +2238,7 @@ These are not policies, just pointers for whoever picks up the next plan:
   Until an operator runs `tool/seed_firestore.dart --upload-images`,
   the `accessory_library` docs ship empty URL strings and the app falls
   back to the category icon in `CheckCard` / `AccessoryDetailSheet`.
-  Legacy No.1 / 2 / 4 / 5 entries will stay empty until their doctrine
+  Legacy No.1 / 2 / 5 entries will stay empty until their doctrine
   PDFs land.
 - `DressRequirement.mergedFor(BranchId)` only swaps top-level
   `mandatory_rules` / `optional_logic` lists when a branch override

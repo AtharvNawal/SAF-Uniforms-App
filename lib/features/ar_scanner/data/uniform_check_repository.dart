@@ -5,7 +5,8 @@ import 'package:http/http.dart' as http;
 
 import '../../../core/utils/app_logger.dart';
 import '../domain/entities/uniform_check_result.dart';
-import 'cv_service_inspection_repository.dart' show kCvServiceBaseUrl;
+import 'cv_service_inspection_repository.dart'
+    show IdTokenProvider, attachIdToken, kCvServiceBaseUrl;
 
 const String _tag = 'arScanner.uniformCheck';
 
@@ -15,19 +16,23 @@ const String _tag = 'arScanner.uniformCheck';
 /// all in pixel space). See `cv-service/api/main.py` +
 /// `cv-service/api/response_schema.py` and CLAUDE.md §5.10.
 ///
-/// Reuses [kCvServiceBaseUrl] (default `http://localhost:8001`; override
-/// per device with `--dart-define=CV_SERVICE_BASE_URL=...`). `cv-service`
-/// has **no deployed instance** yet — an unreachable service surfaces as
-/// a [UniformCheckException] with `statusCode == null`.
+/// Reuses [kCvServiceBaseUrl] (override per build with
+/// `--dart-define=CV_SERVICE_BASE_URL=...`, e.g. the Cloud Run URL; or on
+/// the phone in Settings → Analysis server). [idToken] supplies the
+/// Firebase ID token the deployed service requires. An unreachable service
+/// surfaces as a [UniformCheckException] with `statusCode == null`.
 class UniformCheckRepository {
   UniformCheckRepository({
     required http.Client client,
     String baseUrl = kCvServiceBaseUrl,
+    IdTokenProvider? idToken,
   })  : _client = client,
-        _baseUrl = baseUrl;
+        _baseUrl = baseUrl,
+        _idToken = idToken;
 
   final http.Client _client;
   final String _baseUrl;
+  final IdTokenProvider? _idToken;
 
   /// One photo → `POST /check_uniform`; several frames of the same pose
   /// → `POST /check_uniform_burst`, which combines them by per-item
@@ -90,6 +95,8 @@ class UniformCheckRepository {
           filename: 'frame_$i.jpg',
         ));
       }
+
+      await attachIdToken(request, _idToken, tag: _tag);
 
       final streamed = await _client
           .send(request)

@@ -6,6 +6,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../../core/utils/app_logger.dart';
 import '../../data/uniform_check_repository.dart';
 import '../../domain/entities/uniform_check_result.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
 import 'cv_service_url_provider.dart';
 
 part 'uniform_check_provider.g.dart';
@@ -15,7 +16,12 @@ const String _tag = 'arScanner.uniformCheck.ctl';
 @Riverpod(keepAlive: true)
 UniformCheckRepository uniformCheckRepository(Ref ref) {
   // Rebuilt whenever the user changes the analysis-server address.
-  return UniformCheckRepository(client: http.Client(), baseUrl: ref.watch(cvServiceUrlProvider));
+  final auth = ref.watch(firebaseAuthProvider);
+  return UniformCheckRepository(
+    client: http.Client(),
+    baseUrl: ref.watch(cvServiceUrlProvider),
+    idToken: () async => auth.currentUser?.getIdToken(),
+  );
 }
 
 /// Drives a single real (geometry/pixel) uniform check from

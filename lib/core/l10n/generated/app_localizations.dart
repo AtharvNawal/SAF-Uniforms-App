@@ -635,7 +635,7 @@ abstract class AppLocalizations {
   /// No description provided for @dressNo4Tag.
   ///
   /// In en, this message translates to:
-  /// **'Working · long sleeve'**
+  /// **'Working · Pixelised'**
   String get dressNo4Tag;
 
   /// No description provided for @dressNo5Tag.
@@ -815,7 +815,7 @@ abstract class AppLocalizations {
   /// No description provided for @checklistDressNo4Desc.
   ///
   /// In en, this message translates to:
-  /// **'Working · long sleeve'**
+  /// **'Working · Pixelised'**
   String get checklistDressNo4Desc;
 
   /// No description provided for @checklistDressNo5Desc.

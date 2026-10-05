@@ -6,13 +6,14 @@
       "display_name": "Army Beret",
       "branch_id": "army",
       "category": "headdress_beret",
-      "gender": "men",
+      "gender": "unisex",
       "image_url": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Farmy_beret%2Fimage.png?alt=media&token=707578d3-e1f0-48f8-9339-899e762917bf",
       "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Farmy_beret%2Fplacement.png?alt=media&token=5b90795a-1050-4f30-9381-e1eb4380d926",
       "rules": {
         "color": "dark_green",
         "standard": "Pinned centrally on the backing of the beret, approximately 1.3 cm above the bottom edge of the band.",
-        "applicability": "Standard headdress for Army men in No. 3 dress (also worn by Army ladies as alternative when not in service hat)."
+        "applicability": "Standard headdress for Army men in No. 3 dress (also worn by Army ladies as alternative when not in service hat).",
+        "no4_applicability": "Also the standard No. 4 headdress for men and ladies."
       },
       "render_logic": {
         "anchor": "head_top",
@@ -24,13 +25,14 @@
       "display_name": "Navy Beret",
       "branch_id": "navy",
       "category": "headdress_beret",
-      "gender": "men",
+      "gender": "unisex",
       "image_url": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fnavy_beret%2Fimage.png?alt=media&token=6208311f-4121-4374-96f6-5cd27392f21c",
       "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fnavy_beret%2Fplacement.png?alt=media&token=8272ba5b-f13b-4d0f-bc65-e5476567310a",
       "rules": {
         "color": "dark_blue",
         "standard": "Pinned centrally on the backing of the beret, approximately 1.3 cm above the bottom edge of the band.",
-        "applicability": "Standard headdress for Navy men in No. 3 dress."
+        "applicability": "Standard headdress for Navy men in No. 3 dress.",
+        "no4_applicability": "Also the standard No. 4 headdress for men and ladies."
       },
       "render_logic": {
         "anchor": "head_top",
@@ -42,13 +44,14 @@
       "display_name": "RSAF Beret",
       "branch_id": "rsaf",
       "category": "headdress_beret",
-      "gender": "men",
+      "gender": "unisex",
       "image_url": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Frsaf_beret%2Fimage.png?alt=media&token=2937f1e3-5bd3-45e2-ae27-eb7656bdfd82",
       "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Frsaf_beret%2Fplacement.png?alt=media&token=ca4d0b39-ae8b-42ba-95f9-e6e6cecaeb2e",
       "rules": {
         "color": "rsaf_blue",
         "standard": "Pinned centrally on the backing of the beret, approximately 1.3 cm above the bottom edge of the band.",
-        "applicability": "Standard headdress for RSAF men in No. 3 dress."
+        "applicability": "Standard headdress for RSAF men in No. 3 dress.",
+        "no4_applicability": "Also the standard No. 4 headdress for men and ladies."
       },
       "render_logic": {
         "anchor": "head_top",
@@ -1459,6 +1462,493 @@
         "y_multiplier": 0.5,
         "legacy_placeholder": true,
         "mirror_left_right": true
+      }
+    },
+    {
+      "id": "army_jockey_cap",
+      "display_name": "Army Jockey Cap (Pixelised)",
+      "branch_id": "army",
+      "category": "headdress_jockey_cap",
+      "image_url": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Farmy_jockey_cap%2Fimage.png?alt=media&token=8c3d31582fbb479d8cfa6673022d6e88",
+      "placement_diagram": "",
+      "rules": {
+        "applicability": "Alternative No. 4 headdress, worn by occasion/order instead of the beret (not rendered on the 3D model).",
+        "doctrine_ref": "SAF No.4 Dress PDF Army Picture B-1"
+      },
+      "render_logic": {}
+    },
+    {
+      "id": "army_jungle_hat",
+      "display_name": "Army Jungle Hat (Pixelised)",
+      "branch_id": "army",
+      "category": "headdress_jungle_hat",
+      "image_url": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Farmy_jungle_hat%2Fimage.png?alt=media&token=3623b370b7264048ae8aa56ce96777e3",
+      "placement_diagram": "",
+      "rules": {
+        "applicability": "Alternative No. 4 headdress, worn by occasion/order instead of the beret (not rendered on the 3D model).",
+        "doctrine_ref": "SAF No.4 Dress PDF Army Picture B-5"
+      },
+      "render_logic": {}
+    },
+    {
+      "id": "navy_jockey_cap",
+      "display_name": "Navy Jockey Cap (Pixelised)",
+      "branch_id": "navy",
+      "category": "headdress_jockey_cap",
+      "image_url": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fnavy_jockey_cap%2Fimage.png?alt=media&token=abfff4ea0c7a4b3ba73b1e239b9a9bb1",
+      "placement_diagram": "",
+      "rules": {
+        "applicability": "Alternative No. 4 headdress, worn by occasion/order instead of the beret (not rendered on the 3D model).",
+        "doctrine_ref": "SAF No.4 Dress PDF Navy Headdress"
+      },
+      "render_logic": {}
+    },
+    {
+      "id": "navy_jungle_hat",
+      "display_name": "Navy Jungle Hat (Pixelised)",
+      "branch_id": "navy",
+      "category": "headdress_jungle_hat",
+      "image_url": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fnavy_jungle_hat%2Fimage.png?alt=media&token=c7932cc79c35408588f87f8d9cf83ab8",
+      "placement_diagram": "",
+      "rules": {
+        "applicability": "Alternative No. 4 headdress, worn by occasion/order instead of the beret (not rendered on the 3D model).",
+        "doctrine_ref": "SAF No.4 Dress PDF Navy Headdress"
+      },
+      "render_logic": {}
+    },
+    {
+      "id": "navy_kevlar_helmet",
+      "display_name": "Kevlar Helmet with Pixelised Cover",
+      "branch_id": "navy",
+      "category": "headdress_helmet",
+      "image_url": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fnavy_kevlar_helmet%2Fimage.png?alt=media&token=5b98153a65f94f56a510b5c24d253b75",
+      "placement_diagram": "",
+      "rules": {
+        "applicability": "Alternative No. 4 headdress, worn by occasion/order instead of the beret (not rendered on the 3D model).",
+        "doctrine_ref": "SAF No.4 Dress PDF Navy Headdress"
+      },
+      "render_logic": {}
+    },
+    {
+      "id": "rsaf_jockey_cap",
+      "display_name": "RSAF Jockey Cap (Pixelised)",
+      "branch_id": "rsaf",
+      "category": "headdress_jockey_cap",
+      "image_url": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Frsaf_jockey_cap%2Fimage.png?alt=media&token=a2313ed28b834fed94e0c8b7afaf3c3b",
+      "placement_diagram": "",
+      "rules": {
+        "applicability": "Alternative No. 4 headdress, worn by occasion/order instead of the beret (not rendered on the 3D model).",
+        "doctrine_ref": "SAF No.4 Dress PDF RSAF Picture B-1"
+      },
+      "render_logic": {}
+    },
+    {
+      "id": "rsaf_ball_cap",
+      "display_name": "RSAF Ball Cap",
+      "branch_id": "rsaf",
+      "category": "headdress_ball_cap",
+      "image_url": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Frsaf_ball_cap%2Fimage.png?alt=media&token=b0f544cbdbb94051a2ae3e114006ee04",
+      "placement_diagram": "",
+      "rules": {
+        "applicability": "Alternative No. 4 headdress, worn by occasion/order instead of the beret (not rendered on the 3D model).",
+        "doctrine_ref": "SAF No.4 Dress PDF RSAF Picture B-2"
+      },
+      "render_logic": {}
+    },
+    {
+      "id": "sikh_field_turban_green",
+      "display_name": "Green Turban without Cap Badge (Field)",
+      "category": "headdress_sikh_turban",
+      "gender": "men",
+      "image_url": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fsikh_field_turban_green%2Fimage.png?alt=media&token=0e081d235c0b4f6983f41896f0317ed7",
+      "placement_diagram": "",
+      "rules": {
+        "applicability": "Worn by Sikh personnel (Army, Navy) for training and field duties instead of the turban with cap badge.",
+        "doctrine_ref": "SAF No.4 Dress PDF Army Picture B-2; Navy Headdress notes"
+      },
+      "render_logic": {}
+    },
+    {
+      "id": "army_no4_rank_epaulette",
+      "display_name": "Army No. 4 Rank Epaulette",
+      "branch_id": "army",
+      "category": "rank_epaulette_chest",
+      "image_url": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Farmy_no4_rank_epaulette%2Fimage.png?alt=media&token=2cfe64dd95ca4a37a7e29f5323365888",
+      "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Farmy_no4_rank_epaulette%2Fplacement.png?alt=media&token=ded34cd3490a46f1975d3288f91977c9",
+      "rules": {
+        "applicability": "Army No. 4 rank epaulette for Officers, Warrant Officers, Military Experts, Specialists and Enlistees.",
+        "placement": "Single epaulette worn at the centre of the chest on the shirt placket tab, below the pocket line. No sleeve chevrons or collar rank pins are worn on No. 4.",
+        "doctrine_ref": "SAF No.4 Dress PDF Army Picture B-6"
+      },
+      "render_logic": {
+        "anchor": "belt_center",
+        "offset_y_cm": 20.0,
+        "offset_z_cm": 0.5
+      }
+    },
+    {
+      "id": "army_no4_rank_epaulette_cadet_trainee",
+      "display_name": "Army No. 4 Rank Epaulette (Cadet / Trainee)",
+      "branch_id": "army",
+      "category": "rank_epaulette_chest",
+      "image_url": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Farmy_no4_rank_epaulette_cadet_trainee%2Fimage.png?alt=media&token=4633673cb8d24d9889d93a77a4cae55b",
+      "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Farmy_no4_rank_epaulette_cadet_trainee%2Fplacement.png?alt=media&token=46838654139a49fcbb5912481c9fac69",
+      "rules": {
+        "applicability": "Army No. 4 rank epaulette for Officer Cadets / Specialist Cadets / Military Expert Trainees (white bars / outline).",
+        "placement": "Single epaulette worn at the centre of the chest on the shirt placket tab, below the pocket line. No sleeve chevrons or collar rank pins are worn on No. 4.",
+        "doctrine_ref": "SAF No.4 Dress PDF Army Picture B-7"
+      },
+      "render_logic": {
+        "anchor": "belt_center",
+        "offset_y_cm": 20.0,
+        "offset_z_cm": 0.5
+      }
+    },
+    {
+      "id": "navy_no4_rank_epaulette",
+      "display_name": "Navy No. 4 Rank Epaulette",
+      "branch_id": "navy",
+      "category": "rank_epaulette_chest",
+      "image_url": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fnavy_no4_rank_epaulette%2Fimage.png?alt=media&token=bf3fbf2791cf4c6a8f499fe848ab5490",
+      "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fnavy_no4_rank_epaulette%2Fplacement.png?alt=media&token=dafc43828ecc4550bb396ab7317e4fe2",
+      "rules": {
+        "applicability": "Navy No. 4 rank epaulette for Officers, Warrant Officers, Military Experts, Specialists and Enlistees.",
+        "placement": "Single epaulette worn at the centre of the chest on the shirt placket tab, below the pocket line. No sleeve chevrons or collar rank pins are worn on No. 4.",
+        "doctrine_ref": "SAF No.4 Dress PDF Navy Epaulettes (left)"
+      },
+      "render_logic": {
+        "anchor": "belt_center",
+        "offset_y_cm": 20.0,
+        "offset_z_cm": 0.5
+      }
+    },
+    {
+      "id": "navy_no4_rank_epaulette_cadet_trainee",
+      "display_name": "Navy No. 4 Rank Epaulette (Cadet / Trainee)",
+      "branch_id": "navy",
+      "category": "rank_epaulette_chest",
+      "image_url": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fnavy_no4_rank_epaulette_cadet_trainee%2Fimage.png?alt=media&token=b5c80a8dccb2497988881756232f150d",
+      "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fnavy_no4_rank_epaulette_cadet_trainee%2Fplacement.png?alt=media&token=f90fc68d1813410e8d83d24bf36916e1",
+      "rules": {
+        "applicability": "Navy No. 4 rank epaulette for Officer Cadets / Specialist Cadets / Military Expert Trainees (white bars / outline).",
+        "placement": "Single epaulette worn at the centre of the chest on the shirt placket tab, below the pocket line. No sleeve chevrons or collar rank pins are worn on No. 4.",
+        "doctrine_ref": "SAF No.4 Dress PDF Navy Epaulettes (right)"
+      },
+      "render_logic": {
+        "anchor": "belt_center",
+        "offset_y_cm": 20.0,
+        "offset_z_cm": 0.5
+      }
+    },
+    {
+      "id": "rsaf_no4_rank_epaulette",
+      "display_name": "RSAF No. 4 Rank Epaulette",
+      "branch_id": "rsaf",
+      "category": "rank_epaulette_chest",
+      "image_url": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Frsaf_no4_rank_epaulette%2Fimage.png?alt=media&token=a78da28a453241d894a4028c57840039",
+      "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Frsaf_no4_rank_epaulette%2Fplacement.png?alt=media&token=5b036178a2974a63b31e84a6fa624bf2",
+      "rules": {
+        "applicability": "RSAF No. 4 rank epaulette for Officers, Warrant Officers, Military Experts, Specialists and Enlistees.",
+        "placement": "Single epaulette worn at the centre of the chest on the shirt placket tab, below the pocket line. No sleeve chevrons or collar rank pins are worn on No. 4.",
+        "doctrine_ref": "SAF No.4 Dress PDF RSAF Picture B-8 (top row)"
+      },
+      "render_logic": {
+        "anchor": "belt_center",
+        "offset_y_cm": 20.0,
+        "offset_z_cm": 0.5
+      }
+    },
+    {
+      "id": "rsaf_no4_rank_epaulette_cadet_trainee",
+      "display_name": "RSAF No. 4 Rank Epaulette (Cadet / Trainee)",
+      "branch_id": "rsaf",
+      "category": "rank_epaulette_chest",
+      "image_url": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Frsaf_no4_rank_epaulette_cadet_trainee%2Fimage.png?alt=media&token=e2cf71408bdc460a86a42664a40adeca",
+      "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Frsaf_no4_rank_epaulette_cadet_trainee%2Fplacement.png?alt=media&token=40f56752cba94ca1940974ec745e43aa",
+      "rules": {
+        "applicability": "RSAF No. 4 rank epaulette for Officer Cadets / Specialist Cadets / Military Expert Trainees (white bars / outline).",
+        "placement": "Single epaulette worn at the centre of the chest on the shirt placket tab, below the pocket line. No sleeve chevrons or collar rank pins are worn on No. 4.",
+        "doctrine_ref": "SAF No.4 Dress PDF RSAF Picture B-8 (bottom row)"
+      },
+      "render_logic": {
+        "anchor": "belt_center",
+        "offset_y_cm": 20.0,
+        "offset_z_cm": 0.5
+      }
+    },
+    {
+      "id": "dis_no4_rank_epaulette",
+      "display_name": "DIS No. 4 Rank Epaulette",
+      "branch_id": "dis",
+      "category": "rank_epaulette_chest",
+      "image_url": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fdis_no4_rank_epaulette%2Fimage.png?alt=media&token=8bd0e6c15a054cebaa37320ab4eab113",
+      "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fdis_no4_rank_epaulette%2Fplacement.png?alt=media&token=52c2ae86f4f74aefafa94a9a283557a0",
+      "rules": {
+        "applicability": "DIS No. 4 rank epaulette for Officers, Warrant Officers, Military Experts, Specialists and Enlistees.",
+        "placement": "Single epaulette worn at the centre of the chest on the shirt placket tab, below the pocket line. No sleeve chevrons or collar rank pins are worn on No. 4.",
+        "doctrine_ref": "SAF No.4 Dress PDF DIS Picture B-6 (top row)"
+      },
+      "render_logic": {
+        "anchor": "belt_center",
+        "offset_y_cm": 20.0,
+        "offset_z_cm": 0.5
+      }
+    },
+    {
+      "id": "dis_no4_rank_epaulette_cadet_trainee",
+      "display_name": "DIS No. 4 Rank Epaulette (Cadet / Trainee)",
+      "branch_id": "dis",
+      "category": "rank_epaulette_chest",
+      "image_url": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fdis_no4_rank_epaulette_cadet_trainee%2Fimage.png?alt=media&token=f1799f6476284163bcd58ab6ee2c86e5",
+      "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fdis_no4_rank_epaulette_cadet_trainee%2Fplacement.png?alt=media&token=c8a753046c844b8d8c638fa4cfa2fac0",
+      "rules": {
+        "applicability": "DIS No. 4 rank epaulette for Officer Cadets / Specialist Cadets / Military Expert Trainees (white bars / outline).",
+        "placement": "Single epaulette worn at the centre of the chest on the shirt placket tab, below the pocket line. No sleeve chevrons or collar rank pins are worn on No. 4.",
+        "doctrine_ref": "SAF No.4 Dress PDF DIS Picture B-6 (bottom row)"
+      },
+      "render_logic": {
+        "anchor": "belt_center",
+        "offset_y_cm": 20.0,
+        "offset_z_cm": 0.5
+      }
+    },
+    {
+      "id": "singapore_tag",
+      "display_name": "SINGAPORE Tag",
+      "category": "country_tag",
+      "image_url": "",
+      "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fsingapore_tag%2Fplacement.png?alt=media&token=b71f3e4acbfa473298cd9cd5a3720e12",
+      "rules": {
+        "placement": "Worn above the left chest pocket, opposite the name tag (which sits above the right chest pocket).",
+        "badges_above": "SAF chest badges are worn centred directly above the top edge of the Singapore tag / left chest pocket.",
+        "doctrine_ref": "SAF No.4 Dress PDF Army Pictures C-1..C-3; DIS Pictures C-4..C-5"
+      },
+      "render_logic": {}
+    },
+    {
+      "id": "navy_no4_inner_shirt_grey",
+      "display_name": "Navy Grey Inner Shirt",
+      "branch_id": "navy",
+      "category": "inner_shirt",
+      "image_url": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fnavy_no4_inner_shirt_grey%2Fimage.png?alt=media&token=345d8fb87ac04eefaee860473ab9f46f",
+      "placement_diagram": "",
+      "rules": {
+        "color": "grey",
+        "applicability": "Worn under the Navy No. 4 shirt.",
+        "doctrine_ref": "SAF No.4 Dress PDF Navy Inner Shirt"
+      },
+      "render_logic": {}
+    },
+    {
+      "id": "rsaf_no4_inner_tshirt",
+      "display_name": "RSAF Inner T-shirt (Blue)",
+      "branch_id": "rsaf",
+      "category": "inner_shirt",
+      "image_url": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Frsaf_no4_inner_tshirt%2Fimage.png?alt=media&token=18f97dc39d474acc9b284226c7c9c19b",
+      "placement_diagram": "",
+      "rules": {
+        "color": "blue",
+        "applicability": "Worn under the RSAF No. 4 shirt.",
+        "doctrine_ref": "SAF No.4 Dress PDF RSAF Picture B-10"
+      },
+      "render_logic": {}
+    },
+    {
+      "id": "dis_no4_inner_tshirt",
+      "display_name": "DIS Inner T-shirt (Grey)",
+      "branch_id": "dis",
+      "category": "inner_shirt",
+      "image_url": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fdis_no4_inner_tshirt%2Fimage.png?alt=media&token=75cf06a693df46d6aa1f1caf1a90ed82",
+      "placement_diagram": "",
+      "rules": {
+        "color": "grey",
+        "applicability": "Worn under the DIS No. 4 shirt; 'DIS' printed on the back.",
+        "doctrine_ref": "SAF No.4 Dress PDF DIS Picture B-8"
+      },
+      "render_logic": {}
+    },
+    {
+      "id": "army_no4_belt",
+      "display_name": "Army No. 4 Belt (Olive Green)",
+      "category": "belt",
+      "image_url": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Farmy_no4_belt%2Fimage.png?alt=media&token=0fdf012550e747679af7db9587ec9892",
+      "placement_diagram": "",
+      "rules": {
+        "color": "olive_green",
+        "applicability": "Olive-green webbing belt with plastic quick-release buckle, Army No. 4.",
+        "doctrine_ref": "SAF No.4 Dress PDF Army Picture B-8"
+      },
+      "render_logic": {
+        "anchor": "belt_center",
+        "offset_y_cm": -3.0,
+        "offset_z_cm": 0.0
+      }
+    },
+    {
+      "id": "no4_belt_black",
+      "display_name": "No. 4 Belt (Black)",
+      "category": "belt",
+      "image_url": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fno4_belt_black%2Fimage.png?alt=media&token=0be8598d9b884c23ab2b6963331d2904",
+      "placement_diagram": "",
+      "rules": {
+        "color": "black",
+        "applicability": "Black webbing belt with plastic quick-release buckle, Navy / RSAF / DIS No. 4.",
+        "doctrine_ref": "SAF No.4 Dress PDF Navy Belt; RSAF Picture B-9; DIS Picture B-7"
+      },
+      "render_logic": {
+        "anchor": "belt_center",
+        "offset_y_cm": -3.0,
+        "offset_z_cm": 0.0
+      }
+    },
+    {
+      "id": "combat_boots",
+      "display_name": "Combat Boots",
+      "category": "footwear",
+      "image_url": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fcombat_boots%2Fimage.png?alt=media&token=bd4a7a5adc5a468db689dc76c6c16818",
+      "placement_diagram": "",
+      "rules": {
+        "standard": "Black leather combat boots, laced.",
+        "doctrine_ref": "SAF No.4 Dress PDF Army B-9; Navy Footwear; RSAF B-12; DIS B-10"
+      },
+      "render_logic": {
+        "anchor": "foot_top",
+        "offset_y_cm": 3.0,
+        "mirror_left_right": true,
+        "style": "boot_high"
+      }
+    },
+    {
+      "id": "safety_boots",
+      "display_name": "Safety Boots",
+      "category": "footwear",
+      "image_url": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fsafety_boots%2Fimage.png?alt=media&token=c2f0174a27af4d3081ccec0520a909b4",
+      "placement_diagram": "",
+      "rules": {
+        "standard": "Black high-cut safety boots, laced.",
+        "doctrine_ref": "SAF No.4 Dress PDF RSAF B-11; DIS B-9"
+      },
+      "render_logic": {
+        "anchor": "foot_top",
+        "offset_y_cm": 3.0,
+        "mirror_left_right": true,
+        "style": "boot_high"
+      }
+    },
+    {
+      "id": "safety_boots_mid_cut",
+      "display_name": "Mid-cut Safety Boots",
+      "category": "footwear",
+      "image_url": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fsafety_boots_mid_cut%2Fimage.png?alt=media&token=c54889783cb342f48f86f9fcfdbab24a",
+      "placement_diagram": "",
+      "rules": {
+        "standard": "Black mid-cut safety boots.",
+        "doctrine_ref": "SAF No.4 Dress PDF Navy Footwear"
+      },
+      "render_logic": {
+        "anchor": "foot_top",
+        "offset_y_cm": 3.0,
+        "mirror_left_right": true,
+        "style": "boot_mid"
+      }
+    },
+    {
+      "id": "safety_shoes_low_cut",
+      "display_name": "Low-cut Safety Shoes",
+      "category": "footwear",
+      "image_url": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fsafety_shoes_low_cut%2Fimage.png?alt=media&token=7717e397906e4edfa03ae425a1928365",
+      "placement_diagram": "",
+      "rules": {
+        "standard": "Black low-cut safety shoes.",
+        "doctrine_ref": "SAF No.4 Dress PDF Navy Footwear"
+      },
+      "render_logic": {
+        "anchor": "foot_top",
+        "offset_y_cm": 3.0,
+        "mirror_left_right": true
+      }
+    },
+    {
+      "id": "green_socks",
+      "display_name": "Green Socks",
+      "category": "socks",
+      "image_url": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fgreen_socks%2Fimage.png?alt=media&token=a12a1fc3d82e4c8db109e608923680d6",
+      "placement_diagram": "",
+      "rules": {
+        "standard": "Plain olive-green socks (Army No. 4 alternative to black socks).",
+        "doctrine_ref": "SAF No.4 Dress PDF Army Picture B-10"
+      },
+      "render_logic": {
+        "anchor": "ankle",
+        "color": "olive_green",
+        "mirror_left_right": true
+      }
+    },
+    {
+      "id": "rsaf_vocation_badge",
+      "display_name": "RSAF Vocation Badge (Collar)",
+      "branch_id": "rsaf",
+      "category": "vocation_badge",
+      "image_url": "",
+      "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Frsaf_vocation_badge%2Fplacement.png?alt=media&token=83bbc6d06a674d0cb17be2c310b9b4b4",
+      "rules": {
+        "placement": "Sewn centrally on the collar, 10 mm from the collar edge.",
+        "offset_cm": 1.0,
+        "doctrine_ref": "SAF No.4 Dress PDF RSAF Pictures C-1..C-3"
+      },
+      "render_logic": {
+        "anchor": "right_collar_tip",
+        "offset_y_cm": -3.0
+      }
+    },
+    {
+      "id": "rsaf_unit_patch",
+      "display_name": "RSAF Unit / Air Force Patch (Sleeve)",
+      "branch_id": "rsaf",
+      "category": "sleeve_patch",
+      "image_url": "",
+      "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Frsaf_unit_patch%2Fplacement.png?alt=media&token=bb0f76558eeb4722b892b9c58e26c48a",
+      "rules": {
+        "placement": "Worn on the upper sleeves, top edge 20 mm below the shoulder seam. Proficiency badges are worn centrally 5 mm below the patch.",
+        "offset_below_shoulder_seam_cm": 2.0,
+        "doctrine_ref": "SAF No.4 Dress PDF RSAF Pictures C-1, C-4"
+      },
+      "render_logic": {
+        "anchor": "sleeve_upper",
+        "offset_y_cm": 4.0,
+        "mirror_left_right": true
+      }
+    },
+    {
+      "id": "dis_service_patch",
+      "display_name": "DIS Service / Command Patch (Right Sleeve)",
+      "branch_id": "dis",
+      "category": "sleeve_patch",
+      "image_url": "",
+      "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fdis_service_patch%2Fplacement.png?alt=media&token=15768453dc0147acac0384e955cba710",
+      "rules": {
+        "placement": "Right upper sleeve carries the patch of the higher echelon (Service Patch for Command HQ; Command Patch for Formation / Group). Must always be worn.",
+        "doctrine_ref": "SAF No.4 Dress PDF DIS Picture C-3"
+      },
+      "render_logic": {
+        "anchor": "right_sleeve_upper",
+        "offset_y_cm": 4.0
+      }
+    },
+    {
+      "id": "dis_formation_patch",
+      "display_name": "DIS Command / Formation / Group Patch (Left Sleeve)",
+      "branch_id": "dis",
+      "category": "sleeve_patch",
+      "image_url": "",
+      "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fdis_formation_patch%2Fplacement.png?alt=media&token=c3b8b3610f8d4d1ea7fc8006b9090588",
+      "rules": {
+        "placement": "Left upper sleeve carries the Command (Command HQ) or Formation / Group patch; may be left empty where applicable. Left and right patches must be aligned as a pair.",
+        "doctrine_ref": "SAF No.4 Dress PDF DIS Pictures C-3, C-6..C-9"
+      },
+      "render_logic": {
+        "anchor": "left_sleeve_upper",
+        "offset_y_cm": 4.0
       }
     }
   ]

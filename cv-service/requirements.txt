@@ -39,3 +39,7 @@ jsonschema>=4.0
 # Tests
 pytest>=8.0
 httpx>=0.27
+
+# Cloud Run deployment: Firebase ID-token verification (api/auth.py)
+google-auth>=2.29
+requests>=2.31
