@@ -1,6 +1,7 @@
 """Stage 6 — rule engine (geometry half).
 
-Resolves each doctrine rule in `army_no3_male.json` to an expected 3D
+Resolves each doctrine rule in a uniform's rules file (`uniforms.py`; default
+`army_no3_male.json`) to an expected 3D
 position (anchor + cm offset), projects it into the current photo via
 the Stage 3 camera solution, and sizes a pixel-space crop region around
 it. This is the "where to look" half of Stage 6 — deterministic,
@@ -330,6 +331,13 @@ CATEGORY_TO_SEGMENTATION_CLASS: dict[str, str | None] = {
     "skill_tab": None,
     "skill_badge": None,
     "socks": "socks",  # segmentation_v2+ only — see has_detector
+    # RSAF No.4 (segmentation_v3+; ChangeRequest/2026-10-05_cv-service-rsaf-no4.md).
+    "rank_epaulette_chest": "rank_tab",
+    "sleeve_patch": "sleeve_patch",
+    # The SINGAPORE tag looks like the name tag; the two rules' search boxes
+    # (right vs left chest pocket) keep their detections apart.
+    "country_tag": "name_tag",
+    "vocation_badge": None,
 }
 
 _DEFAULT_MIN_SEGMENT_CONFIDENCE = config.MIN_SEGMENT_CONFIDENCE
@@ -363,7 +371,7 @@ class VerdictResult:
     # error, and the matched mask for the post-verdict checks (B8-B10).
     # failure_kind: "position" | "orientation" | "missing" | "out_of_frame"
     #   | "no_detector" | "camera" | "boundary" | "color" | "variant"
-    #   | "name_text" | None
+    #   | "name_text" | "unconfirmed" | None
     failure_kind: str | None = None
     px_per_cm: float | None = None
     angle_error_deg: float | None = None
@@ -553,6 +561,16 @@ def _evaluate_one_crop(
             if angle_error > tolerance_deg:
                 status = "fail"
                 failure_kind = "orientation" if failure_kind in (None, "boundary") else failure_kind
+
+    # A zero-shot region (B7) only ever stands in for a trained detection
+    # that wasn't there, so on its own it can't certify the item: on the
+    # hair of a bare head YOLO-World scores "beret" 0.72 (RSAF benchmark
+    # scene_0016), above the accept threshold. It turns a would-be
+    # `missing` into "couldn't confirm", never into a pass or fail.
+    if getattr(region, "source", "trained") == "zero_shot":
+        status = "unverifiable"
+        failure_kind = "unconfirmed"
+        reason += "; found only by the zero-shot fallback (the trained model saw nothing here) — not confirmed"
 
     if region.confidence < config.MIN_SEGMENT_CONFIDENCE * config.PARTIAL_VISIBILITY_CONFIDENCE_MULTIPLIER:
         visibility = "partially_visible"

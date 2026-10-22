@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -39,7 +41,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final profile = ref.watch(uniformProfileProvider);
     final dressStates = {
       for (final dc in DressCode.values)
-        dc: profile.generatedDresses.containsKey(dc.requirementDocId) ? 'ready' : 'idle',
+        dc: profile.generatedDresses.containsKey(dc.requirementDocId)
+            ? 'ready'
+            : 'idle',
     };
 
     return Scaffold(
@@ -55,9 +59,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             bottom: false,
             child: Column(
               children: [
-                _AppBar(
-                  onOpenSettings: () => showSettingsSheet(context),
-                ),
+                _AppBar(onOpenSettings: () => showSettingsSheet(context)),
                 Expanded(
                   child: IndexedStack(
                     index: _tab.index,
@@ -65,20 +67,30 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       HomeTab(
                         dressStates: dressStates,
                         onOpenDress: (d) {
+                          // The dress picked here is the one the 3D figure
+                          // and the AR Scanner show / check.
+                          if (profile.dressCode != d) {
+                            log(
+                              'active dress ${profile.dressCode.wireName} -> ${d.wireName}',
+                              name: 'dashboard',
+                            );
+                            ref
+                                .read(uniformProfileProvider.notifier)
+                                .setDressCode(d);
+                          }
                           if (dressStates[d] == 'ready') {
                             context.go(Routes.ghostModel);
                           } else {
                             context.push(
-                                '${Routes.dressAccessories}?dress=${d.wireName}');
+                              '${Routes.dressAccessories}?dress=${d.wireName}',
+                            );
                           }
                         },
                         onSetup: () => context.go(Routes.config),
                       ),
                       const WardrobeTab(),
                       const GalleryTab(),
-                      ProfileTab(
-                        onUpdate: () => context.go(Routes.rebuilding),
-                      ),
+                      ProfileTab(onUpdate: () => context.go(Routes.rebuilding)),
                     ],
                   ),
                 ),
@@ -111,7 +123,8 @@ class _AppBar extends ConsumerWidget {
     final branch = ref.watch(currentBranchProvider);
     final profile = ref.watch(uniformProfileProvider);
     final themeMode = ref.watch(themeModeProvider);
-    final isDark = themeMode == ThemeMode.dark ||
+    final isDark =
+        themeMode == ThemeMode.dark ||
         (themeMode == ThemeMode.system &&
             MediaQuery.of(context).platformBrightness == Brightness.dark);
     final accent = context.branchTheme.bright;
@@ -136,10 +149,15 @@ class _AppBar extends ConsumerWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  profile.fullName.isNotEmpty ? profile.fullName : l.commonSoldier,
+                  profile.fullName.isNotEmpty
+                      ? profile.fullName
+                      : l.commonSoldier,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.bodyStrong(color: AppColors.ink, fontSize: 10),
+                  style: AppTextStyles.bodyStrong(
+                    color: AppColors.ink,
+                    fontSize: 10,
+                  ),
                 ),
                 Text(
                   '${branch.label(l)} · ${profile.rank.code}',
@@ -154,9 +172,9 @@ class _AppBar extends ConsumerWidget {
           ),
           _IconBtn(
             icon: isDark ? Icons.dark_mode : Icons.light_mode,
-            onTap: () => ref.read(themeModeProvider.notifier).set(
-                  isDark ? ThemeMode.light : ThemeMode.dark,
-                ),
+            onTap: () => ref
+                .read(themeModeProvider.notifier)
+                .set(isDark ? ThemeMode.light : ThemeMode.dark),
           ),
           const SizedBox(width: 4),
           _IconBtn(icon: Icons.settings_outlined, onTap: onOpenSettings),
@@ -220,7 +238,9 @@ class _BottomNav extends StatelessWidget {
           colors: [Color(0xF80B0D0E), Color(0x000B0D0E)],
           stops: [0.6, 1.0],
         ),
-        border: Border(top: BorderSide(color: accent.withValues(alpha: 0.25), width: 1)),
+        border: Border(
+          top: BorderSide(color: accent.withValues(alpha: 0.25), width: 1),
+        ),
       ),
       padding: EdgeInsets.fromLTRB(8, 4, 8, 8 + bottomInset),
       child: Row(
@@ -286,9 +306,7 @@ class _NavItem extends StatelessWidget {
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: accent,
-                          boxShadow: [
-                            BoxShadow(color: accent, blurRadius: 8),
-                          ],
+                          boxShadow: [BoxShadow(color: accent, blurRadius: 8)],
                         ),
                       ),
                     ),
@@ -317,25 +335,25 @@ class _NavItem extends StatelessWidget {
 /// Helper extension for AppLocalizations dress code/code/name lookups
 /// (also used by the Home + Wardrobe tabs).
 String dressCodeLabel(AppLocalizations l, DressCode d) => switch (d) {
-      DressCode.no1 => l.dressNo1Code,
-      DressCode.no2 => l.dressNo2Code,
-      DressCode.no3 => l.dressNo3Code,
-      DressCode.no4 => l.dressNo4Code,
-      DressCode.no5 => l.dressNo5Code,
-    };
+  DressCode.no1 => l.dressNo1Code,
+  DressCode.no2 => l.dressNo2Code,
+  DressCode.no3 => l.dressNo3Code,
+  DressCode.no4 => l.dressNo4Code,
+  DressCode.no5 => l.dressNo5Code,
+};
 
 String dressNameLabel(AppLocalizations l, DressCode d) => switch (d) {
-      DressCode.no1 => l.dressNo1Name,
-      DressCode.no2 => l.dressNo2Name,
-      DressCode.no3 => l.dressNo3Name,
-      DressCode.no4 => l.dressNo4Name,
-      DressCode.no5 => l.dressNo5Name,
-    };
+  DressCode.no1 => l.dressNo1Name,
+  DressCode.no2 => l.dressNo2Name,
+  DressCode.no3 => l.dressNo3Name,
+  DressCode.no4 => l.dressNo4Name,
+  DressCode.no5 => l.dressNo5Name,
+};
 
 String dressTagLabel(AppLocalizations l, DressCode d) => switch (d) {
-      DressCode.no1 => l.dressNo1Tag,
-      DressCode.no2 => l.dressNo2Tag,
-      DressCode.no3 => l.dressNo3Tag,
-      DressCode.no4 => l.dressNo4Tag,
-      DressCode.no5 => l.dressNo5Tag,
-    };
+  DressCode.no1 => l.dressNo1Tag,
+  DressCode.no2 => l.dressNo2Tag,
+  DressCode.no3 => l.dressNo3Tag,
+  DressCode.no4 => l.dressNo4Tag,
+  DressCode.no5 => l.dressNo5Tag,
+};

@@ -19,15 +19,17 @@ import '../../../../core/l10n/generated/app_localizations.dart';
 import '../../../../core/l10n/l10n_extensions.dart';
 import '../../../../core/routing/routes.dart';
 import '../../../../core/theme/branch_theme_extension.dart';
+import '../../../profile/domain/entities/branch_id.dart';
+import '../../../profile/domain/entities/dress_code.dart';
 import '../../../profile/domain/entities/gender.dart';
 import '../../../profile/domain/entities/rank.dart';
-import '../../../profile/domain/entities/uniform_profile.dart';
 import '../../../profile/presentation/providers/uniform_provider.dart';
 import '../../data/capture_quality_gate.dart';
 import '../../data/device_tilt.dart';
 import '../../data/live_pose_guide.dart';
 import '../../domain/entities/cv_inspection_result.dart';
 import '../../domain/entities/uniform_check_result.dart';
+import '../../domain/supported_uniforms.dart';
 import '../providers/cv_service_inspection_provider.dart';
 import '../providers/uniform_check_provider.dart';
 // Phase-1 `checkUniformCompliance` (Node/Anthropic) path stays disabled —
@@ -85,25 +87,12 @@ String _rankTierWireValue(Rank rank) {
   }
 }
 
-/// `uniform_type` form field for `POST /check_uniform` — e.g.
-/// `army_no3_male`. `cv-service` only has `army_no3_male` doctrine
-/// transcribed today; any other combination gets a clear
-/// `UNSUPPORTED_UNIFORM` 422 back (surfaced verbatim, not hidden).
-String _uniformTypeWireValue(UniformProfile p) =>
-    '${p.branch.wireName}_${p.dressCode.wireName.toLowerCase()}_'
-    '${_uniformGenderWireValue(p.gender)}';
-
-/// Doctrine only distinguishes male/female — maternity folds to female
-/// for rule resolution.
-String _uniformGenderWireValue(Gender g) =>
-    g == Gender.male ? 'male' : 'female';
-
 /// `body_type` form field — the geometry/anchor set the solver uses.
 String _bodyTypeWireValue(Gender g) => switch (g) {
-      Gender.male => 'male',
-      Gender.female => 'female',
-      Gender.maternity => 'female_maternity',
-    };
+  Gender.male => 'male',
+  Gender.female => 'female',
+  Gender.maternity => 'female_maternity',
+};
 
 class ARScannerScreen extends ConsumerStatefulWidget {
   const ARScannerScreen({super.key});
@@ -208,7 +197,7 @@ class _ARScannerScreenState extends ConsumerState<ARScannerScreen>
     try {
       final cameras = await availableCameras();
       final camera = cameras.firstWhere(
-        (c) => c.lensDirection == CameraLensDirection.back, 
+        (c) => c.lensDirection == CameraLensDirection.back,
         orElse: () => cameras.first,
       );
       final controller = CameraController(
@@ -216,8 +205,9 @@ class _ARScannerScreenState extends ConsumerState<ARScannerScreen>
         ResolutionPreset.high,
         enableAudio: false,
         // Single-plane formats ML Kit accepts directly from the stream.
-        imageFormatGroup:
-            Platform.isAndroid ? ImageFormatGroup.nv21 : ImageFormatGroup.bgra8888,
+        imageFormatGroup: Platform.isAndroid
+            ? ImageFormatGroup.nv21
+            : ImageFormatGroup.bgra8888,
       );
       await controller.initialize();
       if (!mounted) {
@@ -231,8 +221,13 @@ class _ARScannerScreenState extends ConsumerState<ARScannerScreen>
       developer.log('initCamera: ready', name: _tag, level: 800);
       unawaited(_startGuide());
     } catch (e, st) {
-      developer.log('initCamera: failed',
-          name: _tag, error: e, stackTrace: st, level: 1000);
+      developer.log(
+        'initCamera: failed',
+        name: _tag,
+        error: e,
+        stackTrace: st,
+        level: 1000,
+      );
       if (mounted) setState(() => _cameraUnavailable = true);
     }
   }
@@ -252,8 +247,11 @@ class _ARScannerScreenState extends ConsumerState<ARScannerScreen>
     _guideWatchdog?.cancel();
     _guideWatchdog = Timer(_guideWatchdogDelay, () {
       if (!mounted || _guideSeenFrame) return;
-      developer.log('startGuide: no guide result — unlocking capture',
-          name: _tag, level: 900);
+      developer.log(
+        'startGuide: no guide result — unlocking capture',
+        name: _tag,
+        level: 900,
+      );
       setState(() {
         _guideUnavailable = true;
         if (_phase == _ArPhase.aligning) _phase = _ArPhase.aligned;
@@ -271,7 +269,9 @@ class _ARScannerScreenState extends ConsumerState<ARScannerScreen>
         if (hint == null || !mounted) return;
         _guideSeenFrame = true;
         if (_phase != _ArPhase.aligning && _phase != _ArPhase.aligned) return;
-        final next = hint == CaptureHint.ready ? _ArPhase.aligned : _ArPhase.aligning;
+        final next = hint == CaptureHint.ready
+            ? _ArPhase.aligned
+            : _ArPhase.aligning;
         if (hint != _hint || next != _phase || _guideUnavailable) {
           setState(() {
             _hint = hint;
@@ -281,8 +281,13 @@ class _ARScannerScreenState extends ConsumerState<ARScannerScreen>
         }
       });
     } catch (e, st) {
-      developer.log('startGuide: stream failed',
-          name: _tag, error: e, stackTrace: st, level: 1000);
+      developer.log(
+        'startGuide: stream failed',
+        name: _tag,
+        error: e,
+        stackTrace: st,
+        level: 1000,
+      );
       if (mounted) {
         setState(() {
           _guideUnavailable = true;
@@ -301,8 +306,13 @@ class _ARScannerScreenState extends ConsumerState<ARScannerScreen>
     try {
       await controller.stopImageStream();
     } catch (e, st) {
-      developer.log('stopGuide: failed',
-          name: _tag, error: e, stackTrace: st, level: 1000);
+      developer.log(
+        'stopGuide: failed',
+        name: _tag,
+        error: e,
+        stackTrace: st,
+        level: 1000,
+      );
     }
   }
 
@@ -320,8 +330,13 @@ class _ARScannerScreenState extends ConsumerState<ARScannerScreen>
       try {
         frames.add(await controller.takePicture());
       } catch (e, st) {
-        developer.log('takeBurst: frame $i failed',
-            name: _tag, error: e, stackTrace: st, level: 1000);
+        developer.log(
+          'takeBurst: frame $i failed',
+          name: _tag,
+          error: e,
+          stackTrace: st,
+          level: 1000,
+        );
         break;
       }
       if (i < _burstFrames - 1) {
@@ -330,7 +345,9 @@ class _ARScannerScreenState extends ConsumerState<ARScannerScreen>
     }
     developer.log('takeBurst: ${frames.length} frames', name: _tag, level: 800);
     if (!mounted) return null;
-    if (frames.isEmpty || !await _passesCaptureGate(frames.first.path) || !mounted) {
+    if (frames.isEmpty ||
+        !await _passesCaptureGate(frames.first.path) ||
+        !mounted) {
       unawaited(_startGuide());
       return null;
     }
@@ -375,8 +392,13 @@ class _ARScannerScreenState extends ConsumerState<ARScannerScreen>
     try {
       picked = await controller.takePicture();
     } catch (e, st) {
-      developer.log('$logTag: takePicture failed',
-          name: _tag, error: e, stackTrace: st, level: 1000);
+      developer.log(
+        '$logTag: takePicture failed',
+        name: _tag,
+        error: e,
+        stackTrace: st,
+        level: 1000,
+      );
       return null;
     }
     if (!mounted) return null;
@@ -401,16 +423,24 @@ class _ARScannerScreenState extends ConsumerState<ARScannerScreen>
     if (photos == null || !mounted) return;
 
     final profile = ref.read(uniformProfileProvider);
+    // The dress chosen on the dashboard (profile's active dress).
+    final dress = profile.dressCode;
     final gravity = _tilt.gravityUpCamera;
+    developer.log(
+      'capture: uniform=${uniformTypeFor(profile.branch, dress, profile.gender)}',
+      name: _tag,
+    );
     setState(() {
       _usingCvService = false;
       _phase = _ArPhase.analyzing;
     });
-    await ref.read(uniformCheckControllerProvider.notifier).check(
+    await ref
+        .read(uniformCheckControllerProvider.notifier)
+        .check(
           photos: photos,
-          uniformType: _uniformTypeWireValue(profile),
+          uniformType: uniformTypeFor(profile.branch, dress, profile.gender),
           rankTier: _rankTierWireValue(profile.rank),
-          gender: _uniformGenderWireValue(profile.gender),
+          gender: uniformGenderWireValue(profile.gender),
           isSikh: profile.isSikh,
           medalRowCount: profile.medalRowCount,
           bodyType: _bodyTypeWireValue(profile.gender),
@@ -436,7 +466,9 @@ class _ARScannerScreenState extends ConsumerState<ARScannerScreen>
       _usingCvService = true;
       _phase = _ArPhase.analyzing;
     });
-    await ref.read(cvServiceInspectionControllerProvider.notifier).inspect(
+    await ref
+        .read(cvServiceInspectionControllerProvider.notifier)
+        .inspect(
           photoBytes: bytes,
           rankTier: _rankTierWireValue(profile.rank),
           gender: profile.gender.wireName,
@@ -520,7 +552,28 @@ class _ARScannerScreenState extends ConsumerState<ARScannerScreen>
         );
       case _ArPhase.aligning:
       case _ArPhase.aligned:
+        final profile = ref.watch(uniformProfileProvider);
+        final l = context.l10n;
+        final dress = profile.dressCode;
+        String uniformLabel(BranchId b, DressCode d, Gender g) =>
+            '${b.label(l)} ${d.code(l)} (${g.label(l)})';
+        final supported = isCheckableUniform(
+          profile.branch,
+          dress,
+          profile.gender,
+        );
         return _ScanningPhase(
+          onChooseUniform: () => context.go(Routes.dashboard),
+          unsupportedTitle: supported
+              ? null
+              : l.arUnsupportedTitle(
+                  uniformLabel(profile.branch, dress, profile.gender),
+                ),
+          unsupportedSub: l.arUnsupportedSub(
+            checkableUniforms()
+                .map((u) => uniformLabel(u.branch, u.dress, u.gender))
+                .join(', '),
+          ),
           aligned: _phase == _ArPhase.aligned,
           hint: _hint,
           guideUnavailable: _guideUnavailable,
@@ -536,6 +589,9 @@ class _ARScannerScreenState extends ConsumerState<ARScannerScreen>
 
 class _ScanningPhase extends StatelessWidget {
   const _ScanningPhase({
+    required this.onChooseUniform,
+    required this.unsupportedTitle,
+    required this.unsupportedSub,
     required this.aligned,
     required this.hint,
     required this.guideUnavailable,
@@ -546,6 +602,14 @@ class _ScanningPhase extends StatelessWidget {
     required this.onClose,
   });
   final bool aligned;
+
+  /// Back to the dashboard, where the uniform (No.1–No.5) is chosen.
+  final VoidCallback onChooseUniform;
+
+  /// Non-null when cv-service can't check this branch / dress / gender yet;
+  /// capture is then disabled so no photo is uploaded for a sure 422.
+  final String? unsupportedTitle;
+  final String unsupportedSub;
 
   /// Live guidance: what to fix next ([CaptureHint.ready] once aligned).
   final CaptureHint hint;
@@ -570,6 +634,7 @@ class _ScanningPhase extends StatelessWidget {
     final branchTheme = context.branchTheme;
     final controller = cameraController;
     final previewReady = controller != null && controller.value.isInitialized;
+    final canCapture = aligned && previewReady && unsupportedTitle == null;
     return Scaffold(
       backgroundColor: const Color(0xFF0A0A0A),
       body: Stack(
@@ -609,14 +674,19 @@ class _ScanningPhase extends StatelessWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.videocam_off_outlined,
-                        color: AppColors.warn, size: 32),
+                    const Icon(
+                      Icons.videocam_off_outlined,
+                      color: AppColors.warn,
+                      size: 32,
+                    ),
                     const SizedBox(height: 10),
                     Text(
                       l.arErrorCameraTitle,
                       textAlign: TextAlign.center,
                       style: AppTextStyles.bodyStrong(
-                          color: AppColors.ink, fontSize: 13.5),
+                        color: AppColors.ink,
+                        fontSize: 13.5,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Text(
@@ -667,6 +737,65 @@ class _ScanningPhase extends StatelessWidget {
               ],
             ),
           ),
+          // "Can't be checked yet" notice — the uniform is chosen on the
+          // dashboard, so the card links back there.
+          if (unsupportedTitle != null)
+            Positioned(
+              top: MediaQuery.of(context).padding.top + 68,
+              left: 16,
+              right: 16,
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.err.withValues(alpha: 0.18),
+                  borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+                  border: Border.all(color: AppColors.err, width: 1),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.block, color: AppColors.err, size: 18),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            unsupportedTitle!,
+                            style: AppTextStyles.bodyStrong(
+                              color: AppColors.ink,
+                              fontSize: 13.5,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            unsupportedSub,
+                            style: AppTextStyles.body(
+                              color: Colors.white.withValues(alpha: 0.7),
+                              fontSize: 12,
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: onChooseUniform,
+                            style: TextButton.styleFrom(
+                              padding: EdgeInsets.zero,
+                              minimumSize: const Size(0, 32),
+                            ),
+                            child: Text(
+                              l.arChooseUniform,
+                              style: AppTextStyles.bodyStrong(
+                                color: AppColors.ink,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           // Status banner
           Positioned(
             bottom: 140 + MediaQuery.of(context).viewPadding.bottom,
@@ -675,8 +804,9 @@ class _ScanningPhase extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: (aligned ? AppColors.ok : AppColors.warn)
-                    .withValues(alpha: 0.18),
+                color: (aligned ? AppColors.ok : AppColors.warn).withValues(
+                  alpha: 0.18,
+                ),
                 borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
                 border: Border.all(
                   color: aligned ? AppColors.ok : AppColors.warn,
@@ -699,12 +829,16 @@ class _ScanningPhase extends StatelessWidget {
                         Text(
                           aligned ? l.arAlignedTitle : l.arAligning,
                           style: AppTextStyles.bodyStrong(
-                              color: AppColors.ink, fontSize: 14),
+                            color: AppColors.ink,
+                            fontSize: 14,
+                          ),
                         ),
                         const SizedBox(height: 2),
                         Text(
                           aligned
-                              ? (guideUnavailable ? l.arHintUnavailable : l.arAlignedSub)
+                              ? (guideUnavailable
+                                    ? l.arHintUnavailable
+                                    : l.arAlignedSub)
                               : _hintText(l, hint),
                           style: AppTextStyles.body(
                             color: Colors.white.withValues(alpha: 0.7),
@@ -725,16 +859,18 @@ class _ScanningPhase extends StatelessWidget {
             right: 0,
             child: Center(
               child: GestureDetector(
-                onTap: aligned && previewReady ? onCapture : null,
-                onLongPress: aligned && previewReady ? onCaptureDev : null,
+                onTap: canCapture ? onCapture : null,
+                onLongPress: canCapture ? onCaptureDev : null,
                 child: Container(
                   width: 84,
                   height: 84,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: aligned ? AppColors.ok : Colors.white.withValues(alpha: 0.10),
+                    color: canCapture
+                        ? AppColors.ok
+                        : Colors.white.withValues(alpha: 0.10),
                     border: Border.all(color: Colors.white, width: 4),
-                    boxShadow: aligned
+                    boxShadow: canCapture
                         ? [
                             BoxShadow(
                               color: AppColors.ok.withValues(alpha: 0.6),
@@ -809,8 +945,10 @@ class _AnalyzingPhase extends StatelessWidget {
                 const SizedBox(height: 24),
                 Text(
                   l.arAnalyzing,
-                  style:
-                      AppTextStyles.bodyStrong(color: AppColors.ink, fontSize: 15),
+                  style: AppTextStyles.bodyStrong(
+                    color: AppColors.ink,
+                    fontSize: 15,
+                  ),
                 ),
                 const SizedBox(height: 6),
                 Text(
@@ -864,13 +1002,19 @@ class _FailedPhase extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.error_outline, color: AppColors.err, size: 40),
+                  const Icon(
+                    Icons.error_outline,
+                    color: AppColors.err,
+                    size: 40,
+                  ),
                   const SizedBox(height: 18),
                   Text(
                     title,
                     textAlign: TextAlign.center,
                     style: AppTextStyles.bodyStrong(
-                        color: AppColors.ink, fontSize: 15),
+                      color: AppColors.ink,
+                      fontSize: 15,
+                    ),
                   ),
                   const SizedBox(height: 6),
                   Text(
@@ -930,10 +1074,26 @@ class _CornerBrackets extends StatelessWidget {
     final color = Colors.white.withValues(alpha: 0.6);
     return Stack(
       children: [
-        Positioned(top: 70, left: 24, child: _bracket(color, Alignment.topLeft)),
-        Positioned(top: 70, right: 24, child: _bracket(color, Alignment.topRight)),
-        Positioned(bottom: 220, left: 24, child: _bracket(color, Alignment.bottomLeft)),
-        Positioned(bottom: 220, right: 24, child: _bracket(color, Alignment.bottomRight)),
+        Positioned(
+          top: 70,
+          left: 24,
+          child: _bracket(color, Alignment.topLeft),
+        ),
+        Positioned(
+          top: 70,
+          right: 24,
+          child: _bracket(color, Alignment.topRight),
+        ),
+        Positioned(
+          bottom: 220,
+          left: 24,
+          child: _bracket(color, Alignment.bottomLeft),
+        ),
+        Positioned(
+          bottom: 220,
+          right: 24,
+          child: _bracket(color, Alignment.bottomRight),
+        ),
       ],
     );
   }
@@ -988,13 +1148,23 @@ class _GhostOverlayPainter extends CustomPainter {
     final w = size.width;
     final h = size.height;
     canvas.drawCircle(Offset(w * 0.5, h * 0.10), w * 0.10, paint);
-    canvas.drawRect(Rect.fromLTRB(w * 0.30, h * 0.20, w * 0.70, h * 0.55), paint);
-    canvas.drawRect(Rect.fromLTRB(w * 0.30, h * 0.55, w * 0.49, h * 0.95), paint);
-    canvas.drawRect(Rect.fromLTRB(w * 0.51, h * 0.55, w * 0.70, h * 0.95), paint);
+    canvas.drawRect(
+      Rect.fromLTRB(w * 0.30, h * 0.20, w * 0.70, h * 0.55),
+      paint,
+    );
+    canvas.drawRect(
+      Rect.fromLTRB(w * 0.30, h * 0.55, w * 0.49, h * 0.95),
+      paint,
+    );
+    canvas.drawRect(
+      Rect.fromLTRB(w * 0.51, h * 0.55, w * 0.70, h * 0.95),
+      paint,
+    );
   }
 
   @override
-  bool shouldRepaint(covariant _GhostOverlayPainter old) => old.accent != accent;
+  bool shouldRepaint(covariant _GhostOverlayPainter old) =>
+      old.accent != accent;
 }
 
 /// Renders the real `cv-service` `/check_uniform` geometry result — the
@@ -1014,8 +1184,8 @@ class _RealScorecard extends StatelessWidget {
     final color = result.passed
         ? AppColors.ok
         : result.incomplete || score >= 70
-            ? AppColors.warn
-            : AppColors.err;
+        ? AppColors.warn
+        : AppColors.err;
     final issues = result.issues;
     final passes = result.passes;
     final couldNotCheck = result.couldNotCheck;
@@ -1043,8 +1213,8 @@ class _RealScorecard extends StatelessWidget {
                       result.passed
                           ? 'PASS'
                           : result.incomplete
-                              ? 'INCOMPLETE'
-                              : 'FAIL',
+                          ? 'INCOMPLETE'
+                          : 'FAIL',
                       style: AppTextStyles.mono(
                         fontSize: 11,
                         color: color,
@@ -1059,7 +1229,9 @@ class _RealScorecard extends StatelessWidget {
                   padding: const EdgeInsets.only(bottom: 16),
                   children: [
                     const SizedBox(height: 12),
-                    Center(child: _ScoreRing(score: score, color: color)),
+                    Center(
+                      child: _ScoreRing(score: score, color: color),
+                    ),
                     const SizedBox(height: 12),
                     Text(
                       _summaryLine(result),
@@ -1074,23 +1246,36 @@ class _RealScorecard extends StatelessWidget {
                       Text(
                         'Camera lens info was missing from the photo — distances are less precise.',
                         textAlign: TextAlign.center,
-                        style: AppTextStyles.body(color: AppColors.warn, fontSize: 11.5),
+                        style: AppTextStyles.body(
+                          color: AppColors.warn,
+                          fontSize: 11.5,
+                        ),
                       ),
                     ],
                     if (overlay != null) ...[
                       const SizedBox(height: 16),
                       ClipRRect(
-                        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-                        child: Image.memory(overlay, fit: BoxFit.contain, gaplessPlayback: true),
+                        borderRadius: BorderRadius.circular(
+                          AppSpacing.radiusMd,
+                        ),
+                        child: Image.memory(
+                          overlay,
+                          fit: BoxFit.contain,
+                          gaplessPlayback: true,
+                        ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         'Where each item should be vs. where it was found',
                         textAlign: TextAlign.center,
-                        style: AppTextStyles.body(color: AppColors.inkSubtle, fontSize: 11),
+                        style: AppTextStyles.body(
+                          color: AppColors.inkSubtle,
+                          fontSize: 11,
+                        ),
                       ),
                     ],
-                    if (!result.personDetected || !result.imageQualityUsable) ...[
+                    if (!result.personDetected ||
+                        !result.imageQualityUsable) ...[
                       const SizedBox(height: 8),
                       Text(
                         !result.personDetected
@@ -1108,7 +1293,9 @@ class _RealScorecard extends StatelessWidget {
                       Text(
                         '${issues.length} ISSUE(S)',
                         style: AppTextStyles.bodyStrong(
-                            color: AppColors.warn, fontSize: 14),
+                          color: AppColors.warn,
+                          fontSize: 14,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       for (final item in issues)
@@ -1118,7 +1305,8 @@ class _RealScorecard extends StatelessWidget {
                             title:
                                 '${_prettyName(item.name)} — ${_statusLabel(item.status)}',
                             body: _accessoryBody(item),
-                            color: item.status ==
+                            color:
+                                item.status ==
                                     UniformCheckStatus.slightlyMisaligned
                                 ? AppColors.warn
                                 : AppColors.err,
@@ -1130,7 +1318,9 @@ class _RealScorecard extends StatelessWidget {
                       Text(
                         '${passes.length} CORRECT',
                         style: AppTextStyles.bodyStrong(
-                            color: AppColors.ok, fontSize: 14),
+                          color: AppColors.ok,
+                          fontSize: 14,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       for (final item in passes)
@@ -1144,7 +1334,9 @@ class _RealScorecard extends StatelessWidget {
                       Text(
                         '${couldNotCheck.length} COULD NOT CHECK — A RETAKE MAY HELP',
                         style: AppTextStyles.bodyStrong(
-                            color: AppColors.inkMuted, fontSize: 14),
+                          color: AppColors.inkMuted,
+                          fontSize: 14,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       for (final item in couldNotCheck)
@@ -1163,12 +1355,17 @@ class _RealScorecard extends StatelessWidget {
                       Text(
                         '${checkByEye.length} CHECK BY EYE',
                         style: AppTextStyles.bodyStrong(
-                            color: AppColors.inkMuted, fontSize: 14),
+                          color: AppColors.inkMuted,
+                          fontSize: 14,
+                        ),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         'Not measured automatically yet — compare with the doctrine diagram.',
-                        style: AppTextStyles.body(color: AppColors.inkSubtle, fontSize: 11.5),
+                        style: AppTextStyles.body(
+                          color: AppColors.inkSubtle,
+                          fontSize: 11.5,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       for (final item in checkByEye)
@@ -1176,7 +1373,9 @@ class _RealScorecard extends StatelessWidget {
                           padding: const EdgeInsets.only(bottom: 6),
                           child: _IssueCard(
                             title: _prettyName(item.name),
-                            body: item.doctrineRef.isNotEmpty ? 'Ref: ${item.doctrineRef}' : 'See the doctrine diagram.',
+                            body: item.doctrineRef.isNotEmpty
+                                ? 'Ref: ${item.doctrineRef}'
+                                : 'See the doctrine diagram.',
                             color: AppColors.inkSubtle,
                             icon: Icons.visibility_outlined,
                           ),
@@ -1195,13 +1394,13 @@ class _RealScorecard extends StatelessWidget {
                         ),
                         _MetaTile(
                           label: 'PERSON',
-                          value:
-                              '${(result.personConfidence * 100).round()}%',
+                          value: '${(result.personConfidence * 100).round()}%',
                         ),
                         if (result.burstFrames != null)
                           _MetaTile(
                             label: 'FRAMES',
-                            value: '${result.burstUsableFrames ?? 0}/${result.burstFrames}',
+                            value:
+                                '${result.burstUsableFrames ?? 0}/${result.burstFrames}',
                           )
                         else
                           _MetaTile(
@@ -1234,25 +1433,26 @@ class _RealScorecard extends StatelessWidget {
 }
 
 String _hintText(AppLocalizations l, CaptureHint hint) => switch (hint) {
-      CaptureHint.noPerson => l.arHintNoPerson,
-      CaptureHint.notFullBody => l.arHintNotFullBody,
-      CaptureHint.tooFar => l.arHintTooFar,
-      CaptureHint.tooClose => l.arHintTooClose,
-      CaptureHint.notCentered => l.arHintNotCentered,
-      CaptureHint.facingAway => l.arHintFacingAway,
-      CaptureHint.turnedSideways => l.arHintTurnedSideways,
-      CaptureHint.armsRaised => l.arHintArmsRaised,
-      CaptureHint.phoneTilted => l.arHintPhoneTilted,
-      CaptureHint.holdStill => l.arHintHoldStill,
-      CaptureHint.ready => l.arAlignedSub,
-    };
+  CaptureHint.noPerson => l.arHintNoPerson,
+  CaptureHint.notFullBody => l.arHintNotFullBody,
+  CaptureHint.tooFar => l.arHintTooFar,
+  CaptureHint.tooClose => l.arHintTooClose,
+  CaptureHint.notCentered => l.arHintNotCentered,
+  CaptureHint.facingAway => l.arHintFacingAway,
+  CaptureHint.turnedSideways => l.arHintTurnedSideways,
+  CaptureHint.armsRaised => l.arHintArmsRaised,
+  CaptureHint.phoneTilted => l.arHintPhoneTilted,
+  CaptureHint.holdStill => l.arHintHoldStill,
+  CaptureHint.ready => l.arAlignedSub,
+};
 
 String _summaryLine(UniformCheckResult r) {
   final s = r.summary;
   if (s.requiredAccessories == 0) {
     return 'No doctrine rules resolved for this profile.';
   }
-  final line = '${s.correct} of ${s.requiredAccessories} required items correct · '
+  final line =
+      '${s.correct} of ${s.requiredAccessories} required items correct · '
       '${s.incorrect} off · ${s.slightlyMisaligned} slightly off · '
       '${s.missing} missing · ${s.uncertain} unverified.';
   if (r.incomplete) {
@@ -1284,18 +1484,24 @@ Uint8List? _decodeOverlay(String? base64Image) {
   try {
     return base64Decode(base64Image);
   } catch (e, st) {
-    developer.log('decodeOverlay: failed', name: _tag, error: e, stackTrace: st, level: 1000);
+    developer.log(
+      'decodeOverlay: failed',
+      name: _tag,
+      error: e,
+      stackTrace: st,
+      level: 1000,
+    );
     return null;
   }
 }
 
 String _statusLabel(UniformCheckStatus s) => switch (s) {
-      UniformCheckStatus.correct => 'correct',
-      UniformCheckStatus.slightlyMisaligned => 'slightly misaligned',
-      UniformCheckStatus.incorrect => 'incorrect position',
-      UniformCheckStatus.missing => 'missing',
-      UniformCheckStatus.uncertain => 'unverified',
-    };
+  UniformCheckStatus.correct => 'correct',
+  UniformCheckStatus.slightlyMisaligned => 'slightly misaligned',
+  UniformCheckStatus.incorrect => 'incorrect position',
+  UniformCheckStatus.missing => 'missing',
+  UniformCheckStatus.uncertain => 'unverified',
+};
 
 String _prettyName(String raw) => raw
     .split(RegExp(r'[_\s]+'))
@@ -1321,7 +1527,9 @@ class _ScoreRing extends StatelessWidget {
             child: CircularProgressIndicator(
               value: 1,
               strokeWidth: 6,
-              valueColor: AlwaysStoppedAnimation(Colors.white.withValues(alpha: 0.08)),
+              valueColor: AlwaysStoppedAnimation(
+                Colors.white.withValues(alpha: 0.08),
+              ),
             ),
           ),
           SizedBox.expand(
@@ -1335,15 +1543,19 @@ class _ScoreRing extends StatelessWidget {
           Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('$score%',
-                  style: AppTextStyles.title(color: AppColors.ink, fontSize: 30)),
+              Text(
+                '$score%',
+                style: AppTextStyles.title(color: AppColors.ink, fontSize: 30),
+              ),
               const SizedBox(height: 4),
-              Text(l.arCompliance,
-                  style: AppTextStyles.mono(
-                    fontSize: 9.5,
-                    color: AppColors.inkSubtle,
-                    letterSpacing: 1.8,
-                  )),
+              Text(
+                l.arCompliance,
+                style: AppTextStyles.mono(
+                  fontSize: 9.5,
+                  color: AppColors.inkSubtle,
+                  letterSpacing: 1.8,
+                ),
+              ),
             ],
           ),
         ],
@@ -1381,9 +1593,21 @@ class _IssueCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: AppTextStyles.bodyStrong(color: AppColors.ink, fontSize: 13)),
+                Text(
+                  title,
+                  style: AppTextStyles.bodyStrong(
+                    color: AppColors.ink,
+                    fontSize: 13,
+                  ),
+                ),
                 const SizedBox(height: 2),
-                Text(body, style: AppTextStyles.body(color: AppColors.inkMuted, fontSize: 12)),
+                Text(
+                  body,
+                  style: AppTextStyles.body(
+                    color: AppColors.inkMuted,
+                    fontSize: 12,
+                  ),
+                ),
               ],
             ),
           ),
@@ -1403,20 +1627,28 @@ class _PassCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.ok.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(AppSpacing.radiusSm + 2),
-        border: Border.all(color: AppColors.ok.withValues(alpha: 0.3), width: 1),
+        border: Border.all(
+          color: AppColors.ok.withValues(alpha: 0.3),
+          width: 1,
+        ),
       ),
       child: Row(
         children: [
           Container(
             width: 18,
             height: 18,
-            decoration: const BoxDecoration(shape: BoxShape.circle, color: AppColors.ok),
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              color: AppColors.ok,
+            ),
             child: const Icon(Icons.check, color: AppColors.bg, size: 12),
           ),
           const SizedBox(width: 10),
           Expanded(
-            child: Text(label,
-                style: AppTextStyles.body(color: AppColors.ink, fontSize: 12.5)),
+            child: Text(
+              label,
+              style: AppTextStyles.body(color: AppColors.ink, fontSize: 12.5),
+            ),
           ),
         ],
       ),
@@ -1441,17 +1673,21 @@ class _MetaTile extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(label,
-              style: AppTextStyles.mono(
-                fontSize: 9,
-                color: AppColors.inkSubtle,
-                letterSpacing: 1.4,
-              )),
+          Text(
+            label,
+            style: AppTextStyles.mono(
+              fontSize: 9,
+              color: AppColors.inkSubtle,
+              letterSpacing: 1.4,
+            ),
+          ),
           const SizedBox(height: 4),
-          Text(value,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: AppTextStyles.bodyStrong(color: AppColors.ink, fontSize: 13)),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTextStyles.bodyStrong(color: AppColors.ink, fontSize: 13),
+          ),
         ],
       ),
     );
@@ -1479,8 +1715,8 @@ class _CvScorecard extends StatelessWidget {
     final color = score >= 90
         ? AppColors.ok
         : score >= 70
-            ? AppColors.warn
-            : AppColors.err;
+        ? AppColors.warn
+        : AppColors.err;
     final subscoreEntries = <String, double?>{
       'HEADWEAR': result.subscores.headwear,
       'CHEST': result.subscores.chest,
@@ -1534,7 +1770,9 @@ class _CvScorecard extends StatelessWidget {
                   padding: const EdgeInsets.only(bottom: 16),
                   children: [
                     const SizedBox(height: 12),
-                    Center(child: _ScoreRing(score: score, color: color)),
+                    Center(
+                      child: _ScoreRing(score: score, color: color),
+                    ),
                     const SizedBox(height: 12),
                     Text(
                       'Real pose + camera-pose geometry; item identification '
@@ -1548,8 +1786,13 @@ class _CvScorecard extends StatelessWidget {
                     if (annotatedBytes != null) ...[
                       const SizedBox(height: 18),
                       ClipRRect(
-                        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-                        child: Image.memory(annotatedBytes, fit: BoxFit.contain),
+                        borderRadius: BorderRadius.circular(
+                          AppSpacing.radiusMd,
+                        ),
+                        child: Image.memory(
+                          annotatedBytes,
+                          fit: BoxFit.contain,
+                        ),
                       ),
                     ],
                     const SizedBox(height: 20),
@@ -1573,7 +1816,9 @@ class _CvScorecard extends StatelessWidget {
                       Text(
                         '${result.issues.length} ISSUE(S)',
                         style: AppTextStyles.bodyStrong(
-                            color: AppColors.warn, fontSize: 14),
+                          color: AppColors.warn,
+                          fontSize: 14,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       for (final issue in result.issues)
@@ -1592,7 +1837,9 @@ class _CvScorecard extends StatelessWidget {
                       Text(
                         '${result.uncertain.length} UNCERTAIN',
                         style: AppTextStyles.bodyStrong(
-                            color: AppColors.inkMuted, fontSize: 14),
+                          color: AppColors.inkMuted,
+                          fontSize: 14,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       for (final item in result.uncertain)
@@ -1611,7 +1858,9 @@ class _CvScorecard extends StatelessWidget {
                       Text(
                         'GEOMETRIC VERDICTS (${result.geometricVerdicts.length})',
                         style: AppTextStyles.bodyStrong(
-                            color: AppColors.ink, fontSize: 14),
+                          color: AppColors.ink,
+                          fontSize: 14,
+                        ),
                       ),
                       const SizedBox(height: 2),
                       Text(
@@ -1627,7 +1876,8 @@ class _CvScorecard extends StatelessWidget {
                         Padding(
                           padding: const EdgeInsets.only(bottom: 8),
                           child: _IssueCard(
-                            title: '${verdict.accessory} — ${verdict.status.wireName}',
+                            title:
+                                '${verdict.accessory} — ${verdict.status.wireName}',
                             body: verdict.doctrineRef.isNotEmpty
                                 ? '${verdict.reason}\n${verdict.doctrineRef}'
                                 : verdict.reason,
@@ -1654,7 +1904,8 @@ class _CvScorecard extends StatelessWidget {
                         ),
                         _MetaTile(
                           label: 'CORR. PTS',
-                          value: '${result.cameraDiagnostics.correspondenceCount}',
+                          value:
+                              '${result.cameraDiagnostics.correspondenceCount}',
                         ),
                       ],
                     ),

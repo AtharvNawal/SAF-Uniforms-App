@@ -11,24 +11,20 @@ const String _tag = 'arScanner.cvService';
 /// Base URL for the `cv-service` FastAPI app (`cv-service/api/main.py`),
 /// used by both `POST /inspect` and `POST /check_uniform`.
 ///
-/// **Local dev only** — `cv-service` has no Cloud Run deployment (see
-/// `cv-service/README.md`), so this points at a service the developer
-/// runs themselves via `uvicorn --host 0.0.0.0 --port 8001`.
-///
-/// The default is this dev machine's LAN IP so a plain
-/// `flutter build apk` produces an APK a physical phone (on the same
-/// Wi-Fi, with the Mac running `deploy/run-cv-service-local.sh`) can
-/// reach with no extra flags. When the Mac's IP changes, edit the line
-/// below (find it with `ipconfig getifaddr en0`) and rebuild — or
-/// override without editing:
-///   - this phone, new IP:  `--dart-define=CV_SERVICE_BASE_URL=http://<ip>:8001`
+/// The default is the deployed Cloud Run service (see CLAUDE.md §5.5), so
+/// a plain `flutter build apk` works on any network with no extra flags.
+/// For a local `cv-service` (`deploy/run-cv-service-local.sh`), change the
+/// address on the phone (Settings → Analysis server) or override at build:
+///   - this phone, LAN:     `--dart-define=CV_SERVICE_BASE_URL=http://<mac-ip>:8001`
+///     (find the IP with `ipconfig getifaddr en0`)
+///   - USB (`adb reverse`): `--dart-define=CV_SERVICE_BASE_URL=http://127.0.0.1:8001`
 ///   - iOS simulator:       `--dart-define=CV_SERVICE_BASE_URL=http://localhost:8001`
 ///   - Android emulator:    `--dart-define=CV_SERVICE_BASE_URL=http://10.0.2.2:8001`
 /// (Android cleartext to any host is already allowed for dev builds —
 /// see `android/app/src/main/res/xml/network_security_config.xml`.)
 const String kCvServiceBaseUrl = String.fromEnvironment(
   'CV_SERVICE_BASE_URL',
-  defaultValue: 'http://192.168.1.144:8001',
+  defaultValue: 'https://cv-service-612500938654.asia-southeast1.run.app',
 );
 
 /// Client-side wrapper around `cv-service`'s `POST /inspect` — the

@@ -11,6 +11,10 @@ part 'cv_service_url_provider.g.dart';
 
 const String _tag = 'arScanner.cvUrl';
 
+/// Old compiled-in LAN default (a dev Mac's Wi-Fi IP). A saved override
+/// equal to it is dropped so the Cloud Run default takes over.
+const String _staleLanDefault = 'http://192.168.1.144:8001';
+
 /// The dev `cv-service` base URL the AR Scanner calls. Starts at the
 /// compiled-in [kCvServiceBaseUrl] and switches to the user's saved
 /// override (`saf.cvServiceUrl`) as soon as it's loaded — so the address
@@ -32,7 +36,12 @@ class CvServiceUrl extends _$CvServiceUrl {
   Future<void> _loadOverride() async {
     try {
       final saved = await ref.read(localStorageServiceProvider).readCvServiceUrl();
-      final url = saved == null ? null : normaliseCvServiceUrl(saved);
+      var url = saved == null ? null : normaliseCvServiceUrl(saved);
+      if (url == _staleLanDefault) {
+        AppLog.i('dropping stale LAN override $url', tag: _tag);
+        await ref.read(localStorageServiceProvider).writeCvServiceUrl(null);
+        url = null;
+      }
       if (url != null && url != state) {
         _isOverride = true;
         state = url;

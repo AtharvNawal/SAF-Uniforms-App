@@ -18,6 +18,11 @@
       "render_logic": {
         "anchor": "head_top",
         "offset_y_cm": -16.0
+      },
+      "dress_images": {
+        "no4": {
+          "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Farmy_beret%2Fno4_placement.png?alt=media&token=938b7d4f17ee4142b1f70dbbeacf0910"
+        }
       }
     },
     {
@@ -37,6 +42,11 @@
       "render_logic": {
         "anchor": "head_top",
         "offset_y_cm": 1.3
+      },
+      "dress_images": {
+        "no4": {
+          "image_url": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fnavy_beret%2Fno4_image.png?alt=media&token=e3f82331129540658d1cbfced89350bc"
+        }
       }
     },
     {
@@ -56,6 +66,11 @@
       "render_logic": {
         "anchor": "head_top",
         "offset_y_cm": 1.3
+      },
+      "dress_images": {
+        "no4": {
+          "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Frsaf_beret%2Fno4_placement.png?alt=media&token=bc0a92ad15214ad2b0fde83538b74a98"
+        }
       }
     },
     {
@@ -68,11 +83,17 @@
       "rules": {
         "color": "dark_grey",
         "standard": "Pinned centrally on the backing of the beret, approximately 1.3 cm above the bottom edge of the band.",
-        "applicability": "Standard headdress for both DIS men and ladies in No. 3 dress (DIS does not issue a ladies service hat)."
+        "applicability": "Standard headdress for both DIS men and ladies in No. 3 dress (DIS does not issue a ladies service hat).",
+        "no4_applicability": "No. 4: beret for all DIS uniformed personnel (SAF No.4 Dress PDF, DIS Picture B-1)."
       },
       "render_logic": {
         "anchor": "head_top",
         "offset_y_cm": 1.3
+      },
+      "dress_images": {
+        "no4": {
+          "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fdis_beret%2Fno4_placement.png?alt=media&token=61156a33f78c44e68ceaa787ab071cf6"
+        }
       }
     },
     {
@@ -86,12 +107,18 @@
       "rules": {
         "color": "dark_blue_with_red_fifti",
         "applicability": "Worn by Sikh personnel in lieu of the beret. Standard variant for SLTC/ME6 and below.",
-        "alignment": "Centred on the turban centreline; cap badge pinned over the front fold."
+        "alignment": "Centred on the turban centreline; cap badge pinned over the front fold.",
+        "no4_placement": "No. 4: Sikh personnel wear a turban of the same colour instead of the beret, with the cap badge. For field training, a green turban without cap badge is worn (SAF No.4 Dress PDF, Army Pictures B-2, B-4)."
       },
       "render_logic": {
         "anchor": "head_top",
         "offset_y_cm": 0.0,
         "use_branch_sikh_logic": true
+      },
+      "dress_images": {
+        "no4": {
+          "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Farmy_sikh_turban_standard%2Fno4_placement.png?alt=media&token=daecddb27ad9450c90d3cbac42c87cb8"
+        }
       }
     },
     {
@@ -105,12 +132,18 @@
       "rules": {
         "color": "dark_blue_with_red_fifti_and_red_band",
         "applicability": "Worn by Sikh personnel at rank COL/ME7 and above (red horizontal band added below the fifti).",
-        "alignment": "Centred on the turban centreline; cap badge pinned over the front fold."
+        "alignment": "Centred on the turban centreline; cap badge pinned over the front fold.",
+        "no4_placement": "No. 4: Sikh personnel wear a turban of the same colour instead of the beret, with the cap badge. For field training, a green turban without cap badge is worn (SAF No.4 Dress PDF, Army Pictures B-2, B-4)."
       },
       "render_logic": {
         "anchor": "head_top",
         "offset_y_cm": 0.0,
         "use_branch_sikh_logic": true
+      },
+      "dress_images": {
+        "no4": {
+          "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Farmy_sikh_turban_col_me7_above%2Fno4_placement.png?alt=media&token=e1806eaea4c6411aa9496aa943c66d99"
+        }
       }
     },
     {
@@ -124,12 +157,18 @@
       "rules": {
         "color": "dark_blue_with_black_fitti",
         "applicability": "Worn by Sikh personnel in lieu of the beret. Standard variant for 2WO/ME2 and below.",
-        "alignment": "Centred on the turban centreline; cap badge pinned over the front fold."
+        "alignment": "Centred on the turban centreline; cap badge pinned over the front fold.",
+        "no4_placement": "No. 4: Sikh personnel wear a blue turban instead of the beret, with the cap badge. For training and field duties, a green turban without cap badge is worn (SAF No.4 Dress PDF, Navy headdress notes)."
       },
       "render_logic": {
         "anchor": "head_top",
         "offset_y_cm": 0.0,
         "use_branch_sikh_logic": true
+      },
+      "dress_images": {
+        "no4": {
+          "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fnavy_sikh_turban_standard%2Fno4_placement.png?alt=media&token=d8c9aae0557148379594128f0544dfb0"
+        }
       }
     },
     {
@@ -162,12 +201,18 @@
       "rules": {
         "color": "blue_with_blue_fifti",
         "applicability": "Worn by Sikh personnel in lieu of the beret across all RSAF ranks.",
-        "alignment": "Centred on the turban centreline; cap badge pinned over the front fold."
+        "alignment": "Centred on the turban centreline; cap badge pinned over the front fold.",
+        "no4_placement": "No. 4: turban with blue fifty, with the cap badge, instead of the beret (SAF No.4 Dress PDF, RSAF Picture B-4)."
       },
       "render_logic": {
         "anchor": "head_top",
         "offset_y_cm": 0.0,
         "use_branch_sikh_logic": true
+      },
+      "dress_images": {
+        "no4": {
+          "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Frsaf_sikh_turban%2Fno4_placement.png?alt=media&token=df2980791a254982a78718d404db2268"
+        }
       }
     },
     {
@@ -181,12 +226,18 @@
       "rules": {
         "color": "dark_grey_with_black_fifti",
         "applicability": "Worn by male Sikh DIS personnel in lieu of the beret.",
-        "alignment": "Centred on the turban centreline; cap badge pinned over the front fold."
+        "alignment": "Centred on the turban centreline; cap badge pinned over the front fold.",
+        "no4_placement": "No. 4: turban with black fifti, with the cap badge, instead of the beret (SAF No.4 Dress PDF, DIS Picture B-2)."
       },
       "render_logic": {
         "anchor": "head_top",
         "offset_y_cm": 0.0,
         "use_branch_sikh_logic": true
+      },
+      "dress_images": {
+        "no4": {
+          "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fdis_sikh_turban%2Fno4_placement.png?alt=media&token=4be5814a7f78416487647d9a9486fcae"
+        }
       }
     },
     {
@@ -326,12 +377,18 @@
       "rules": {
         "applicability": "Standard SAF cap badge worn by Army personnel at rank SLTC/ME6 and below.",
         "cadet_white_backing_diameter_mm": 53,
-        "placement": "Pinned centrally on the backing of the beret, approximately 1.3 cm above the bottom edge of the band."
+        "placement": "Pinned centrally on the backing of the beret, approximately 1.3 cm above the bottom edge of the band.",
+        "no4_placement": "No. 4: same cap badge as No. 3, worn on the beret. Officer Cadets have a white round backing (53 mm) behind it."
       },
       "render_logic": {
         "anchor": "cap_band_front",
         "offset_y_cm": -1.0,
         "offset_z_cm": 3.0
+      },
+      "dress_images": {
+        "no4": {
+          "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Farmy_cap_badge_sltc_me6_below%2Fno4_placement.png?alt=media&token=43058453fac94502b9c7214db8bddaef"
+        }
       }
     },
     {
@@ -343,11 +400,17 @@
       "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Farmy_cap_badge_col_me7%2Fplacement.png?alt=media&token=489cd2d268b34512bc3fedb4f4b8d759",
       "rules": {
         "applicability": "Embroidered cap badge worn by Army personnel at rank COL/ME7.",
-        "placement": "Pinned centrally on the backing of the beret, approximately 1.3 cm above the bottom edge of the band."
+        "placement": "Pinned centrally on the backing of the beret, approximately 1.3 cm above the bottom edge of the band.",
+        "no4_placement": "No. 4: COL/ME7 wear the embroidered cap badge on the beret."
       },
       "render_logic": {
         "anchor": "cap_band_front",
         "offset_y_cm": 1.3
+      },
+      "dress_images": {
+        "no4": {
+          "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Farmy_cap_badge_col_me7%2Fno4_placement.png?alt=media&token=d3f8ab214e6345ef9cb3bc90013d9270"
+        }
       }
     },
     {
@@ -359,11 +422,17 @@
       "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Farmy_cap_badge_bg_me8_above%2Fplacement.png?alt=media&token=c6fd5dcd983a49ad8c257bde10a5094a",
       "rules": {
         "applicability": "Embroidered cap badge worn by Army Generals (BG/ME8 and above).",
-        "placement": "Pinned centrally on the backing of the beret, approximately 1.3 cm above the bottom edge of the band."
+        "placement": "Pinned centrally on the backing of the beret, approximately 1.3 cm above the bottom edge of the band.",
+        "no4_placement": "No. 4: BG/ME8 and above wear the embroidered cap badge on the beret."
       },
       "render_logic": {
         "anchor": "cap_band_front",
         "offset_y_cm": 1.3
+      },
+      "dress_images": {
+        "no4": {
+          "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Farmy_cap_badge_bg_me8_above%2Fno4_placement.png?alt=media&token=9c0227df49384427bbea0e08bbce69c7"
+        }
       }
     },
     {
@@ -392,7 +461,8 @@
       "rules": {
         "applicability": "Standard Navy cap badge worn at rank SLTC/ME6 and below.",
         "cadet_white_backing_diameter_mm": 53,
-        "placement": "Pinned centrally on the backing of the beret or above the embellishment of the service hat."
+        "placement": "Pinned centrally on the backing of the beret or above the embellishment of the service hat.",
+        "no4_placement": "No. 4: same cap badge as No. 3, worn on the beret. Officer Cadets have a white round backing (53 mm) behind it."
       },
       "render_logic": {
         "anchor": "cap_band_front",
@@ -408,11 +478,17 @@
       "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fnavy_cap_badge_col_me7_above%2Fplacement.png?alt=media&token=6e8e4e950a25408aa835046ab23850de",
       "rules": {
         "applicability": "Embroidered Navy cap badge worn at rank COL/ME7 and above.",
-        "placement": "Pinned centrally on the backing of the beret or above the embellishment of the service hat."
+        "placement": "Pinned centrally on the backing of the beret or above the embellishment of the service hat.",
+        "no4_placement": "No. 4: COL/ME7 and above wear the embroidered cap badge on the beret."
       },
       "render_logic": {
         "anchor": "cap_band_front",
         "offset_y_cm": 1.3
+      },
+      "dress_images": {
+        "no4": {
+          "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fnavy_cap_badge_col_me7_above%2Fno4_placement.png?alt=media&token=d3b09c6a3e3846b0b51914440a806952"
+        }
       }
     },
     {
@@ -425,11 +501,17 @@
       "rules": {
         "applicability": "Standard RSAF cap badge worn at rank SLTC/ME6 and below.",
         "cadet_white_backing_diameter_mm": 53,
-        "placement": "Pinned centrally on the backing of the beret or above the embellishment of the service hat."
+        "placement": "Pinned centrally on the backing of the beret or above the embellishment of the service hat.",
+        "no4_placement": "No. 4: same cap badge as No. 3, worn on the beret. Officer Cadets have a white round backing (53 mm) behind it."
       },
       "render_logic": {
         "anchor": "cap_band_front",
         "offset_y_cm": 1.3
+      },
+      "dress_images": {
+        "no4": {
+          "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Frsaf_cap_badge_sltc_me6_below%2Fno4_placement.png?alt=media&token=c96a50e6acd548c99a0ebe03410b1622"
+        }
       }
     },
     {
@@ -441,11 +523,17 @@
       "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Frsaf_cap_badge_col_me7%2Fplacement.png?alt=media&token=3caee5ba878648af830600b8395c3b9a",
       "rules": {
         "applicability": "Embroidered RSAF cap badge worn at rank COL/ME7.",
-        "placement": "Pinned centrally on the backing of the beret or above the embellishment of the service hat."
+        "placement": "Pinned centrally on the backing of the beret or above the embellishment of the service hat.",
+        "no4_placement": "No. 4: COL/ME7 wear the embroidered cap badge on the beret."
       },
       "render_logic": {
         "anchor": "cap_band_front",
         "offset_y_cm": 1.3
+      },
+      "dress_images": {
+        "no4": {
+          "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Frsaf_cap_badge_col_me7%2Fno4_placement.png?alt=media&token=fc37a4b0fcc84c59a3842d4f5f32f209"
+        }
       }
     },
     {
@@ -457,11 +545,17 @@
       "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Frsaf_cap_badge_bg_me8_above_beret%2Fplacement.png?alt=media&token=c45c92c264a34926b4b3bdfea709a703",
       "rules": {
         "applicability": "Beret cap badge for RSAF personnel at rank BG/ME8 and above. Larger embroidery (53 mm width × 53 mm height per PDF).",
-        "diameter_mm": 53
+        "diameter_mm": 53,
+        "no4_placement": "No. 4: BG to LG and ME8 wear the embroidered cap badge on the beret."
       },
       "render_logic": {
         "anchor": "cap_band_front",
         "offset_y_cm": 1.3
+      },
+      "dress_images": {
+        "no4": {
+          "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Frsaf_cap_badge_bg_me8_above_beret%2Fno4_placement.png?alt=media&token=01aa9ddf6da3489eb4f3ae792dd009db"
+        }
       }
     },
     {
@@ -490,11 +584,17 @@
       "rules": {
         "applicability": "Standard DIS cap badge worn at rank SLTC/ME6 and below.",
         "cadet_white_backing_diameter_mm": 53,
-        "placement": "Pinned centrally on the backing of the beret, approximately 1.3 cm above the bottom edge of the band."
+        "placement": "Pinned centrally on the backing of the beret, approximately 1.3 cm above the bottom edge of the band.",
+        "no4_placement": "No. 4: same cap badge as No. 3, worn on the beret. Officer Cadets have a white round backing (53 mm) behind it."
       },
       "render_logic": {
         "anchor": "cap_band_front",
         "offset_y_cm": 1.3
+      },
+      "dress_images": {
+        "no4": {
+          "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fdis_cap_badge_sltc_me6_below%2Fno4_placement.png?alt=media&token=4e0cd2504b074f98ab919ee25b5b0de7"
+        }
       }
     },
     {
@@ -506,11 +606,17 @@
       "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fdis_cap_badge_col_me7%2Fplacement.png?alt=media&token=a9d685597b5844aa92349cc8770a68bb",
       "rules": {
         "applicability": "Embroidered DIS cap badge worn at rank COL/ME7.",
-        "placement": "Pinned centrally on the backing of the beret, approximately 1.3 cm above the bottom edge of the band."
+        "placement": "Pinned centrally on the backing of the beret, approximately 1.3 cm above the bottom edge of the band.",
+        "no4_placement": "No. 4: COL/ME7 wear the embroidered cap badge on the beret."
       },
       "render_logic": {
         "anchor": "cap_band_front",
         "offset_y_cm": 1.3
+      },
+      "dress_images": {
+        "no4": {
+          "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fdis_cap_badge_col_me7%2Fno4_placement.png?alt=media&token=11c366ce044c4d68a78870a2fd5d7226"
+        }
       }
     },
     {
@@ -522,11 +628,17 @@
       "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fdis_cap_badge_bg_me8_radm_above%2Fplacement.png?alt=media&token=70918067ee7c4714b26cec3dbea9057d",
       "rules": {
         "applicability": "Embroidered DIS cap badge worn at rank BG/ME8/RADM and above.",
-        "placement": "Pinned centrally on the backing of the beret, approximately 1.3 cm above the bottom edge of the band."
+        "placement": "Pinned centrally on the backing of the beret, approximately 1.3 cm above the bottom edge of the band.",
+        "no4_placement": "No. 4: BG/ME8/RADM and above wear the embroidered cap badge on the beret."
       },
       "render_logic": {
         "anchor": "cap_band_front",
         "offset_y_cm": 1.3
+      },
+      "dress_images": {
+        "no4": {
+          "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fdis_cap_badge_bg_me8_radm_above%2Fno4_placement.png?alt=media&token=ab3002fa195e424ebc79f0c1919b5a24"
+        }
       }
     },
     {
@@ -925,11 +1037,17 @@
       "rules": {
         "placement": "Worn on the right collar (e.g. Intelligence vocation badge).",
         "applicability": "DIS arms / vocation identifier (Intelligence and equivalents).",
-        "side_effect": "When present, collar rank insignia is offset 3 cm from collar edge (not 1 cm)."
+        "side_effect": "When present, collar rank insignia is offset 3 cm from collar edge (not 1 cm).",
+        "no4_placement": "No. 4: arms badge sewn centrally on the collar, 1 cm from the collar edge (SAF No.4 Dress PDF, DIS Picture C-2)."
       },
       "render_logic": {
         "anchor": "right_collar_tip",
         "offset_y_cm": 0.0
+      },
+      "dress_images": {
+        "no4": {
+          "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fdis_arms_badge%2Fno4_placement.png?alt=media&token=e8084da81af4429b94bd869d27f05c5b"
+        }
       }
     },
     {
@@ -942,11 +1060,17 @@
       "rules": {
         "applicability": "Worn on the left chest area (e.g. MIE, C4X, DISE, PMT). Specific to DIS personnel.",
         "precedence": "top",
-        "placement": "Centred above the left chest pocket, mounted on the top placement when other chest badges are worn."
+        "placement": "Centred above the left chest pocket, mounted on the top placement when other chest badges are worn.",
+        "no4_placement": "No. 4: DIS vocation badge worn on the left chest above the SINGAPORE tag (SAF No.4 Dress PDF, DIS Picture C-1)."
       },
       "render_logic": {
         "anchor": "left_chest_pocket",
         "offset_y_cm": 3.0
+      },
+      "dress_images": {
+        "no4": {
+          "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fdis_vocation_badge%2Fno4_placement.png?alt=media&token=95db0fd334b74d69a1aa70de06c3143f"
+        }
       }
     },
     {
@@ -958,11 +1082,30 @@
       "rules": {
         "men": "Centred, immediately above and parallel to the top edge of the right chest pocket.",
         "ladies": "Centred on right side; base aligned equidistant between 2nd and 3rd buttons of the blouse.",
-        "format": "Gold wording on black background."
+        "format": "Gold wording on black background.",
+        "no4_placement": "No. 4: name tape worn directly above the right chest pocket, level with the SINGAPORE tag above the left chest pocket (SAF No.4 Dress PDF: Army C-1, Navy C-1, RSAF C-1, DIS C-4)."
       },
       "render_logic": {
         "anchor_men": "right_pocket_top",
         "anchor_ladies": "button_2_3_mid"
+      },
+      "dress_images": {
+        "no4_army": {
+          "image_url": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fname_tag_standard%2Fno4_army_image.png?alt=media&token=564af5d470ac4f87965a93e6dedc0bee",
+          "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fname_tag_standard%2Fno4_army_placement.png?alt=media&token=1813c3fbc50e4346897f902395faf229"
+        },
+        "no4_dis": {
+          "image_url": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fname_tag_standard%2Fno4_dis_image.png?alt=media&token=2f05de4f9a8f4924ad366471802f5675",
+          "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fname_tag_standard%2Fno4_dis_placement.png?alt=media&token=da0411e4dbac4ddf8f7b9e0f1b29df41"
+        },
+        "no4_navy": {
+          "image_url": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fname_tag_standard%2Fno4_navy_image.png?alt=media&token=559a9fcdd29c4693bf2d0519018f9b2c",
+          "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fname_tag_standard%2Fno4_navy_placement.png?alt=media&token=d9c15e612a0445149e5a6ed827dd6355"
+        },
+        "no4_rsaf": {
+          "image_url": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fname_tag_standard%2Fno4_rsaf_image.png?alt=media&token=07895e729b0a4ab2b71d40d44bf441a1",
+          "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fname_tag_standard%2Fno4_rsaf_placement.png?alt=media&token=8fa44050a9424551b56e7785caf822c2"
+        }
       }
     },
     {
@@ -1118,12 +1261,27 @@
       "image_url": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fblack_socks%2Fimage.png?alt=media&token=3f4924c1151440f3962111463ae11f62",
       "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fblack_socks%2Fplacement.png?alt=media&token=99e797dc8d7b4dddb2e5ec6f526cfe0e",
       "rules": {
-        "standard": "Plain black socks with no visible pattern; mid-calf length minimum."
+        "standard": "Plain black socks with no visible pattern; mid-calf length minimum.",
+        "no4_placement": "No. 4: black socks for all services; Army personnel may wear green or black socks (SAF No.4 Dress PDF, Army Picture B-10)."
       },
       "render_logic": {
         "anchor": "ankle",
         "color": "black",
         "mirror_left_right": true
+      },
+      "dress_images": {
+        "no4_army": {
+          "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fblack_socks%2Fno4_army_placement.png?alt=media&token=c85663eb29e24680a54d17e4f8515a74"
+        },
+        "no4_dis": {
+          "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fblack_socks%2Fno4_dis_placement.png?alt=media&token=bd1a5b49c01a481f9671382ff4dde933"
+        },
+        "no4_navy": {
+          "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fblack_socks%2Fno4_navy_placement.png?alt=media&token=e111e085191a4438a8bc0e75b96739bd"
+        },
+        "no4_rsaf": {
+          "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fblack_socks%2Fno4_rsaf_placement.png?alt=media&token=34dbcfeff3394232a40c6f13fff66ef0"
+        }
       }
     },
     {
@@ -1230,12 +1388,30 @@
         "max_limit": "Maximum of three SAF badges may be worn on the left chest area of the No. 3 shirt.",
         "standard_offset_cm": "Centred 3 cm above the top edge of the left chest pocket.",
         "high_medal_rule": "When three or more rows of medal ribbons are worn, badges sit 1 cm above the top edge of the ribbons.",
-        "dis_vocation_badge_takes_precedence": "For DIS, the vocation badge takes precedence over skills badges and is mounted on the top placement."
+        "dis_vocation_badge_takes_precedence": "For DIS, the vocation badge takes precedence over skills badges and is mounted on the top placement.",
+        "no4_army_placement": "No. 4: maximum of three badges on the left chest, centred directly above the top edge of the left chest pocket (SAF No.4 Dress PDF, Army Pictures C-1 to C-3).",
+        "no4_navy_placement": "No. 4: maximum of three SAF badges on the left chest — only two, in stacking order, when the combination includes two of PWO, CIC Sup or Submariner badges. Centred 3 cm above the top edge of the left chest pocket (SAF No.4 Dress PDF, Navy Pictures C-1 to C-3).",
+        "no4_rsaf_placement": "No. 4: badges are worn centred above the SINGAPORE tag on the left chest (SAF No.4 Dress PDF, RSAF Pictures C-2, C-3).",
+        "no4_dis_placement": "No. 4: maximum of three badges on the left chest, centred directly above the top edge of the Singapore tag (SAF No.4 Dress PDF, DIS Pictures C-4, C-5)."
       },
       "render_logic": {
         "standard_y_cm": 3.0,
         "high_stack_y_cm": 1.0,
         "max_count": 3
+      },
+      "dress_images": {
+        "no4_army": {
+          "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fsaf_badges_chest%2Fno4_army_placement.png?alt=media&token=a051462d69354ed9b8715c3d7eb0617f"
+        },
+        "no4_dis": {
+          "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fsaf_badges_chest%2Fno4_dis_placement.png?alt=media&token=021df72e236a4bf7915ef1a05219d9f3"
+        },
+        "no4_navy": {
+          "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fsaf_badges_chest%2Fno4_navy_placement.png?alt=media&token=a40b57330f344462b03d87bb2858992c"
+        },
+        "no4_rsaf": {
+          "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fsaf_badges_chest%2Fno4_rsaf_placement.png?alt=media&token=270e2e24cf0c4e0793447af721a738d7"
+        }
       }
     },
     {
@@ -1248,12 +1424,26 @@
         "max_limit": "Maximum of two tabs may be worn on the left shoulder sleeve.",
         "first_tab_offset_cm": "1 cm below the left shoulder seam.",
         "stacking": "The second tab is immediately below the first tab.",
-        "alignment": "Tabs aligned to the crease of the sleeve."
+        "alignment": "Tabs aligned to the crease of the sleeve.",
+        "no4_army_placement": "No. 4: maximum of two tabs on the left sleeve, 1 cm below the left shoulder seam and centred to it; the second tab immediately below the first (SAF No.4 Dress PDF, Army Pictures C-5 to C-7).",
+        "no4_navy_placement": "No. 4: worn on the left sleeve as shown in SAF No.4 Dress PDF, Navy Picture C-5.",
+        "no4_dis_placement": "No. 4: maximum of two tabs on the left sleeve, worn centrally above the patch; when tabs are worn, only one sleeve badge. Keep the tabs at least 0.5 cm below the shoulder seam (SAF No.4 Dress PDF, DIS Pictures C-8, C-9)."
       },
       "render_logic": {
         "anchor": "left_shoulder_seam",
         "first_offset_y_cm": 1.0,
         "max_count": 2
+      },
+      "dress_images": {
+        "no4_army": {
+          "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fskill_tabs_sleeve%2Fno4_army_placement.png?alt=media&token=fa1a24d3d7724547bc81d3a19f9cf8b7"
+        },
+        "no4_dis": {
+          "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fskill_tabs_sleeve%2Fno4_dis_placement.png?alt=media&token=f83a199c452a483380cbdb6fd3fb6772"
+        },
+        "no4_navy": {
+          "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fskill_tabs_sleeve%2Fno4_navy_placement.png?alt=media&token=0ef0013736ee48fb9b32718c8e942f99"
+        }
       }
     },
     {
@@ -1268,13 +1458,31 @@
         "army_marksmanship_above_ippt_cm": 0.5,
         "two_badge_stack": "When two sleeve badges are worn (Marksmanship/Sniper/Fitness Specialist + IPPT), the upper badge is 0.5 cm above and centred to the IPPT badge.",
         "with_chevrons": "Where chevrons exist, the IPPT badge is worn centrally upon the lower portion of the chevrons.",
-        "exclusivity": "Only one type of Marksmanship badge may be worn. The Fitness Specialist badge supersedes all other Marksmanship badges."
+        "exclusivity": "Only one type of Marksmanship badge may be worn. The Fitness Specialist badge supersedes all other Marksmanship badges.",
+        "no4_army_placement": "No. 4: maximum of two badges on the left sleeve. Marksmanship or Sniper Marksmanship 1 cm below the left shoulder seam (only one type); IPPT badge centrally 0.5 cm below it. If space is short, move them down but keep at least 1 cm below the shoulder seam (SAF No.4 Dress PDF, Army Pictures C-4 to C-7).",
+        "no4_navy_placement": "No. 4: worn on the left sleeve as shown in SAF No.4 Dress PDF, Navy Pictures C-4 and C-5.",
+        "no4_rsaf_placement": "No. 4: proficiency badges are worn centrally 5 mm below the unit patch, which sits 20 mm below the shoulder seam (SAF No.4 Dress PDF, RSAF Picture C-4).",
+        "no4_dis_placement": "No. 4: maximum of two badges on the left sleeve, worn centrally about 0.4 cm below the patch. Only one type of marksmanship (SAF No.4 Dress PDF, DIS Pictures C-6, C-7)."
       },
       "render_logic": {
         "anchor": "left_sleeve_upper",
         "stack_gap_cm": 0.5,
         "chevron_anchor": "lower_chevron_block",
         "max_count": 2
+      },
+      "dress_images": {
+        "no4_army": {
+          "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fskill_badges_sleeve%2Fno4_army_placement.png?alt=media&token=325930529b864abc972184e52f40bce6"
+        },
+        "no4_dis": {
+          "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fskill_badges_sleeve%2Fno4_dis_placement.png?alt=media&token=a0024caaedba4a23ae557eb2611c3b7e"
+        },
+        "no4_navy": {
+          "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fskill_badges_sleeve%2Fno4_navy_placement.png?alt=media&token=3a1d2587b94244e5a3a375343ab6dceb"
+        },
+        "no4_rsaf": {
+          "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fskill_badges_sleeve%2Fno4_rsaf_placement.png?alt=media&token=5b28af008a574590a87b0751bcc1b97d"
+        }
       }
     },
     {
@@ -1290,7 +1498,9 @@
         "placement": "Foreign badges are worn according to the method of wearing of the awarding country except they are worn on the right side of the uniform.",
         "standard_offset_cm": "Centred to the name tag, 3 cm above the top edge of the right chest pocket or the base of the name tag.",
         "high_medal_rule": "When three or more rows of medal ribbons are worn, the base of the foreign badges is in line with the base of the SAF badges on the left.",
-        "approval": "Only foreign awards approved by MINDEF may be worn."
+        "approval": "Only foreign awards approved by MINDEF may be worn.",
+        "no4_placement": "No. 4: worn by the awarding country's method but on the right side. Maximum of three on the right chest; maximum of one tab and two badges on the right sleeve (SAF No.4 Dress PDF).",
+        "no4_navy_placement": "No. 4: worn by the awarding country's method but on the right side. Maximum of three on the right chest; maximum of two tabs and two badges on the right sleeve (SAF No.4 Dress PDF, Navy Pictures C-6 to C-8)."
       },
       "render_logic": {
         "anchor_men": "right_pocket_top",
@@ -1298,6 +1508,17 @@
         "standard_y_cm": 3.0,
         "max_chest_count": 3,
         "max_sleeve_tabs": 2
+      },
+      "dress_images": {
+        "no4_army": {
+          "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fforeign_badges%2Fno4_army_placement.png?alt=media&token=29cb66f917734e4da1aeba084f45b1b8"
+        },
+        "no4_dis": {
+          "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fforeign_badges%2Fno4_dis_placement.png?alt=media&token=1e7d2a2907764bfb92c245c9edd1ffab"
+        },
+        "no4_navy": {
+          "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fforeign_badges%2Fno4_navy_placement.png?alt=media&token=ac9f4233e8d2464097507faa732f22b3"
+        }
       }
     },
     {
@@ -1535,7 +1756,7 @@
       "branch_id": "rsaf",
       "category": "headdress_jockey_cap",
       "image_url": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Frsaf_jockey_cap%2Fimage.png?alt=media&token=a2313ed28b834fed94e0c8b7afaf3c3b",
-      "placement_diagram": "",
+      "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Frsaf_jockey_cap%2Fplacement.png?alt=media&token=eaf6495ffa3d45e890fd3e96b0ee37fb",
       "rules": {
         "applicability": "Alternative No. 4 headdress, worn by occasion/order instead of the beret (not rendered on the 3D model).",
         "doctrine_ref": "SAF No.4 Dress PDF RSAF Picture B-1"
@@ -1716,14 +1937,31 @@
       "id": "singapore_tag",
       "display_name": "SINGAPORE Tag",
       "category": "country_tag",
-      "image_url": "",
+      "image_url": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fsingapore_tag%2Fimage.png?alt=media&token=f8e3c772b8e34970a978a628c60d0d9c",
       "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fsingapore_tag%2Fplacement.png?alt=media&token=b71f3e4acbfa473298cd9cd5a3720e12",
       "rules": {
         "placement": "Worn above the left chest pocket, opposite the name tag (which sits above the right chest pocket).",
         "badges_above": "SAF chest badges are worn centred directly above the top edge of the Singapore tag / left chest pocket.",
         "doctrine_ref": "SAF No.4 Dress PDF Army Pictures C-1..C-3; DIS Pictures C-4..C-5"
       },
-      "render_logic": {}
+      "render_logic": {},
+      "dress_images": {
+        "no4_army": {
+          "image_url": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fsingapore_tag%2Fno4_army_image.png?alt=media&token=cd08cfbbc39e48b7888a00dd9ad69dd1"
+        },
+        "no4_dis": {
+          "image_url": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fsingapore_tag%2Fno4_dis_image.png?alt=media&token=8c108511e8d4405aab73fd022869c4ac",
+          "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fsingapore_tag%2Fno4_dis_placement.png?alt=media&token=f56596c1be2141a1a79fa03b5a175ae9"
+        },
+        "no4_navy": {
+          "image_url": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fsingapore_tag%2Fno4_navy_image.png?alt=media&token=5b9633ffbdc44ada891606c8ccbc65c8",
+          "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fsingapore_tag%2Fno4_navy_placement.png?alt=media&token=25dc97c40b874e86b394f930cdc969b4"
+        },
+        "no4_rsaf": {
+          "image_url": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fsingapore_tag%2Fno4_rsaf_image.png?alt=media&token=0de4386f410745979c917be6b2287684",
+          "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fsingapore_tag%2Fno4_rsaf_placement.png?alt=media&token=968d6010894d4b1d8841817d0c453c8a"
+        }
+      }
     },
     {
       "id": "navy_no4_inner_shirt_grey",
@@ -1759,7 +1997,7 @@
       "branch_id": "dis",
       "category": "inner_shirt",
       "image_url": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fdis_no4_inner_tshirt%2Fimage.png?alt=media&token=75cf06a693df46d6aa1f1caf1a90ed82",
-      "placement_diagram": "",
+      "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fdis_no4_inner_tshirt%2Fplacement.png?alt=media&token=41000fa956f7429a82fc1a972b79a21e",
       "rules": {
         "color": "grey",
         "applicability": "Worn under the DIS No. 4 shirt; 'DIS' printed on the back.",
@@ -1806,7 +2044,7 @@
       "display_name": "Combat Boots",
       "category": "footwear",
       "image_url": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fcombat_boots%2Fimage.png?alt=media&token=bd4a7a5adc5a468db689dc76c6c16818",
-      "placement_diagram": "",
+      "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fcombat_boots%2Fplacement.png?alt=media&token=2f8a2c5bae644c94be3d9c466fa77c24",
       "rules": {
         "standard": "Black leather combat boots, laced.",
         "doctrine_ref": "SAF No.4 Dress PDF Army B-9; Navy Footwear; RSAF B-12; DIS B-10"
@@ -1823,7 +2061,7 @@
       "display_name": "Safety Boots",
       "category": "footwear",
       "image_url": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fsafety_boots%2Fimage.png?alt=media&token=c2f0174a27af4d3081ccec0520a909b4",
-      "placement_diagram": "",
+      "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fsafety_boots%2Fplacement.png?alt=media&token=2af38c981ff94da4a318ebe1692933ac",
       "rules": {
         "standard": "Black high-cut safety boots, laced.",
         "doctrine_ref": "SAF No.4 Dress PDF RSAF B-11; DIS B-9"
@@ -1833,6 +2071,11 @@
         "offset_y_cm": 3.0,
         "mirror_left_right": true,
         "style": "boot_high"
+      },
+      "dress_images": {
+        "no4_dis": {
+          "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fsafety_boots%2Fno4_dis_placement.png?alt=media&token=1ae60e036979410bbea6ef0967fa8a70"
+        }
       }
     },
     {
@@ -1840,7 +2083,7 @@
       "display_name": "Mid-cut Safety Boots",
       "category": "footwear",
       "image_url": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fsafety_boots_mid_cut%2Fimage.png?alt=media&token=c54889783cb342f48f86f9fcfdbab24a",
-      "placement_diagram": "",
+      "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fsafety_boots_mid_cut%2Fplacement.png?alt=media&token=5bfa6a8a74cb46b09a13eb8b8abe9a45",
       "rules": {
         "standard": "Black mid-cut safety boots.",
         "doctrine_ref": "SAF No.4 Dress PDF Navy Footwear"
@@ -1873,7 +2116,7 @@
       "display_name": "Green Socks",
       "category": "socks",
       "image_url": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fgreen_socks%2Fimage.png?alt=media&token=a12a1fc3d82e4c8db109e608923680d6",
-      "placement_diagram": "",
+      "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fgreen_socks%2Fplacement.png?alt=media&token=91d4ba6f44c441139f4cb90909ef895d",
       "rules": {
         "standard": "Plain olive-green socks (Army No. 4 alternative to black socks).",
         "doctrine_ref": "SAF No.4 Dress PDF Army Picture B-10"
@@ -1889,7 +2132,7 @@
       "display_name": "RSAF Vocation Badge (Collar)",
       "branch_id": "rsaf",
       "category": "vocation_badge",
-      "image_url": "",
+      "image_url": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Frsaf_vocation_badge%2Fimage.png?alt=media&token=7b3760dcf6c2444192e8534b30785fda",
       "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Frsaf_vocation_badge%2Fplacement.png?alt=media&token=83bbc6d06a674d0cb17be2c310b9b4b4",
       "rules": {
         "placement": "Sewn centrally on the collar, 10 mm from the collar edge.",
@@ -1906,7 +2149,7 @@
       "display_name": "RSAF Unit / Air Force Patch (Sleeve)",
       "branch_id": "rsaf",
       "category": "sleeve_patch",
-      "image_url": "",
+      "image_url": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Frsaf_unit_patch%2Fimage.png?alt=media&token=449d88e37c694030b744c589fc98ab67",
       "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Frsaf_unit_patch%2Fplacement.png?alt=media&token=bb0f76558eeb4722b892b9c58e26c48a",
       "rules": {
         "placement": "Worn on the upper sleeves, top edge 20 mm below the shoulder seam. Proficiency badges are worn centrally 5 mm below the patch.",
@@ -1924,7 +2167,7 @@
       "display_name": "DIS Service / Command Patch (Right Sleeve)",
       "branch_id": "dis",
       "category": "sleeve_patch",
-      "image_url": "",
+      "image_url": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fdis_service_patch%2Fimage.png?alt=media&token=a009851bd91446df985145a11c749b75",
       "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fdis_service_patch%2Fplacement.png?alt=media&token=15768453dc0147acac0384e955cba710",
       "rules": {
         "placement": "Right upper sleeve carries the patch of the higher echelon (Service Patch for Command HQ; Command Patch for Formation / Group). Must always be worn.",
@@ -1940,7 +2183,7 @@
       "display_name": "DIS Command / Formation / Group Patch (Left Sleeve)",
       "branch_id": "dis",
       "category": "sleeve_patch",
-      "image_url": "",
+      "image_url": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fdis_formation_patch%2Fimage.png?alt=media&token=de76b25f24fb4ece9d5458eafe8fe541",
       "placement_diagram": "https://firebasestorage.googleapis.com/v0/b/saf-uniforms.firebasestorage.app/o/accessories%2Fdis_formation_patch%2Fplacement.png?alt=media&token=c3b8b3610f8d4d1ea7fc8006b9090588",
       "rules": {
         "placement": "Left upper sleeve carries the Command (Command HQ) or Formation / Group patch; may be left empty where applicable. Left and right patches must be aligned as a pair.",

@@ -18,11 +18,31 @@ class AccessoryFirestore {
       placementDiagramUrl: (data['placement_diagram'] as String?) ?? '',
       rules: _decodeMap(data['rules']),
       renderLogic: _decodeMap(data['render_logic']),
+      dressImages: _decodeDressImages(data['dress_images']),
       branchId: data['branch_id'] as String?,
       category: data['category'] as String?,
       gender: data['gender'] as String?,
       version: (data['version'] as num?)?.toInt() ?? 1,
     );
+  }
+
+  /// `{variant: {image_url, placement_diagram}}`; non-string values and
+  /// malformed variants are dropped rather than failing the whole doc.
+  static Map<String, Map<String, String>> _decodeDressImages(Object? raw) {
+    if (raw is! Map) return const <String, Map<String, String>>{};
+    final out = <String, Map<String, String>>{};
+    raw.forEach((key, value) {
+      if (key is! String || value is! Map) return;
+      final urls = <String, String>{
+        for (final e in value.entries)
+          if (e.key is String &&
+              e.value is String &&
+              (e.value as String).isNotEmpty)
+            e.key as String: e.value as String,
+      };
+      if (urls.isNotEmpty) out[key] = urls;
+    });
+    return out;
   }
 
   static Map<String, dynamic> _decodeMap(Object? raw) {

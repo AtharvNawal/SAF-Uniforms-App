@@ -30,6 +30,12 @@ cv-service/models/*
 !cv-service/models/segmentation_v2/weights/
 !cv-service/models/segmentation_v2/weights/best.pt
 !cv-service/models/segmentation_v2/training_complete.json
+# segmentation_v3 (RSAF No.4 classes) — default only once promoted.json exists.
+!cv-service/models/segmentation_v3/
+!cv-service/models/segmentation_v3/weights/
+!cv-service/models/segmentation_v3/weights/best.pt
+!cv-service/models/segmentation_v3/training_complete.json
+!cv-service/models/segmentation_v3/promoted.json
 # Pretrained weights: ship the exact files the test suite ran against
 # instead of re-downloading at build time.
 !cv-service/models/*.pt

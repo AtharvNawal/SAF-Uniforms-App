@@ -1,4 +1,5 @@
-import 'package:cached_network_image/cached_network_image.dart';
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 
 import '../../../../core/design/app_colors.dart';
@@ -10,7 +11,12 @@ import '../../../../core/design/widgets/app_bottom_sheet.dart';
 import '../../../../core/l10n/l10n_extensions.dart';
 import '../../../../core/theme/branch_theme_extension.dart';
 import '../../../profile/domain/entities/accessory.dart';
+import '../../../profile/domain/entities/branch_id.dart';
+import '../../../profile/domain/entities/dress_code.dart';
+import '../../../profile/domain/entities/gender.dart';
+import '../../domain/services/accessory_presentation.dart';
 import '../models/accessory_item.dart';
+import 'accessory_remote_image.dart';
 
 Future<void> showAccessoryDetailSheet({
   required BuildContext context,
@@ -34,12 +40,34 @@ Future<void> showAccessoryDetailSheet({
 /// Variant of [showAccessoryDetailSheet] that takes a live [Accessory]
 /// (sourced from the Firestore-backed accessory_library). Visually
 /// identical — only the data binding changes.
+///
+/// [dress] is the dress the item is being viewed for (null in the
+/// cross-dress "All Accessories" list). With it, the sheet shows that
+/// dress's pictures (e.g. the No.4 name tape on No.4 camo, per [branch])
+/// and its doctrine text instead of the shared No.3 ones.
 Future<void> showAccessoryDetailSheetForAccessory({
   required BuildContext context,
   required Accessory accessory,
   required VoidCallback onMarkVerified,
+  required Gender gender,
+  DressCode? dress,
+  BranchId? branch,
 }) {
-  final view = _accessoryView(accessory, context);
+  final view = _accessoryView(
+    accessory,
+    gender: gender,
+    dress: dress,
+    branch: branch,
+  );
+  final images = accessoryImagesFor(accessory, dress: dress, branch: branch);
+  log(
+    'open: id=${accessory.id} dress=${dress?.wireName} '
+    'branch=${branch?.wireName} '
+    'dressImage=${images.imageUrl != accessory.imageUrl} '
+    'dressPlacement=${images.placementDiagramUrl != accessory.placementDiagramUrl}',
+    name: 'checklist.detail_sheet',
+    level: 500,
+  );
   return _showSheet(
     context: context,
     title: view.title,
@@ -48,8 +76,8 @@ Future<void> showAccessoryDetailSheetForAccessory({
     mono: view.mono,
     icon: view.icon,
     zoneKey: view.zoneKey,
-    imageUrl: accessory.imageUrl,
-    placementDiagramUrl: accessory.placementDiagramUrl,
+    imageUrl: images.imageUrl,
+    placementDiagramUrl: images.placementDiagramUrl,
     onMarkVerified: onMarkVerified,
   );
 }
@@ -83,7 +111,7 @@ Future<void> _showSheet({
           ),
           const SizedBox(height: 14),
           if (imageUrl.isNotEmpty) ...[
-            _RemoteAccessoryImage(
+            AccessoryRemoteImage(
               url: imageUrl,
               caption: 'ACCESSORY',
               icon: icon,
@@ -92,7 +120,7 @@ Future<void> _showSheet({
             const SizedBox(height: 12),
           ],
           if (placementDiagramUrl.isNotEmpty) ...[
-            _RemoteAccessoryImage(
+            AccessoryRemoteImage(
               url: placementDiagramUrl,
               caption: 'PLACEMENT',
               icon: icon,
@@ -162,12 +190,20 @@ class _AccessoryView {
   final String zoneKey;
 }
 
-_AccessoryView _accessoryView(Accessory a, BuildContext context) {
+_AccessoryView _accessoryView(
+  Accessory a, {
+  required Gender gender,
+  DressCode? dress,
+  BranchId? branch,
+}) {
   final category = a.category;
-  final placement = a.rules['placement_text'];
-  final body = placement is String && placement.isNotEmpty
-      ? placement
-      : 'Refer to branch doctrine for exact placement of this accessory.';
+  final body = accessoryDoctrineText(
+        a,
+        gender: gender,
+        dress: dress,
+        branch: branch,
+      ) ??
+      'Refer to branch doctrine for exact placement of this accessory.';
   final eyebrow = (category ?? 'accessory')
       .replaceAll('_', ' ')
       .toUpperCase();
@@ -179,73 +215,6 @@ _AccessoryView _accessoryView(Accessory a, BuildContext context) {
     icon: iconForAccessoryCategory(category),
     zoneKey: zoneForCategory(category),
   );
-}
-
-/// Renders a Firebase-Storage-hosted accessory image with a small
-/// caption chip. Keeps the icon as both the loading placeholder and the
-/// error fallback so the slot never goes blank, even on cold open or
-/// network hiccup.
-class _RemoteAccessoryImage extends StatelessWidget {
-  const _RemoteAccessoryImage({
-    required this.url,
-    required this.caption,
-    required this.icon,
-    required this.accent,
-  });
-  final String url;
-  final String caption;
-  final IconData icon;
-  final Color accent;
-
-  @override
-  Widget build(BuildContext context) {
-    return AspectRatio(
-      aspectRatio: 5 / 3,
-      child: Stack(
-        children: [
-          Positioned.fill(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.04),
-                  border: Border.all(color: AppColors.line, width: 1),
-                  borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-                ),
-                child: CachedNetworkImage(
-                  imageUrl: url,
-                  fit: BoxFit.contain,
-                  placeholder: (_, _) => Center(
-                    child: Icon(
-                      icon,
-                      size: 28,
-                      color: Colors.white.withValues(alpha: 0.35),
-                    ),
-                  ),
-                  errorWidget: (_, _, _) => Center(
-                    child: Icon(
-                      icon,
-                      size: 28,
-                      color: Colors.white.withValues(alpha: 0.35),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-            top: 8,
-            left: 8,
-            child: AppChip(
-              label: caption,
-              accent: true,
-              accentColor: accent,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 IconData iconForAccessoryCategory(String? category) {

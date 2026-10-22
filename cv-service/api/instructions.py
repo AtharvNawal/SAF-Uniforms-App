@@ -79,6 +79,9 @@ def instruction_for(verdict: VerdictResult) -> str:
         return f"{name}: not in the photo — retake with your whole body in frame."
     if kind == "camera":
         return f"{name}: couldn't measure from this photo's angle — retake standing square-on to the camera."
+    if kind == "unconfirmed":
+        return (f"{name}: couldn't confirm it's there — make sure it's on and clearly visible, "
+                f"then retake, or check it yourself.")
     if kind == "boundary":
         offset = _offset_cm(verdict)
         if offset is None:

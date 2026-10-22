@@ -1,0 +1,238 @@
+{
+  "source_glb": "assets/3d/bodies/rsaf_no4_male.glb",
+  "reference_height_m": 1.7448,
+  "coordinate_frame": {
+    "units": "meters",
+    "origin": "feet at y=0, x/z centered on the body's vertical symmetry axis",
+    "up_axis": "y",
+    "forward_axis": "+z (body-front)",
+    "side_convention": "anatomical \u2014 left_* is the wearer's left (+x); matches MediaPipe landmark naming"
+  },
+  "measured_by": "cv-service/utils/extract_figure_anchors.py (from named parts, not compose sockets)",
+  "anchors": {
+    "head_top": {
+      "x": 0.0,
+      "y": 1.7846,
+      "z": 0.0,
+      "source": "top of the beret (= what the headwear-mask refinement measures)"
+    },
+    "cap_band_front": {
+      "x": 0.0385,
+      "y": 1.7016,
+      "z": 0.108,
+      "source": "modelled cap badge centre, front face"
+    },
+    "right_collar_tip": {
+      "x": -0.0626,
+      "y": 1.4573,
+      "z": 0.1152,
+      "source": "collar_point_left: lowest point, front"
+    },
+    "right_chest_pocket": {
+      "x": -0.0886,
+      "y": 1.338,
+      "z": 0.1591,
+      "source": "chest_pocket_flap_left: top edge centre"
+    },
+    "right_shoulder_seam": {
+      "x": -0.2117,
+      "y": 1.3903,
+      "z": 0.0,
+      "source": "shoulder joint x; y = shoulder_patch_left top + 20 mm (doctrine)"
+    },
+    "right_sleeve_upper": {
+      "x": -0.2958,
+      "y": 1.3414,
+      "z": 0.0064,
+      "source": "shoulder_patch_left: outer face centre"
+    },
+    "right_ankle": {
+      "x": -0.0832,
+      "y": 0.2626,
+      "z": 0.0,
+      "source": "boot_collar_left: top of the boot (= footwear-mask refinement)"
+    },
+    "right_foot_top": {
+      "x": -0.0832,
+      "y": 0.05,
+      "z": 0.1,
+      "source": "boot_collar_left centre x, instep"
+    },
+    "left_collar_tip": {
+      "x": 0.0626,
+      "y": 1.4573,
+      "z": 0.1152,
+      "source": "collar_point_right: lowest point, front"
+    },
+    "left_chest_pocket": {
+      "x": 0.0886,
+      "y": 1.338,
+      "z": 0.1591,
+      "source": "chest_pocket_flap_right: top edge centre"
+    },
+    "left_shoulder_seam": {
+      "x": 0.2117,
+      "y": 1.3903,
+      "z": 0.0,
+      "source": "shoulder joint x; y = shoulder_patch_right top + 20 mm (doctrine)"
+    },
+    "left_sleeve_upper": {
+      "x": 0.2958,
+      "y": 1.3414,
+      "z": 0.0064,
+      "source": "shoulder_patch_right: outer face centre"
+    },
+    "left_ankle": {
+      "x": 0.0832,
+      "y": 0.2626,
+      "z": 0.0,
+      "source": "boot_collar_right: top of the boot (= footwear-mask refinement)"
+    },
+    "left_foot_top": {
+      "x": 0.0832,
+      "y": 0.05,
+      "z": 0.1,
+      "source": "boot_collar_right centre x, instep"
+    },
+    "belt_center": {
+      "x": 0.0,
+      "y": 0.9362,
+      "z": 0.1404,
+      "source": "untucked shirt hem, front centre (= shirt/trousers-boundary refinement)"
+    },
+    "chest_center": {
+      "x": 0.0,
+      "y": 1.338,
+      "z": 0.1591,
+      "source": "derived: midpoint(left_chest_pocket, right_chest_pocket), x forced to symmetry plane"
+    }
+  },
+  "items": {
+    "beret": {
+      "center": [
+        -0.0214,
+        1.7173,
+        -0.0043
+      ],
+      "top_y": 1.7846,
+      "bottom_y": 1.6501,
+      "size_cm": [
+        28.0,
+        13.4,
+        25.9
+      ]
+    },
+    "beret_badge": {
+      "center": [
+        0.0385,
+        1.7016,
+        0.0971
+      ],
+      "top_y": 1.7191,
+      "bottom_y": 1.684,
+      "size_cm": [
+        3.3,
+        3.5,
+        2.2
+      ]
+    },
+    "rank_tab_assembly": {
+      "center": [
+        0.0,
+        1.2618,
+        0.1527
+      ],
+      "top_y": 1.2875,
+      "bottom_y": 1.236,
+      "size_cm": [
+        3.2,
+        5.2,
+        0.8
+      ]
+    },
+    "name_tape": {
+      "center": [
+        -0.0886,
+        1.3555,
+        0.1391
+      ],
+      "top_y": 1.3653,
+      "bottom_y": 1.3457,
+      "size_cm": [
+        9.0,
+        2.0,
+        2.9
+      ]
+    },
+    "country_tape": {
+      "center": [
+        0.0886,
+        1.3555,
+        0.1391
+      ],
+      "top_y": 1.3653,
+      "bottom_y": 1.3457,
+      "size_cm": [
+        9.0,
+        2.0,
+        2.9
+      ]
+    },
+    "shoulder_patch_left": {
+      "center": [
+        -0.2912,
+        1.3414,
+        0.0064
+      ],
+      "top_y": 1.3703,
+      "bottom_y": 1.3126,
+      "size_cm": [
+        0.9,
+        5.8,
+        5.9
+      ]
+    },
+    "shoulder_patch_right": {
+      "center": [
+        0.2912,
+        1.3414,
+        0.0064
+      ],
+      "top_y": 1.3703,
+      "bottom_y": 1.3126,
+      "size_cm": [
+        0.9,
+        5.8,
+        5.9
+      ]
+    },
+    "wing_badge_assembly": {
+      "center": [
+        0.0886,
+        1.3843,
+        0.1382
+      ],
+      "top_y": 1.3956,
+      "bottom_y": 1.373,
+      "size_cm": [
+        5.9,
+        2.3,
+        2.3
+      ]
+    },
+    "boots": {
+      "center": [
+        0.0,
+        0.1313,
+        0.0424
+      ],
+      "top_y": 0.2626,
+      "bottom_y": -0.0,
+      "size_cm": [
+        33.5,
+        26.3,
+        28.0
+      ]
+    }
+  }
+}

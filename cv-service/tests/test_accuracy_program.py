@@ -112,6 +112,29 @@ def test_mapped_class_missing_from_loaded_model_is_unverifiable_not_missing():
     assert verdict.failure_kind == "no_detector"
 
 
+def _beret_rule():
+    crop = CropBox("head_top", (200.0, 60.0), 140, 0, 260, 120, px_per_cm=5.0)
+    return ResolvedRule("rsaf_beret", "headdress_beret", "ref", True, [crop], None, None, "", {"tolerance_cm": None})
+
+
+def test_zero_shot_only_headwear_is_unconfirmed_not_pass():
+    # RSAF benchmark scene_0016: no beret, the trained model saw nothing,
+    # YOLO-World called the hair "beret" at 0.72 -> must not be a pass.
+    region = SegmentedRegion("headwear", 0.72, _rect(170, 40, 230, 90), (170, 40, 230, 90), source="zero_shot")
+    [verdict] = evaluate_verdicts([_beret_rule()], SegmentationResult([region], W, H), cm_per_px=0.2,
+                                  image_width=W, image_height=H)
+    assert verdict.status == "unverifiable"
+    assert verdict.failure_kind == "unconfirmed"
+    assert "confirm" in instruction_for(verdict)
+
+
+def test_trained_headwear_still_passes():
+    region = SegmentedRegion("headwear", 0.9, _rect(170, 40, 230, 90), (170, 40, 230, 90))
+    [verdict] = evaluate_verdicts([_beret_rule()], SegmentationResult([region], W, H), cm_per_px=0.2,
+                                  image_width=W, image_height=H)
+    assert verdict.status == "pass"
+
+
 # --- B10 colour --------------------------------------------------------------
 
 def _image_with(shirt_value: int, item_value: int, item_saturation: int = 0):

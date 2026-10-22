@@ -183,6 +183,9 @@ class DressAccessoriesScreen extends ConsumerWidget {
                                                   showAccessoryDetailSheetForAccessory(
                                                 context: context,
                                                 accessory: a,
+                                                gender: profile.gender,
+                                                dress: DressCode.fromRequirementDocId(dressId),
+                                                branch: profile.branch,
                                                 onMarkVerified: () {
                                                   ref
                                                       .read(
@@ -223,6 +226,9 @@ class DressAccessoriesScreen extends ConsumerWidget {
                                                   showAccessoryDetailSheetForAccessory(
                                                 context: context,
                                                 accessory: a,
+                                                gender: profile.gender,
+                                                dress: DressCode.fromRequirementDocId(dressId),
+                                                branch: profile.branch,
                                                 onMarkVerified: () {
                                                   ref
                                                       .read(

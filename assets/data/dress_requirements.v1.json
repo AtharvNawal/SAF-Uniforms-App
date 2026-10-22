@@ -533,7 +533,23 @@
               "patent_shoes_low_cut"
             ],
             "ladies": "court_shoes"
-          }
+          },
+          "epaulettes": {
+            "standard": "epaulettes_standard",
+            "cadet_trainee": "epaulettes_officer_cadet_me_trainee"
+          },
+          "ladies_rank": {
+            "collar_pins": "collar_rank_pins",
+            "gorgette_officer_cadet": "gorgette_lady_officer_cadet",
+            "gorgette_me_trainee": "gorgette_lady_me_trainee"
+          },
+          "additional_optional": [
+            "medal_ribbons",
+            "saf_badges_chest",
+            "skill_tabs_sleeve",
+            "skill_badges_sleeve",
+            "foreign_badges"
+          ]
         },
         "navy": {
           "headdress": {
@@ -575,7 +591,23 @@
               "patent_shoes_low_cut"
             ],
             "ladies": "court_shoes"
-          }
+          },
+          "epaulettes": {
+            "standard": "epaulettes_standard",
+            "cadet_trainee": "epaulettes_officer_cadet_me_trainee"
+          },
+          "ladies_rank": {
+            "collar_pins": "collar_rank_pins",
+            "gorgette_officer_cadet": "gorgette_lady_officer_cadet",
+            "gorgette_me_trainee": "gorgette_lady_me_trainee"
+          },
+          "additional_optional": [
+            "medal_ribbons",
+            "saf_badges_chest",
+            "skill_tabs_sleeve",
+            "skill_badges_sleeve",
+            "foreign_badges"
+          ]
         },
         "rsaf": {
           "headdress": {
@@ -619,7 +651,23 @@
               "patent_shoes_low_cut"
             ],
             "ladies": "court_shoes"
-          }
+          },
+          "epaulettes": {
+            "standard": "epaulettes_standard",
+            "cadet_trainee": "epaulettes_officer_cadet_me_trainee"
+          },
+          "ladies_rank": {
+            "collar_pins": "collar_rank_pins",
+            "gorgette_officer_cadet": "gorgette_lady_officer_cadet",
+            "gorgette_me_trainee": "gorgette_lady_me_trainee"
+          },
+          "additional_optional": [
+            "medal_ribbons",
+            "saf_badges_chest",
+            "skill_tabs_sleeve",
+            "skill_badges_sleeve",
+            "foreign_badges"
+          ]
         },
         "dis": {
           "headdress": {
@@ -665,7 +713,18 @@
               "patent_shoes_low_cut"
             ],
             "ladies": "court_shoes"
-          }
+          },
+          "ladies_rank": {
+            "collar_pins": "collar_rank_pins",
+            "gorgette_me_trainee": "gorgette_lady_me_trainee"
+          },
+          "additional_optional": [
+            "medal_ribbons",
+            "saf_badges_chest",
+            "skill_tabs_sleeve",
+            "skill_badges_sleeve",
+            "foreign_badges"
+          ]
         }
       }
     },
@@ -718,7 +777,7 @@
         },
         {
           "category": "Footwear",
-          "logic": "Army combat boots; Navy mid-cut safety boots; RSAF and DIS safety boots. Doctrine alternatives (Navy low-cut safety shoes / combat boots; RSAF and DIS combat boots) are optional."
+          "logic": "Combat boots are compulsory for every service (product decision, 2026-10-19). Safety boots are optional: Navy mid-cut safety boots / low-cut safety shoes; RSAF and DIS safety boots."
         }
       ],
       "optional_logic": {
@@ -820,14 +879,14 @@
           "name_tag": "name_tag_standard",
           "belt": "no4_belt_black",
           "socks": "black_socks",
-          "footwear": "safety_boots_mid_cut",
+          "footwear": "combat_boots",
           "additional_mandatory": [
             "singapore_tag",
             "navy_no4_inner_shirt_grey"
           ],
           "additional_optional": [
+            "safety_boots_mid_cut",
             "safety_shoes_low_cut",
-            "combat_boots",
             "saf_badges_chest",
             "skill_tabs_sleeve",
             "skill_badges_sleeve",
@@ -867,14 +926,14 @@
           "vocation_badge": "rsaf_vocation_badge",
           "belt": "no4_belt_black",
           "socks": "black_socks",
-          "footwear": "safety_boots",
+          "footwear": "combat_boots",
           "additional_mandatory": [
             "singapore_tag",
             "rsaf_no4_inner_tshirt",
             "rsaf_unit_patch"
           ],
           "additional_optional": [
-            "combat_boots",
+            "safety_boots",
             "saf_badges_chest",
             "skill_tabs_sleeve",
             "skill_badges_sleeve",
@@ -903,14 +962,14 @@
           "vocation_badge": "dis_vocation_badge",
           "belt": "no4_belt_black",
           "socks": "black_socks",
-          "footwear": "safety_boots",
+          "footwear": "combat_boots",
           "additional_mandatory": [
             "singapore_tag",
             "dis_no4_inner_tshirt",
             "dis_service_patch"
           ],
           "additional_optional": [
-            "combat_boots",
+            "safety_boots",
             "dis_formation_patch",
             "saf_badges_chest",
             "skill_tabs_sleeve",

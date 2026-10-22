@@ -27,7 +27,7 @@
     },
     "footwear": {
       "node": "boots",
-      "accessory": "safety_boots"
+      "accessory": "combat_boots"
     },
     "socks": {
       "node": "boots",

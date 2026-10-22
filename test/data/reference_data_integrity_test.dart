@@ -47,6 +47,7 @@ const _idKeys = {
   'rank_insignia_sleeve',
   'rank_epaulette',
   'epaulettes',
+  'ladies_rank',
   'name_tag',
   'name_tag_protocol',
   'lanyard',
@@ -198,16 +199,29 @@ void main() {
 
     test('Navy / RSAF / DIS: black belt + inner shirt; DIS service patch', () {
       expect(_resolve(DressCode.no4, branch: BranchId.navy, mandatoryOnly: true),
-          containsAll(['no4_belt_black', 'navy_no4_inner_shirt_grey',
-              'safety_boots_mid_cut']));
-      expect(_resolve(DressCode.no4, branch: BranchId.navy),
-          containsAll(['safety_shoes_low_cut', 'combat_boots']));
+          containsAll(['no4_belt_black', 'navy_no4_inner_shirt_grey']));
       expect(_resolve(DressCode.no4, branch: BranchId.rsaf, mandatoryOnly: true),
           containsAll(['no4_belt_black', 'rsaf_no4_inner_tshirt',
-              'rsaf_unit_patch', 'safety_boots']));
+              'rsaf_unit_patch']));
       expect(_resolve(DressCode.no4, branch: BranchId.dis, mandatoryOnly: true),
           containsAll(['no4_belt_black', 'dis_no4_inner_tshirt',
               'dis_service_patch']));
+    });
+
+    test('combat boots compulsory, safety boots optional (all services)', () {
+      for (final b in BranchId.values) {
+        final mandatory = _resolve(DressCode.no4, branch: b, mandatoryOnly: true);
+        expect(mandatory, contains('combat_boots'), reason: b.wireName);
+        expect(mandatory, isNot(contains('safety_boots')), reason: b.wireName);
+        expect(mandatory, isNot(contains('safety_boots_mid_cut')),
+            reason: b.wireName);
+      }
+      expect(_resolve(DressCode.no4, branch: BranchId.navy),
+          containsAll(['safety_boots_mid_cut', 'safety_shoes_low_cut']));
+      expect(_resolve(DressCode.no4, branch: BranchId.rsaf),
+          contains('safety_boots'));
+      expect(_resolve(DressCode.no4, branch: BranchId.dis),
+          contains('safety_boots'));
     });
   });
 

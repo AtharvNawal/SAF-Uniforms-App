@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -83,7 +84,19 @@ class _GeneratingScreenState extends ConsumerState<GeneratingScreen> {
     _startTimer();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      ref.read(modelGenerationControllerProvider.notifier).generate(widget.dress);
+      // Building a dress makes it the active one, so GhostScreen and the AR
+      // Scanner (both read profile.dressCode) show / scan this dress.
+      final current = ref.read(uniformProfileProvider).dressCode;
+      if (current != widget.dress) {
+        log(
+          'active dress ${current.wireName} -> ${widget.dress.wireName}',
+          name: 'dashboard.generating',
+        );
+        ref.read(uniformProfileProvider.notifier).setDressCode(widget.dress);
+      }
+      ref
+          .read(modelGenerationControllerProvider.notifier)
+          .generate(widget.dress);
       _startTimeout();
     });
   }
@@ -157,10 +170,7 @@ class _GeneratingScreenState extends ConsumerState<GeneratingScreen> {
                 ),
                 Expanded(
                   child: _hasFailed
-                      ? _ErrorState(
-                          accent: branchTheme.bright,
-                          onRetry: _retry,
-                        )
+                      ? _ErrorState(accent: branchTheme.bright, onRetry: _retry)
                       : Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -278,8 +288,9 @@ class _Ring extends StatelessWidget {
             child: CircularProgressIndicator(
               value: 1,
               strokeWidth: 3,
-              valueColor:
-                  AlwaysStoppedAnimation(Colors.white.withValues(alpha: 0.08)),
+              valueColor: AlwaysStoppedAnimation(
+                Colors.white.withValues(alpha: 0.08),
+              ),
             ),
           ),
           SizedBox.expand(
@@ -299,25 +310,27 @@ class _Ring extends StatelessWidget {
             alignment: Alignment.center,
             child: RichText(
               textAlign: TextAlign.center,
-              text: TextSpan(children: [
-                TextSpan(
-                  text: '${(progress * 100).floor()}',
-                  style: AppTextStyles.mono(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.ink,
-                    letterSpacing: 0,
+              text: TextSpan(
+                children: [
+                  TextSpan(
+                    text: '${(progress * 100).floor()}',
+                    style: AppTextStyles.mono(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.ink,
+                      letterSpacing: 0,
+                    ),
                   ),
-                ),
-                TextSpan(
-                  text: '%',
-                  style: AppTextStyles.mono(
-                    fontSize: 12,
-                    color: AppColors.inkSubtle,
-                    letterSpacing: 0,
+                  TextSpan(
+                    text: '%',
+                    style: AppTextStyles.mono(
+                      fontSize: 12,
+                      color: AppColors.inkSubtle,
+                      letterSpacing: 0,
+                    ),
                   ),
-                ),
-              ]),
+                ],
+              ),
             ),
           ),
         ],

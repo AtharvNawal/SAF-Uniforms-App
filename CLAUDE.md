@@ -171,9 +171,9 @@ SAF-Uniforms/
 ├── test/                  # Mirrors lib/ structure
 ├── tool/                  # Operator-only entry points (not in app build graph)
 │   ├── seed_firestore.dart            # Pure-Dart Firebase Admin SDK seeder; bypasses Firestore rules. Run via `dart run tool/seed_firestore.dart <service-account.json>` to push the four reference collections. The `--upload-images` flag exists but is unreliable — use `tool/upload_accessory_images.py` for image uploads (see §5.5).
-│   ├── upload_accessory_images.py     # Python uploader for `assets/accessories/<id>/{image,placement}.png` → Firebase Storage. Replaces the broken Dart upload path. Idempotent via per-object SHA-256 metadata. Run with `GOOGLE_APPLICATION_CREDENTIALS=<svc>.json python3 tool/upload_accessory_images.py --bucket saf-uniforms.firebasestorage.app`.
+│   ├── upload_accessory_images.py     # Python uploader for `assets/accessories/<id>/{image,placement}.png` → Firebase Storage. Replaces the broken Dart upload path. Idempotent via per-object SHA-256 metadata. Also uploads `<variant>_{image,placement}.png` files (same Storage folder, flat names — fits the existing rule) and records them in the entry's `dress_images[<variant>]`. Run with `GOOGLE_APPLICATION_CREDENTIALS=<svc>.json python3 tool/upload_accessory_images.py --bucket saf-uniforms.firebasestorage.app`.
 │   ├── extract_pdf_accessories.py     # One-shot Python tool: crops per-accessory PNGs out of the rendered SAF No.3 Dress PDF and writes them to `assets/accessories/<id>/{image,placement}.png`. Re-run when the doctrine PDF changes; details in `assets/accessories/README.md`.
-│   ├── extract_pdf_accessories_no4.py # No.4 sibling of the above: renders exact clip rectangles (PDF points) out of the SAF No.4 Dress PDF with PyMuPDF (`.venv-tools/bin/pip install pymupdf`; no `pdftoppm` needed) and writes `assets/accessories/<id>/{image,placement}.png` for the No.4-only ids. Shared No.3 items keep their No.3 imagery. Run via `.venv-tools/bin/python tool/extract_pdf_accessories_no4.py <SAF_No_4_Dress.pdf>`.
+│   ├── extract_pdf_accessories_no4.py # No.4 sibling of the above: renders exact clip rectangles (PDF points) out of the SAF No.4 Dress PDF with PyMuPDF (`.venv-tools/bin/pip install pymupdf`; no `pdftoppm` needed) and writes `assets/accessories/<id>/{image,placement}.png` for the No.4-only ids. Shared No.3 items keep their No.3 pair; their No.4 pictures (per service where the PDF has them — name tape, Singapore tag, chest / sleeve / foreign badge layouts, berets, turbans) go to `<id>/<variant>_{image,placement}.png`, variant `no4` or `no4_<branch>` (`MANIFEST_NO4_VARIANTS`; also feet / head / neckline crops of the full-uniform figures as placement for boots, socks, RSAF jockey cap, DIS inner T-shirt). Run via `.venv-tools/bin/python tool/extract_pdf_accessories_no4.py <SAF_No_4_Dress.pdf>`.
 │   ├── generate_placeholder_bodies.py # Python (trimesh + Pillow) generator for stand-in humanoid GLBs. Outputs `assets/3d/bodies/{male,female,female_maternity}_apose.glb` + `assets/3d/placeholder.glb`. Composes primitives (head sphere, torso box, arms, legs, beret, name-tag patch, medal ribbons) per variant, plus a textured `name_tag` mesh with a `name_tag_mat` material (1024×256 white base-color texture — Phase-2 bake target) and 11 named socket markers (`head_top`, `cap_band_front`, `left/right_collar_tip`, `left/right_chest_pocket`, `left/right_shoulder_seam`, `left/right_sleeve_upper`, `belt_center`) that the merger looks up by name. Visibly humanoid but explicitly NOT production. Run via `python3 -m venv .venv-tools && .venv-tools/bin/pip install trimesh numpy Pillow && .venv-tools/bin/python tool/generate_placeholder_bodies.py`. Replace with real MakeHuman exports per `docs/3d-body-authoring.md` when ready.
 │   ├── generate_placeholder_accessories.py # Python (trimesh) generator for procedural accessory GLBs. Reads `assets/data/accessory_library.v1.json`, dispatches each non-legacy entry to a per-category builder (beret = truncated cone, sikh turban = ovoid, cap badge = flat oval gold, sleeve insignia = chevron stripes, epaulette = slab, lanyard = cord + loop, etc.), writes `assets/3d/accessories/{id}.glb` centred on origin. The merger applies the per-anchor offset translation when re-parenting under a body socket. Each placeholder is visibly distinct + branch-coloured but obviously not production. Output: 55 GLBs covering headdress / cap badges / cap embellishments / sleeve insignia / epaulettes / lanyards / arms badges / vocation badges. Also builds belt / socks / footwear (No.4 boots get a shaft via `render_logic.style: boot_high|boot_mid`), `rank_epaulette_chest` and `sleeve_patch`. Skips out-of-scope categories (gorgettes, medal_ribbons, etc.). Run via `.venv-tools/bin/python tool/generate_placeholder_accessories.py --only-missing` — **always pass `--only-missing`**: without it the script overwrites every GLB, including the hand-tuned / artist files (`army_beret`, `nylon_belt`, `leather_shoes_low_cut`, …).
 │   ├── inject_accessory.py            # Python tool that takes a raw artist-authored accessory GLB (Tripo / Meshy / Luma export, arbitrary scale + orientation) and emits a contract-compliant accessory GLB ready to drop under `assets/3d/accessories/{id}.glb`. Loads via `trimesh.load(force="mesh")` to bake node transforms, auto-orients so the bbox's thinnest extent aligns with Z (so the accessory's flat face points +Z, matching the merger's body-front sockets), scales uniformly to a target size (default 5 cm widest dim — appropriate for cap badges; bump to 0.07-0.20 m for sleeve insignia / headdress), and recentres at origin so the merger's per-accessory `render_logic.offset_*_cm` translation lands as designed. CLI: `--in <raw.glb> --out <accessory.glb> [--target-size METRES] [--rotate-{x,y,z} DEG] [--no-auto-orient]`. The `--rotate-y 180` flag is the one-flag fix when the auto-oriented badge ends up facing the camera-back rather than camera-front. Raw artist sources are preserved at `assets/3d_raw/` (gitignored).
@@ -358,7 +358,8 @@ lib/
     │   │   ├── entities/
     │   │   │   └── dress_requirement.dart            # @freezed; mergedFor(BranchId) applies branch_overrides
     │   │   └── services/
-    │   │       └── dress_accessory_resolver.dart     # Resolves (DressRequirement, UniformProfile) → List<Accessory>; resolveSplit() returns (mandatory, optional)
+    │   │       ├── dress_accessory_resolver.dart     # Resolves (DressRequirement, UniformProfile) → List<Accessory>; resolveSplit() returns (mandatory, optional)
+    │   │       └── accessory_presentation.dart       # Pure: `accessoryImagesFor(a, dress, branch)` (per-slot fallback `dress_images[no4_<branch>]` → `[no4]` → base) and `accessoryDoctrineText(a, gender, dress, branch)` (`no4_<branch>_placement` / `no4_placement` → gendered rule → placement / applicability…). Used by the Wardrobe detail sheet and the Wearing Guide.
     │   └── presentation/
     │       ├── models/
     │       │   └── accessory_item.dart               # View-model for legacy /checklist screen
@@ -368,7 +369,8 @@ lib/
     │       ├── screens/
     │       │   └── checklist_screen.dart             # Progress card + check-card list + sticky CTA
     │       └── widgets/
-    │           └── accessory_detail_sheet.dart       # Bottom sheet: rule + placement diagram + verify CTA
+    │           ├── accessory_remote_image.dart       # `AccessoryRemoteImage`: Storage image card with caption chip + icon placeholder/fallback; shared by the detail sheet and the Wearing Guide
+    │           └── accessory_detail_sheet.dart       # Bottom sheet: rule + placement diagram + verify CTA. Takes the dress being viewed (+ branch, gender) and shows that dress's pictures and doctrine text — No.4 items shared with No.3 show the No.4 PDF pictures, not the khaki No.3 ones (`ChangeRequest/2026-10-19_no4-wardrobe-imagery.md`). The cross-dress "All Accessories" list passes no dress → base pictures.
     │
     ├── gallery/
     │   ├── domain/
@@ -386,8 +388,10 @@ lib/
     │           └── photo_viewer_screen.dart          # PhotoViewGallery full-screen: pinch-to-zoom, swipe, share, delete
     │
     ├── wearing_guide/
+    │   ├── domain/
+    │   │   └── wearing_steps.dart                    # Pure `buildWearingSteps(dressCode, split, profile)`: base garments + the active dress's resolved accessories (mandatory, plus optional only if ticked in the Wardrobe for that dress), in dressing order; medal-ribbons step is No.3-only (`medalRowCount > 0`); SAF-badge steps from `selectedBadgeIds` (No.3: one step; No.4: chest + left-sleeve steps with per-branch PDF placements). `pickDoctrineTip` takes each step's tip from the accessory's `rules` text (gendered key first).
     │   └── presentation/screens/
-    │       └── wearing_guide_screen.dart             # 9 steps + silhouette + voice stub + completion view
+    │       └── wearing_guide_screen.dart             # Steps follow `profile.dressCode` via `dressAccessoriesByIdProvider` (No.4 shows only No.4 items — `ChangeRequest/2026-10-19_wearing-guide-follows-dress.md`) + per-step ACCESSORY / PLACEMENT pictures for the dress being worn (same `accessoryImagesFor` as the Wardrobe; medal / badge steps use the `medal_ribbons` / `saf_badges_chest` / `skill_badges_sleeve` library entries — `ChangeRequest/2026-10-19_wearing-guide-images.md`), zone silhouette when a step has no picture, voice stub, completion view
     │
     ├── ar_scanner/
     │   ├── domain/
@@ -395,6 +399,7 @@ lib/
     │   │       ├── compliance_result.dart            # @freezed ComplianceResult/ComplianceItem + ComplianceStatus enum (correct/missing/incorrect/uncertain); mirrors the `report_compliance` tool schema forced on the `checkUniformCompliance` Cloud Function. **Phase-1 Node/Anthropic path is disabled** (`uniform_compliance_provider.dart` commented out in full; `checkUniformCompliance` is on trial billing). Model + `compliance_result_test.dart` kept for when it's re-enabled.
     │   │       ├── cv_inspection_result.dart         # @freezed CvInspectionResult + CvVerdict (5-state: present/missing/misaligned/wrongType/lowConfidence) + CvSubscores/CvIssue/CvUncertainItem/CvCameraDiagnostics — mirrors `cv-service`'s `/inspect` JSON shape (Phase 2, long-press dev path). Deliberately NOT unified with `compliance_result.dart` — the backends return different-shaped reports.
     │   │       └── uniform_check_result.dart         # @freezed UniformCheckResult + UniformCheckAccessory + UniformCheckStatus (5-state: correct/slightlyMisaligned/incorrect/missing/uncertain) + UniformCheckPoint/Box/Summary — mirrors `cv-service`'s Anthropic-free `POST /check_uniform` contract (`api/response_schema.py`). `overallStatus` is `PASS`/`FAIL`/`INCOMPLETE` (`passed` / `incomplete` getters). Per item: `instruction` (cm + wearer's left/right), `required`, `checkable`, `detectionSource`, `frameAgreement`; per result: coverage counts, `debugImageBase64`, burst frame counts, `focalSource`. `couldNotCheck` (checkable but unjudgeable — a retake may help) vs `checkByEye` (no detector yet) split the old single "uncertain" list. This is the **default capture path** now (replaced the fabricated "100% match" stand-in). Third report shape, deliberately separate from the other two. Added `ChangeRequest/2026-08-30_ar-scanner-real-geometry-scorecard.md`.
+    │   │   (+ `domain/supported_uniforms.dart` — pure: `kCheckableUniformTypes` (mirror of `cv-service/uniforms.py` `UNIFORMS`; update both together), `kScannableDresses` (No.3, No.4), `uniformTypeFor(branch, dress, gender)`, `isCheckableUniform`. The scanner checks the profile's active dress, which is set by tapping a No.1–No.5 card on the Dashboard Home tab (`DashboardScreen.onOpenDress` → `setDressCode`) or by building a dress (`GeneratingScreen`). When that combination isn't checkable, capture is disabled and a "can't be checked yet" card lists the supported uniforms with a "Choose uniform on Dashboard" link — `ChangeRequest/2026-10-09_ar-scanner-dress-picker.md`.)
     │   ├── data/
     │   │   ├── uniform_compliance_repository.dart    # Wraps the `checkUniformCompliance` HTTPS callable; base64-encodes the captured photo client-side. Currently unused (Phase-1 path disabled — see above).
     │   │   ├── cv_service_inspection_repository.dart # HTTP multipart client for `cv-service`'s `POST /inspect` (`kCvServiceBaseUrl`, defaults to `localhost:8001` — no deployed instance yet)
@@ -476,7 +481,10 @@ Each feature follows a Clean-style split:
   `ChangeRequest/2026-08-11_config-profile-save-failure-fix.md`). On
   launch, `hydratedProfileProvider` (a stream from
   `profileRepository.watch()`) rehydrates state via
-  `notifier.hydrate(profile)` once auth lands. The notifier also owns the
+  `notifier.hydrate(profile)` once auth lands. `hydrate` ignores a
+  snapshot while a local edit's debounced write is still pending — it
+  used to apply it and cancel the write, so a No.4 dress pick could snap
+  back to No.3 unsaved (`ChangeRequest/2026-10-19_wearing-guide-follows-dress.md`). The notifier also owns the
   marksmanship-tier badge mutex (`marksman ↔ sniper ↔ fitness`) inside
   `toggleBadge`, plus per-dress check mutators (`toggleDressAccessory`,
   `setDressAccessoryChecked`, `clearDressAccessoryChecks`) used by the
@@ -709,6 +717,22 @@ whitelist). On iOS the keychain entries persist by default.
       scan and burst get 200.
     - Release APKs point at it with
       `--dart-define=CV_SERVICE_BASE_URL=<that URL>`.
+    - **RSAF No.4 men + ladies** supported since 2026-10-07, revision
+      `cv-service-00003` (`ChangeRequest/2026-10-05_cv-service-rsaf-no4.md`).
+    - `cv-service/uniforms.py` maps each `uniform_type` to its:
+      - rules (`rules/rsaf_no4_*.json`, built by
+        `utils/build_rsaf_no4_rules.py`);
+      - anchors (`rules/anchors.rsaf_no4_*.json`, from
+        `utils/extract_figure_anchors.py`);
+      - pose offsets;
+      - stature;
+      - segmentation model (Army → v2, RSAF → `segmentation_v3`, which adds
+        `rank_tab` / `sleeve_patch`).
+    - RSAF benchmark: `training/generate_violation_benchmark_rsaf.py` and
+      `evaluation/run_violation_benchmark.py --bench
+      violation_benchmark_rsaf`. Result: 3.2% false alarms, 39% violation
+      recall, most correct items "too close to call".
+    - The sleeve unit patch is check-by-eye.
   - Locally, `cv-service` runs
     via `deploy/run-cv-service-local.sh` (or `cv-service/Dockerfile`),
     and the Flutter app reaches it over the LAN, or over the USB cable via
@@ -880,7 +904,9 @@ whitelist). On iOS the keychain entries persist by default.
   naming; the older `<projectId>.appspot.com` is **not** the active
   bucket on this project). Three top-level prefixes:
   - `accessories/{accessoryId}/{image,placement}.png` — mirrors the
-    `accessory_library` collection ids. Reads are auth-required, writes
+    `accessory_library` collection ids. Dress-specific variants sit
+    alongside as `<variant>_{image,placement}.png` (e.g.
+    `no4_rsaf_placement.png`). Reads are auth-required, writes
     blocked (Admin SDK only via the seed script).
   - `models/**` — the 3D asset library that
     `composeUniformModel` reads from. Layout
@@ -946,8 +972,10 @@ whitelist). On iOS the keychain entries persist by default.
     divergence. All five dress codes (`no_1`..`no_5`) are read by
     `DressRequirementsRepository`.
   - `accessory_library/{accessoryId}` — per-accessory display metadata
-    (`display_name`, `image_url`, `placement_diagram`) plus `rules` and
-    `render_logic` blobs. Read by `AccessoryLibraryRepository`. The
+    (`display_name`, `image_url`, `placement_diagram`, optional
+    `dress_images: {"no4" | "no4_<branch>": {image_url, placement_diagram}}`)
+    plus `rules` (incl. optional `no4_placement` / `no4_<branch>_placement`
+    text from the No.4 PDF) and `render_logic` blobs. Read by `AccessoryLibraryRepository`. The
     `image_url` and `placement_diagram` fields hold
     `https://firebasestorage.googleapis.com/...` URLs (auth-required)
     pointing to the per-id PNGs uploaded by `tool/seed_firestore.dart
@@ -1109,7 +1137,7 @@ Current routes:
 - `/ghost-model` — `GhostScreen` (Front/Back ghost figure + 6 hotspots).
 - `/wearing` — `WearingGuideScreen` (9 dressing steps + completion view).
 - `/ar` — `ARScannerScreen` (align/capture UI → real AI-vision compliance check via `checkUniformCompliance` → Phase 2 scorecard with live results).
-- `/generating?dress=No3` — `GeneratingScreen` (animated ring loader; auto-routes to `/ghost-model` on complete).
+- `/generating?dress=No3` — `GeneratingScreen` (animated ring loader; auto-routes to `/ghost-model` on complete). Also sets the profile's active `dressCode` to the dress being built, because `/ghost-model` and `/ar` both read `profile.dressCode` (before 2026-10-09 building No.4 left it at No.3, so the scanner sent e.g. `rsaf_no3_female` → `UNSUPPORTED_UNIFORM`; `ChangeRequest/2026-10-09_ar-scanner-follows-built-dress.md`).
 - `/rebuilding` — `RebuildingScreen` (5-row dress progress ring + auto-route to `/dashboard`).
 - `/gallery/viewer` — `PhotoViewerScreen`. Expects `state.extra` as a Dart named-field record `({List<GalleryPhoto> photos, int initialIndex})`. Full-screen `PhotoViewGallery` with pinch-to-zoom, swipe between photos, share, and delete.
 
@@ -1759,7 +1787,7 @@ benchmark). Stages, in order:
 7. **Two-stage** re-segmentation of small items' search boxes (one batched
    call) and **zero-shot** YOLO-World + SAM 2 for empty headwear / belt /
    footwear boxes only (measured: true large items score 0.61-0.91, a bare
-   head scored 0.18 as "beret", small items < 0.2 → accept ≥ 0.45).
+   head scored 0.18 as "beret", small items < 0.2 → accept ≥ 0.45). **A zero-shot region can't certify an item** (2026-10-09, `ChangeRequest/2026-10-09_cv-service-zero-shot-false-beret.md`): the verdict is `unverifiable`, `failure_kind: "unconfirmed"` — YOLO-World scored the hair of a bare head 0.72 as "beret", so a missing beret used to pass.
 8. Verdicts measure the doctrine **reference edge** (`reference_point`,
    e.g. the name tag's bottom edge) and decide with **calibrated
    uncertainty**: pass only if distance + u ≤ tolerance, out-of-tolerance
@@ -2191,6 +2219,12 @@ These are not policies, just pointers for whoever picks up the next plan:
     chevrons, collar pins or shoulder epaulettes.
   - Berets for men and ladies; boots instead of shoes; per-branch belt,
     socks and inner shirt.
+  - **Combat boots are compulsory for every service; safety boots
+    (Navy mid-cut / low-cut shoes, RSAF / DIS safety boots) are optional**
+    — a product decision that overrides the PDF's per-service default
+    (`ChangeRequest/2026-10-19_no4-combat-boots-required.md`). The RSAF
+    figures' built-in boots are declared `combat_boots` in
+    `assets/3d/figures/rsaf_no4.json` so compose keeps them.
   - The PDF's cm placement rules (chest/sleeve badges, RSAF 10/20/5 mm,
     DIS patches) are stored as metadata in `branch_overrides`.
   - **RSAF No.4** (2026-10-02,
@@ -2211,13 +2245,30 @@ These are not policies, just pointers for whoever picks up the next plan:
     `upload_accessory_images.py`, `seed_firestore.dart` and
     `upload_models.py --only 'accessories/*'`.**
 
-  Known No.3 data quirks, left unchanged because fixing them changes
-  existing models:
-  - DIS `cap_badge.bg_me8_radm_above`, RSAF `bg_me8_above_beret` /
-    `_service_hat` and DIS `epaulettes {standard, me_trainee}` keys are
-    never picked by `_pickByOfficerTier`.
-  - The Dart resolver treats `Gender.maternity` as men; the TS port
-    treats it as ladies.
+  **No.3 completed for every service / gender / Sikh / rank (2026-10-19,
+  `ChangeRequest/2026-10-19_no3-no4-full-coverage.md`).** The Dart
+  resolver now:
+  - treats maternity as ladies (as the TS port does);
+  - picks ladies' hats by tier — BG, officer/WO, else the
+    `specialist…` key; a lady OCT gets the specialist hat;
+  - gives the Navy white turban (`sikh_3wo_me3_above`) to 3WO and above;
+  - resolves No.3 `epaulettes {standard, cadet_trainee | me_trainee}` for
+    men only, and the new `ladies_rank {collar_pins, gorgette_officer_cadet,
+    gorgette_me_trainee}` for ladies (officers / WOs → collar pins, OCT →
+    gorgette);
+  - gives the cap embellishment (service-hat peak) to ladies only, with
+    the MAJ–SLTC / SWO–CWO tier;
+  - picks BG cap badges for DIS (`bg_me8_radm_above`) and RSAF (beret vs
+    service hat).
+
+  No.3 `additional_optional` lists medal ribbons and the SAF / sleeve /
+  foreign badge groups. `test/features/checklist/no3_no4_coverage_test.dart`
+  checks every combination for a complete dress with a picture on every
+  item. **The TS port (`functions/src/dress_accessory_resolver.ts`) was
+  not updated**, so the 3D compose still omits No.3 epaulettes / collar
+  pins / gorgettes, gives men the Navy/RSAF embellishment, and misses the
+  BG DIS/RSAF badges. Aligning it attaches new GLBs and needs a Functions
+  deploy — a separate plan.
 
   No. 1, 2, 5 still reference legacy generic placeholder accessories
   (`beret_standard`, `turban_sikh`, `ladies_service_hat_a` / `_b`,
@@ -2319,6 +2370,11 @@ These are not policies, just pointers for whoever picks up the next plan:
   `CvServiceInspectionException`/`UniformCheckException` to an accurate
   message (the last added 2026-08-30 — unreachable `cv-service` vs. its
   typed error codes).
+- The Wearing Guide was a fixed list of 9 No.3 steps until 2026-10-19; it
+  now builds its steps from the active dress (see `wearing_steps.dart`).
+  Accessory names and tips come from Firestore and are English-only.
+  No.1/2/5 show the base garments plus belt/socks/footwear and a
+  "pending doctrine review" note.
 - The Wearing Guide voice narration is a no-op stub
   ([`WearingGuideScreen`](lib/features/wearing_guide/presentation/screens/wearing_guide_screen.dart));
   TTS will land separately.

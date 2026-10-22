@@ -614,6 +614,107 @@ class AppLocalizationsZh extends AppLocalizations {
   String get wearingStepHeaddressTip => '贝雷帽右倾 · 或佩戴头巾';
 
   @override
+  String wearingStepTrousersFor(String dress) {
+    return '$dress 长裤';
+  }
+
+  @override
+  String wearingStepShirtFor(String dress) {
+    return '$dress 衬衫';
+  }
+
+  @override
+  String get wearingStepTrousersTipGeneric => '腰头位于自然腰线 · 裤子平直整齐';
+
+  @override
+  String get wearingStepShirtTipGeneric => '扣好所有纽扣 · 衣领平整 · 衬衫端正';
+
+  @override
+  String wearingAccessorySub(String zone, String kind) {
+    return '$zone · $kind';
+  }
+
+  @override
+  String get wearingRequired => '必需';
+
+  @override
+  String get wearingOptional => '可选';
+
+  @override
+  String get wearingNoTip => '按位置示意图佩戴';
+
+  @override
+  String get wearingDoctrinePending => '此制服的详细配件尚待条令审核 — 目前仅列出基本服装。';
+
+  @override
+  String get wearingZoneHead => '头部';
+
+  @override
+  String get wearingZoneCollar => '衣领';
+
+  @override
+  String get wearingZoneShoulder => '肩部';
+
+  @override
+  String get wearingZoneChestCentre => '胸前正中';
+
+  @override
+  String get wearingZoneRightChest => '右胸';
+
+  @override
+  String get wearingZoneLeftChest => '左胸';
+
+  @override
+  String get wearingZoneSleeves => '袖子';
+
+  @override
+  String get wearingZoneTorso => '躯干';
+
+  @override
+  String get wearingZoneWaist => '腰部';
+
+  @override
+  String get wearingZoneLegs => '腿部';
+
+  @override
+  String get wearingZoneFeet => '脚部';
+
+  @override
+  String get wearingStepChestBadgesNo4 => '新加坡武装部队徽章';
+
+  @override
+  String get wearingStepChestBadgesNo4Sub => '左胸 · 最多 3 枚';
+
+  @override
+  String get wearingStepChestBadgesTipArmy => '居中佩戴于左胸口袋上缘正上方 · 最多 3 枚';
+
+  @override
+  String get wearingStepChestBadgesTipNavy => '居中佩戴于左胸口袋上缘上方 3 厘米 · 最多 3 枚';
+
+  @override
+  String get wearingStepChestBadgesTipSingaporeTag =>
+      '居中佩戴于 Singapore 名牌上缘正上方 · 最多 3 枚';
+
+  @override
+  String get wearingStepSleeveBadges => '袖章';
+
+  @override
+  String get wearingStepSleeveBadgesSub => '左袖 · 最多 2 枚';
+
+  @override
+  String get wearingStepSleeveBadgesTipArmy =>
+      '射击章位于左肩缝下 1 厘米 · IPPT 章居中位于其下 0.5 厘米 · 只可佩戴一种射击章';
+
+  @override
+  String get wearingStepSleeveBadgesTipRsaf => '居中佩戴于左袖单位臂章下 5 毫米 · 只可佩戴一种射击章';
+
+  @override
+  String get wearingStepSleeveBadgesTipDis => '居中佩戴于左袖臂章下约 0.4 厘米 · 只可佩戴一种射击章';
+
+  @override
+  String get wearingStepSleeveBadgesTipNavy => '居中佩戴于左袖肩缝下方 · 只可佩戴一种射击章';
+
+  @override
   String get arClose => '关闭';
 
   @override
@@ -633,6 +734,19 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get arAlignedSub => '点击拍摄——将连续拍摄 3 张';
+
+  @override
+  String arUnsupportedTitle(String uniform) {
+    return '暂不支持检查 $uniform';
+  }
+
+  @override
+  String arUnsupportedSub(String list) {
+    return '目前可检查:$list';
+  }
+
+  @override
+  String get arChooseUniform => '在首页选择制服 →';
 
   @override
   String get arHintNoPerson => '请走进画面';
