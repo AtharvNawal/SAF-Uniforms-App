@@ -29,6 +29,7 @@ from dataclasses import dataclass
 import cv2
 
 import config
+import uniforms
 from api.intrinsics import resolve_intrinsics
 from api.response_schema import build_check_uniform_response
 from api.validation import check_sharpness, validate_image
@@ -44,15 +45,16 @@ from pose.anchor_mapping import estimate_anchor_pose
 from pose.detect_person import detect_person
 from reporting.report import render_debug_image_b64
 from rules.rule_engine import evaluate_verdicts, load_anchors, load_rules, resolve_rules
-from segmentation.segment_uniform import segment_uniform
+from segmentation.segment_uniform import segment_uniform, using_model
 from segmentation.two_stage import refine_small_items
 
-SUPPORTED_UNIFORM_TYPES = {"army_no3_male"}
+# Every uniform the service has doctrine + reference anchors for
+# (`uniforms.py`); anything else is a typed 422 UNSUPPORTED_UNIFORM.
+SUPPORTED_UNIFORM_TYPES = uniforms.SUPPORTED_UNIFORM_TYPES
 
-# `assets/3d/bodies/male_apose.glb` was normalised to this stature by
-# `tool/inject_sockets.py --target-height 1.78` (CLAUDE.md §8, pass 3);
-# the anchor file's coordinates are in that body's metres.
-REFERENCE_STATURE_M = 1.78
+# Army No.3 reference stature, kept for callers / tests that predate the
+# registry. Per-uniform values live in `uniforms.UniformSpec`.
+REFERENCE_STATURE_M = uniforms.DEFAULT.reference_stature_m
 
 
 @dataclass(frozen=True)
@@ -80,15 +82,15 @@ class CheckError(Exception):
         self.status_code, self.status, self.message, self.extra = status_code, status, message, extra
 
 
-def scaled_anchors(height_cm: float | None) -> tuple[dict, float]:
+def scaled_anchors(height_cm: float | None, spec: uniforms.UniformSpec = uniforms.DEFAULT) -> tuple[dict, float]:
     """Anchors scaled uniformly about the feet to the wearer's height (the
     doctrine cm offsets on top of them stay absolute). A 1.70 m wearer
     measured against a 1.78 m reference body otherwise shifts every
     projected point and puts the solved camera ~5% too far away."""
-    anchors = load_anchors()
+    anchors = load_anchors(spec.anchors_path)
     if not height_cm or not (config.MIN_HEIGHT_CM <= height_cm <= config.MAX_HEIGHT_CM):
         return anchors, 1.0
-    scale = (height_cm / 100.0) / REFERENCE_STATURE_M
+    scale = (height_cm / 100.0) / spec.reference_stature_m
     return {name: {**a, "x": a["x"] * scale, "y": a["y"] * scale, "z": a["z"] * scale} for name, a in anchors.items()}, scale
 
 
@@ -113,7 +115,8 @@ class Geometry:
 def solve_geometry(image_path: str, params: CheckParams) -> Geometry:
     """Stages 0-6 of the pipeline. Raises `CheckError` for every
     condition the photo can't be judged under."""
-    if params.uniform_type not in SUPPORTED_UNIFORM_TYPES:
+    spec = uniforms.get(params.uniform_type)
+    if spec is None:
         raise CheckError(
             422, "UNSUPPORTED_UNIFORM",
             f"'{params.uniform_type}' is not a supported uniform_type. Supported: {sorted(SUPPORTED_UNIFORM_TYPES)}.",
@@ -145,11 +148,11 @@ def solve_geometry(image_path: str, params: CheckParams) -> Geometry:
     except FileNotFoundError:
         raise CheckError(503, "SEGMENTER_UNAVAILABLE", "The uniform segmentation model is not installed on this server.")
 
-    anchor_pose = estimate_anchor_pose(image_path, person_box=detection.person)
+    anchor_pose = estimate_anchor_pose(image_path, person_box=detection.person, offsets_path=spec.offsets_path)
     anchor_pose = refine_anchors_with_masks(anchor_pose, segmentation)
 
     intrinsics = resolve_intrinsics(image_path, width_px, height_px, params.focal_length_px)
-    anchors, height_scale = scaled_anchors(params.height_cm)
+    anchors, height_scale = scaled_anchors(params.height_cm, spec)
     camera = solve_camera_pose_v2(
         anchor_pose, width_px, height_px, anchors=anchors,
         focal_px=intrinsics.focal_px, gravity_up_cam=params.gravity_up_cam,
@@ -169,7 +172,7 @@ def solve_geometry(image_path: str, params: CheckParams) -> Geometry:
                          "Please retake with both shoulders in frame.")
 
     profile = {"rank_tier": params.rank_tier, "gender": params.gender, "isSikh": params.is_sikh, "medalRowCount": params.medal_row_count}
-    all_rules = load_rules()
+    all_rules = load_rules(spec.rules_path)
     resolved = resolve_rules(camera, cm_per_px, profile=profile, rules=all_rules, anchors=anchors)
     if not resolved:
         raise CheckError(500, "NO_RULES", "No doctrine rules resolved for this profile.")
@@ -178,8 +181,15 @@ def solve_geometry(image_path: str, params: CheckParams) -> Geometry:
 
 
 def run_check(image_path: str, params: CheckParams) -> dict:
-    """Runs the full pipeline on one photo. Raises `CheckError` for every
-    condition the photo can't be judged under."""
+    """Runs the full pipeline on one photo, with the uniform's own
+    segmentation model (`uniforms.UniformSpec.segmentation_model`). Raises
+    `CheckError` for every condition the photo can't be judged under."""
+    spec = uniforms.get(params.uniform_type)
+    with using_model(spec.segmentation_model if spec else None):
+        return _run_check(image_path, params)
+
+
+def _run_check(image_path: str, params: CheckParams) -> dict:
     g = solve_geometry(image_path, params)
     detection, validation, image_bgr, camera = g.detection, g.validation, g.image_bgr, g.camera
     segmentation, resolved, all_rules, cm_per_px = g.segmentation, g.resolved, g.all_rules, g.cm_per_px
@@ -215,10 +225,9 @@ def run_check(image_path: str, params: CheckParams) -> dict:
             "Camera focal length unknown (no EXIF, none sent) — distances are less accurate; "
             "send focal_length_px or keep the photo's EXIF data."
         )
-    if params.view != "front" or params.body_type != "male":
+    if params.view != "front":
         response["image_quality"]["note"] = (
-            f"view='{params.view}', body_type='{params.body_type}' — only front/male doctrine exists today; "
-            "results may be unreliable."
+            f"view='{params.view}' — only front-view doctrine exists today; results may be unreliable."
         )
     if params.include_debug_image:
         response["debug_image_base64"] = render_debug_image_b64(image_bgr, verdicts)

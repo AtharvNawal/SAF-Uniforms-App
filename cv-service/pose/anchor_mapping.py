@@ -198,14 +198,17 @@ def _interpolated_via_midpoint(pose: PoseResult, shoulder_name: str, fraction: f
 
 
 _OFFSETS_PATH = Path(__file__).resolve().parent / "anchor_offsets.male.json"
-_offsets_cache: dict | None = None
+_offsets_cache: dict[Path, dict] = {}
 
 
-def _load_offsets() -> dict:
-    global _offsets_cache
-    if _offsets_cache is None:
-        _offsets_cache = json.loads(_OFFSETS_PATH.read_text())["offsets"] if _OFFSETS_PATH.exists() else {}
-    return _offsets_cache
+def _load_offsets(path: Path | None = None) -> dict:
+    """Fitted offsets for one reference body (`uniforms.UniformSpec.
+    offsets_path`; default Army No.3 male). Missing file → `{}` (no
+    correction), same as before the registry existed."""
+    path = Path(path) if path is not None else _OFFSETS_PATH
+    if path not in _offsets_cache:
+        _offsets_cache[path] = json.loads(path.read_text())["offsets"] if path.exists() else {}
+    return _offsets_cache[path]
 
 
 def body_frame(estimate: dict[str, dict]):
@@ -255,7 +258,8 @@ def apply_anchor_offsets(estimate: dict[str, dict], offsets: dict | None = None)
     return corrected
 
 
-def map_pose_to_anchors(pose: PoseResult, *, apply_offsets: bool = True) -> dict[str, dict]:
+def map_pose_to_anchors(pose: PoseResult, *, apply_offsets: bool = True,
+                        offsets_path: Path | None = None) -> dict[str, dict]:
     """Pure function: a `PoseResult` in, all 16 `anchors.male.json` keys
     out, each `{"x_px": float | None, "y_px": float | None, "confidence":
     float}`. `confidence == 0.0` (with null coordinates) means the
@@ -287,14 +291,16 @@ def map_pose_to_anchors(pose: PoseResult, *, apply_offsets: bool = True) -> dict
     result["cap_band_front"] = _cap_band_front(pose, head_top)
 
     if apply_offsets and config.APPLY_ANCHOR_OFFSETS:
-        result = apply_anchor_offsets(result)
+        result = apply_anchor_offsets(result, _load_offsets(offsets_path))
     result["chest_center"] = _chest_center(result["left_chest_pocket"], result["right_chest_pocket"])
 
     return result
 
 
-def estimate_anchor_pose(image_path: str, *, person_box=None, apply_offsets: bool = True) -> dict[str, dict]:
+def estimate_anchor_pose(image_path: str, *, person_box=None, apply_offsets: bool = True,
+                         offsets_path: Path | None = None) -> dict[str, dict]:
     """`image_path -> dict` convenience wrapper: runs Stage 2's pose
     estimator (on the person crop when `person_box` is given — see
     `estimate_pose`), then maps it onto all 16 anchor names in one call."""
-    return map_pose_to_anchors(estimate_pose(image_path, person_box=person_box), apply_offsets=apply_offsets)
+    return map_pose_to_anchors(estimate_pose(image_path, person_box=person_box), apply_offsets=apply_offsets,
+                               offsets_path=offsets_path)

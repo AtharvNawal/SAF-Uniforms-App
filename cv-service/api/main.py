@@ -268,7 +268,7 @@ async def check_uniform(
     """Full compliance check against the `POST /check_uniform` contract —
     see `api/pipeline.py` for every stage.
 
-    `uniform_type` must be one of `SUPPORTED_UNIFORM_TYPES` (today, only
+    `uniform_type` must be one of `SUPPORTED_UNIFORM_TYPES` (`uniforms.py`: army_no3_male, rsaf_no4_male, rsaf_no4_female; was only
     `"army_no3_male"`). The doctrine rules need `rank_tier`/`gender`/
     `is_sikh`/`medal_row_count` to resolve which items apply to this
     wearer. Optional, each improving accuracy (ChangeRequest/

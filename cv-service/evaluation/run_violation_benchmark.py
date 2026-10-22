@@ -62,24 +62,52 @@ VARIANTS: dict[str, dict] = {
                            "CV_SERVICE_UNCERTAINTY_REPROJECTION_WEIGHT": "1.35",
                            "CV_SERVICE_UNCERTAINTY_MASK_FRACTION": "0.09"}, "use_height_gravity": True},
     "program_v2": {"env": {"CV_SERVICE_SEGMENTATION_MODEL": "segmentation_v2"}, "use_height_gravity": True},
+    # v3 = v2 + RSAF No.4 classes (ChangeRequest/2026-10-05_cv-service-rsaf-no4.md)
+    "program_v3": {"env": {"CV_SERVICE_SEGMENTATION_MODEL": "segmentation_v3"}, "use_height_gravity": True},
+    # Production: no pin — each uniform uses its own model (uniforms.py).
+    "program_default": {"env": {"CV_SERVICE_SEGMENTATION_MODEL": ""}, "use_height_gravity": True},
 }
 _TO_INTERNAL = {"CORRECT": "pass", "SLIGHTLY_MISALIGNED": "slightly_misaligned", "INCORRECT": "fail",
                 "MISSING": "missing", "UNCERTAIN": "unverifiable"}
 _FLAGGED = {"fail", "slightly_misaligned", "missing"}
 
 
-def run_variant(variant: str, limit: int | None) -> Path:
+def _results_dir(bench: str) -> Path:
+    # Army results keep their original location; other benchmarks get their own.
+    return RESULTS_DIR if bench == BENCH_DIR.name else RESULTS_DIR.parent / bench
+
+
+def run_variant(variant: str, limit: int | None, bench: str = BENCH_DIR.name) -> Path:
     """Worker mode — runs in a subprocess with the variant's env set."""
     sys.path.insert(0, str(CV_ROOT))
     from api.pipeline import CheckError, CheckParams, run_check
 
+    import api.pipeline as pipeline
+    from pose.detect_person import DetectionResult, PersonBox
+
     spec = VARIANTS[variant]
-    scenes = sorted(BENCH_DIR.glob("scene_*.json"))[:limit]
+    scenes = sorted((CV_ROOT / "synthetic_data" / bench).glob("scene_*.json"))[:limit]
     records = []
+    real_detect = pipeline.detect_person
     for i, gt_path in enumerate(scenes):
         gt = json.loads(gt_path.read_text())
+        # Benchmark-only fallback (RSAF): when the COCO detector misses a
+        # stylised figure, use the render's exact box — counted per scene.
+        fallback = {"used": False}
+
+        def detect(path, _gt=gt, _fb=fallback):
+            result = real_detect(path)
+            box = _gt.get("person_box_px")
+            if result.accepted or box is None or result.reason != "no_person_detected":
+                return result
+            _fb["used"] = True
+            return DetectionResult(True, "ground_truth_box", PersonBox(*map(float, box), confidence=1.0), 1)
+
+        pipeline.detect_person = detect
         params = CheckParams(
-            uniform_type="army_no3_male", rank_tier=gt["profile"]["rank_tier"],
+            # Scenes predating the uniform registry are all Army No.3 male.
+            uniform_type=gt.get("uniform_type", "army_no3_male"), rank_tier=gt["profile"]["rank_tier"],
+            gender=gt["profile"].get("gender", "male"), is_sikh=gt["profile"].get("is_sikh", False),
             height_cm=gt["height_cm"] if spec["use_height_gravity"] else None,
             gravity_up_cam=tuple(gt["gravity_up_cam"]) if spec["use_height_gravity"] else None,
         )
@@ -88,13 +116,15 @@ def run_variant(variant: str, limit: int | None) -> Path:
             predicted = {a["name"]: _TO_INTERNAL[a["status"]] for a in response["accessories"]}
             records.append({"scene": gt_path.stem, "error": None, "overall": response["overall_status"],
                             "predicted": predicted, "expected": {k: v["status"] for k, v in gt["expected"].items()},
-                            "camera": response.get("camera")})
+                            "camera": response.get("camera"), "detector_fallback": fallback["used"]})
         except CheckError as err:
             records.append({"scene": gt_path.stem, "error": err.status, "overall": None, "predicted": {},
-                            "expected": {k: v["status"] for k, v in gt["expected"].items()}})
+                            "expected": {k: v["status"] for k, v in gt["expected"].items()},
+                            "detector_fallback": fallback["used"]})
         print(f"  [{variant}] {i + 1}/{len(scenes)}", flush=True)
-    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
-    out = RESULTS_DIR / f"{variant}.json"
+    results_dir = _results_dir(bench)
+    results_dir.mkdir(parents=True, exist_ok=True)
+    out = results_dir / f"{variant}.json"
     out.write_text(json.dumps(records, indent=1) + "\n")
     return out
 
@@ -134,6 +164,7 @@ def score(records: list[dict]) -> dict:
         "overall_items": rates(totals),
         "scenes": len(records),
         "scenes_rejected": totals["scenes_rejected"],
+        "detector_fallback": sum(1 for r in records if r.get("detector_fallback")),
         "overall_status": {f"{gt}->{pred}": n for (gt, pred), n in sorted(overall.items())},
         "per_item": {item: rates(c) for item, c in sorted(per_item.items())},
     }
@@ -145,12 +176,13 @@ def _fmt(v) -> str:
 
 def print_report(scores: dict[str, dict]) -> None:
     print("\n## Violation benchmark (synthetic renders only — 0 real photos)\n")
-    print("| Variant | Items | Exact | Violation recall | False alarms | Abstain | Scenes rejected |")
-    print("| --- | --- | --- | --- | --- | --- | --- |")
+    print("| Variant | Items | Exact | Violation recall | False alarms | Abstain | Scenes rejected | Detector fallback |")
+    print("| --- | --- | --- | --- | --- | --- | --- | --- |")
     for name, s in scores.items():
         o = s["overall_items"]
         print(f"| {name} | {o['n']} | {_fmt(o['exact_accuracy'])} | {_fmt(o['violation_recall'])} ({o['violations']}) | "
-              f"{_fmt(o['false_alarm_rate'])} | {_fmt(o['abstention_rate'])} | {s['scenes_rejected']}/{s['scenes']} |")
+              f"{_fmt(o['false_alarm_rate'])} | {_fmt(o['abstention_rate'])} | {s['scenes_rejected']}/{s['scenes']} | "
+              f"{s.get('detector_fallback', 0)}/{s['scenes']} |")
     for name, s in scores.items():
         print(f"\n### {name} — per item\n")
         print("| Item | Exact | Violation recall | False alarms | Abstain |")
@@ -167,20 +199,25 @@ def main() -> None:
     parser.add_argument("--limit", type=int, default=None)
     parser.add_argument("--worker", choices=sorted(VARIANTS), help=argparse.SUPPRESS)
     parser.add_argument("--rescore", action="store_true", help="only re-score existing results")
+    parser.add_argument("--bench", default=BENCH_DIR.name,
+                        help="benchmark dir under synthetic_data/ (default: the Army No.3 one; "
+                             "violation_benchmark_rsaf for RSAF No.4)")
     args = parser.parse_args()
 
     if args.worker:
-        run_variant(args.worker, args.limit)
+        run_variant(args.worker, args.limit, args.bench)
         return
+    results_dir = _results_dir(args.bench)
     scores = {}
     for variant in args.variants:
-        out = RESULTS_DIR / f"{variant}.json"
+        out = results_dir / f"{variant}.json"
         if not args.rescore:
             env = {**os.environ, **VARIANTS[variant]["env"]}
-            cmd = [sys.executable, __file__, "--worker", variant] + (["--limit", str(args.limit)] if args.limit else [])
+            cmd = [sys.executable, __file__, "--worker", variant, "--bench", args.bench] + (
+                ["--limit", str(args.limit)] if args.limit else [])
             subprocess.run(cmd, env=env, check=True, cwd=str(REPO_ROOT))
         scores[variant] = score(json.loads(out.read_text()))
-    (RESULTS_DIR / "summary.json").write_text(json.dumps(scores, indent=2) + "\n")
+    (results_dir / "summary.json").write_text(json.dumps(scores, indent=2) + "\n")
     print_report(scores)
 
 

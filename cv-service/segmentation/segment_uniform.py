@@ -24,6 +24,8 @@ mixed in) is the next step before this should gate anything.
 
 from __future__ import annotations
 
+from contextlib import contextmanager
+from contextvars import ContextVar
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -41,16 +43,31 @@ _MODELS_DIR = Path(__file__).resolve().parents[1] / "models"
 # so the weights file alone doesn't mean the model is done — without this
 # marker the service would silently pick up a half-trained model mid-run.
 TRAINING_COMPLETE_MARKER = "training_complete.json"
+# A model a uniform *asks for* (`uniforms.UniformSpec.segmentation_model`,
+# e.g. RSAF No.4 → segmentation_v3) is only used once it has also passed
+# its promotion gate, recorded by this file (v3: Army val mAP50 no worse
+# than v2's minus 0.02). Otherwise that uniform gets the default model.
+# See ChangeRequest/2026-10-05_cv-service-rsaf-no4.md.
+PROMOTED_MARKER = "promoted.json"
 
 
-def _model_path() -> Path:
-    """Prefers `segmentation_v2` (12 classes, domain-randomised — see
-    training/generate_segmentation_dataset_v2.py) once its training has
-    completed, else the original v1 (which predates the marker).
-    `CV_SERVICE_SEGMENTATION_MODEL` (config) pins one explicitly."""
+def _usable(model_dir: Path, *markers: str) -> bool:
+    return all((model_dir / f).exists() for f in (*markers, "weights/best.pt"))
+
+
+def _model_path(preferred: str | None = None) -> Path:
+    """`CV_SERVICE_SEGMENTATION_MODEL` (config) pins one model for every
+    request. Otherwise `preferred` (the uniform's own model) if trained and
+    promoted; otherwise the default — `segmentation_v2` (12 classes,
+    domain-randomised — see training/generate_segmentation_dataset_v2.py)
+    once its training has completed, else the original v1 (which predates
+    the marker). Army No.3 asks for nothing, so it keeps v2: segmentation_v3
+    raised Army belt false alarms 17.9% → 62.5% on the benchmark."""
     pinned = config.SEGMENTATION_MODEL
     if pinned:
         return _MODELS_DIR / pinned / "weights" / "best.pt"
+    if preferred and _usable(_MODELS_DIR / preferred, TRAINING_COMPLETE_MARKER, PROMOTED_MARKER):
+        return _MODELS_DIR / preferred / "weights" / "best.pt"
     v2 = _MODELS_DIR / "segmentation_v2"
     if (v2 / TRAINING_COMPLETE_MARKER).exists() and (v2 / "weights" / "best.pt").exists():
         return v2 / "weights" / "best.pt"
@@ -60,20 +77,39 @@ def _model_path() -> Path:
 _MODEL_PATH = _model_path()
 _DEFAULT_MIN_CONFIDENCE = config.MIN_SEGMENT_CONFIDENCE
 
-_model: YOLO | None = None
+_models: dict[Path, YOLO] = {}
+# The model the current request asked for (see `using_model`); `None` = default.
+_active_preference: ContextVar[str | None] = ContextVar("segmentation_model_preference", default=None)
+
+
+@contextmanager
+def using_model(preferred: str | None):
+    """Selects the segmentation model for everything inside the block —
+    `segment_uniform`, `segment_crops` (two-stage) and `available_classes`
+    — so one request is judged by one model end to end."""
+    token = _active_preference.set(preferred)
+    try:
+        yield
+    finally:
+        _active_preference.reset(token)
+
+
+def active_model_path() -> Path:
+    preferred = _active_preference.get()
+    return _model_path(preferred) if preferred else _MODEL_PATH
 
 
 def _get_model() -> YOLO:
-    global _model
-    if _model is None:
-        if not _MODEL_PATH.exists():
+    path = active_model_path()
+    if path not in _models:
+        if not path.exists():
             raise FileNotFoundError(
-                f"{_MODEL_PATH} not found — run "
+                f"{path} not found — run "
                 "cv-service/training/generate_segmentation_dataset.py then "
                 "cv-service/training/train_segmentation.py first."
             )
-        _model = YOLO(str(_MODEL_PATH))
-    return _model
+        _models[path] = YOLO(str(path))
+    return _models[path]
 
 
 @dataclass(frozen=True)

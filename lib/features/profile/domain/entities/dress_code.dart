@@ -17,6 +17,14 @@ enum DressCode {
     DressCode.no5 => 'no_5_dress_requirements',
   };
 
+  /// Inverse of [requirementDocId]; null for an unknown doc id.
+  static DressCode? fromRequirementDocId(String docId) {
+    for (final d in DressCode.values) {
+      if (d.requirementDocId == docId) return d;
+    }
+    return null;
+  }
+
   static DressCode fromWireName(String value) {
     return DressCode.values.firstWhere(
       (d) => d.wireName == value,

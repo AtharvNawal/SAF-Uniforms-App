@@ -41,7 +41,12 @@ def main() -> int:
         except Exception as e:  # noqa: BLE001 — report every failure, then fail the build
             print(f"[warm_cache] FAIL {label}: {e!r}", flush=True)
             failed.append(label)
-    print(f"[warm_cache] segmentation model: {segment_uniform._MODEL_PATH}", flush=True)
+    import uniforms
+    for name in sorted({u.segmentation_model for u in uniforms.UNIFORMS.values() if u.segmentation_model}):
+        with segment_uniform.using_model(name):
+            segment_uniform._get_model()
+            print(f"[warm_cache] ok   segmentation model for {name}: {segment_uniform.active_model_path()}", flush=True)
+    print(f"[warm_cache] default segmentation model: {segment_uniform._MODEL_PATH}", flush=True)
     return 1 if failed else 0
 
 

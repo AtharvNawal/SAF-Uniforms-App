@@ -21,5 +21,11 @@
 /cv-service/models/segmentation_v2/*.png
 /cv-service/models/segmentation_v2/*.jpg
 /cv-service/models/segmentation_v2/weights/last.pt
+/cv-service/models/segmentation_v3/*.png
+/cv-service/models/segmentation_v3/*.jpg
+/cv-service/models/segmentation_v3/weights/last.pt
 /assets/3d_raw/
 /assets/3d/accessories/
+/cv-service/models/segmentation_v3/weights/best_training_ckpt.pt
+/cv-service/models/segmentation_v3/*.csv
+/cv-service/models/segmentation_v3/args.yaml

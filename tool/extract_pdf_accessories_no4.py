@@ -99,6 +99,115 @@ MANIFEST: list[tuple[int, tuple[float, float, float, float], list[str]]] = [
     ]),
 ]
 
+# No.4 pictures for accessories shared with No.3, plus a few base images
+# the No.4-only entries were missing. `<variant>_{image,placement}.png`
+# sits next to the No.3 pair; variant is `no4` (any branch) or
+# `no4_<branch>`. `tool/upload_accessory_images.py` uploads them and
+# writes `dress_images[<variant>]` on the accessory_library entry, which
+# the Wardrobe detail sheet prefers when showing that dress.
+MANIFEST_NO4_VARIANTS: list[tuple[int, tuple[float, float, float, float], list[str]]] = [
+    # --- Army ---
+    # B-3 beret worn with cap badge; B-4 turban with cap badge.
+    (2, (128, 286, 244, 399), [
+        "army_beret/no4_placement.png",
+        "army_cap_badge_sltc_me6_below/no4_placement.png",
+        "army_cap_badge_col_me7/no4_placement.png",
+        "army_cap_badge_bg_me8_above/no4_placement.png",
+    ]),
+    (2, (351, 288, 472, 399), [
+        "army_sikh_turban_standard/no4_placement.png",
+        "army_sikh_turban_col_me7_above/no4_placement.png",
+    ]),
+    # C-1 chest layout; name tape + Singapore tag cropped out of it.
+    (4, (109, 163, 253, 271), ["name_tag_standard/no4_army_placement.png"]),
+    (4, (137, 223, 171, 233), ["name_tag_standard/no4_army_image.png"]),
+    (4, (191, 223, 226, 233), [
+        "singapore_tag/image.png",
+        "singapore_tag/no4_army_image.png",
+    ]),
+    (4, (223, 299, 383, 418), ["saf_badges_chest/no4_army_placement.png"]),   # C-3
+    (4, (91, 513, 288, 670), ["skill_badges_sleeve/no4_army_placement.png"]),  # C-4
+    (4, (321, 522, 514, 669), ["skill_tabs_sleeve/no4_army_placement.png"]),   # C-5
+    (5, (108, 487, 259, 595), ["foreign_badges/no4_army_placement.png"]),      # C-8
+    # --- Navy ---
+    (8, (90, 228, 223, 305), ["navy_beret/no4_image.png"]),
+    (8, (235, 228, 360, 303), ["navy_cap_badge_col_me7_above/no4_placement.png"]),
+    (8, (383, 228, 495, 337), ["navy_sikh_turban_standard/no4_placement.png"]),
+    (11, (92, 126, 282, 248), [
+        "name_tag_standard/no4_navy_placement.png",
+        "singapore_tag/no4_navy_placement.png",
+    ]),
+    (11, (131, 195, 173, 204), ["name_tag_standard/no4_navy_image.png"]),
+    (11, (201, 195, 239, 204), ["singapore_tag/no4_navy_image.png"]),
+    (11, (221, 277, 386, 384), ["saf_badges_chest/no4_navy_placement.png"]),
+    (11, (140, 515, 243, 637), ["skill_badges_sleeve/no4_navy_placement.png"]),
+    (11, (372, 518, 476, 641), ["skill_tabs_sleeve/no4_navy_placement.png"]),
+    (12, (103, 141, 261, 242), ["foreign_badges/no4_navy_placement.png"]),
+    # --- RSAF ---
+    (14, (105, 291, 259, 405), [
+        "rsaf_beret/no4_placement.png",
+        "rsaf_cap_badge_sltc_me6_below/no4_placement.png",
+        "rsaf_cap_badge_col_me7/no4_placement.png",
+        "rsaf_cap_badge_bg_me8_above_beret/no4_placement.png",
+    ]),
+    (14, (344, 291, 494, 404), ["rsaf_sikh_turban/no4_placement.png"]),
+    (17, (126, 161, 469, 401), [
+        "name_tag_standard/no4_rsaf_placement.png",
+        "singapore_tag/no4_rsaf_placement.png",
+    ]),
+    (17, (215, 280, 283, 297), ["name_tag_standard/no4_rsaf_image.png"]),
+    (17, (318, 279, 386, 297), ["singapore_tag/no4_rsaf_image.png"]),
+    (17, (174, 239, 201, 271), ["rsaf_unit_patch/image.png"]),
+    (17, (261, 213, 277, 230), ["rsaf_vocation_badge/image.png"]),
+    (18, (120, 128, 476, 382), ["saf_badges_chest/no4_rsaf_placement.png"]),   # C-3
+    (18, (168, 446, 428, 701), ["skill_badges_sleeve/no4_rsaf_placement.png"]),  # C-4
+    # --- DIS ---
+    (20, (127, 172, 241, 247), [
+        "dis_beret/no4_placement.png",
+        "dis_cap_badge_sltc_me6_below/no4_placement.png",
+        "dis_cap_badge_col_me7/no4_placement.png",
+        "dis_cap_badge_bg_me8_radm_above/no4_placement.png",
+    ]),
+    (20, (354, 172, 467, 249), ["dis_sikh_turban/no4_placement.png"]),
+    (23, (83, 142, 285, 284), ["dis_vocation_badge/no4_placement.png"]),
+    (23, (206, 514, 388, 656), ["dis_arms_badge/no4_placement.png"]),
+    (24, (78, 477, 290, 619), [
+        "name_tag_standard/no4_dis_placement.png",
+        "singapore_tag/no4_dis_placement.png",
+    ]),
+    (24, (129, 542, 171, 552), ["name_tag_standard/no4_dis_image.png"]),
+    (24, (192, 542, 229, 552), ["singapore_tag/no4_dis_image.png"]),
+    (24, (103, 512, 122, 531), ["dis_service_patch/image.png"]),
+    (24, (239, 510, 261, 533), ["dis_formation_patch/image.png"]),
+    (24, (304, 477, 517, 619), ["saf_badges_chest/no4_dis_placement.png"]),    # C-5
+    (25, (78, 112, 291, 254), ["skill_badges_sleeve/no4_dis_placement.png"]),  # C-6
+    (25, (76, 323, 253, 464), ["skill_tabs_sleeve/no4_dis_placement.png"]),    # C-8
+    (26, (77, 113, 290, 255), ["foreign_badges/no4_dis_placement.png"]),       # C-10
+    # Placement for items the PDF only shows on the full-uniform figures
+    # (A-1 / Fig. 1): the feet for footwear + socks, RSAF A-3's jockey cap,
+    # DIS A-1's neckline for the grey inner T-shirt. Belts are hidden under
+    # the shirt on every figure, so they get none.
+    (1, (140, 318, 220, 394), [                                               # Army A-1
+        "combat_boots/placement.png",
+        "green_socks/placement.png",
+        "black_socks/no4_army_placement.png",
+    ]),
+    (7, (146, 262, 236, 334), [                                               # Navy Fig. 1
+        "safety_boots_mid_cut/placement.png",
+        "black_socks/no4_navy_placement.png",
+    ]),
+    (13, (200, 430, 395, 595), [                                              # RSAF A-2
+        "safety_boots/placement.png",
+        "black_socks/no4_rsaf_placement.png",
+    ]),
+    (19, (147, 318, 220, 386), [                                              # DIS A-1
+        "safety_boots/no4_dis_placement.png",
+        "black_socks/no4_dis_placement.png",
+    ]),
+    (13, (420, 100, 510, 185), ["rsaf_jockey_cap/placement.png"]),            # RSAF A-3
+    (19, (147, 150, 220, 200), ["dis_no4_inner_tshirt/placement.png"]),       # DIS A-1
+]
+
 
 def _render(doc: "pymupdf.Document", page_no: int, rect: tuple) -> Image.Image:
     page = doc[page_no - 1]
@@ -129,7 +238,7 @@ def main(argv: list[str]) -> int:
         print(f"WARNING: expected the 26-page SAF No.4 PDF, got {doc.page_count} pages; "
               "manifest coordinates may be wrong.", file=sys.stderr)
     written = 0
-    for page_no, rect, targets in MANIFEST:
+    for page_no, rect, targets in [*MANIFEST, *MANIFEST_NO4_VARIANTS]:
         try:
             img = _render(doc, page_no, rect)
         except Exception as e:  # noqa: BLE001 — report and continue with the rest

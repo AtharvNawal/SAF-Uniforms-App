@@ -1280,6 +1280,192 @@ abstract class AppLocalizations {
   /// **'Beret tilted right · or turban with fifti'**
   String get wearingStepHeaddressTip;
 
+  /// No description provided for @wearingStepTrousersFor.
+  ///
+  /// In en, this message translates to:
+  /// **'{dress} Trousers'**
+  String wearingStepTrousersFor(String dress);
+
+  /// No description provided for @wearingStepShirtFor.
+  ///
+  /// In en, this message translates to:
+  /// **'{dress} Shirt'**
+  String wearingStepShirtFor(String dress);
+
+  /// No description provided for @wearingStepTrousersTipGeneric.
+  ///
+  /// In en, this message translates to:
+  /// **'Waistband at natural waist · trousers straight and even'**
+  String get wearingStepTrousersTipGeneric;
+
+  /// No description provided for @wearingStepShirtTipGeneric.
+  ///
+  /// In en, this message translates to:
+  /// **'All buttons done up · collar flat · shirt sits evenly'**
+  String get wearingStepShirtTipGeneric;
+
+  /// No description provided for @wearingAccessorySub.
+  ///
+  /// In en, this message translates to:
+  /// **'{zone} · {kind}'**
+  String wearingAccessorySub(String zone, String kind);
+
+  /// No description provided for @wearingRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Required'**
+  String get wearingRequired;
+
+  /// No description provided for @wearingOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional'**
+  String get wearingOptional;
+
+  /// No description provided for @wearingNoTip.
+  ///
+  /// In en, this message translates to:
+  /// **'Wear as shown in the placement diagram'**
+  String get wearingNoTip;
+
+  /// No description provided for @wearingDoctrinePending.
+  ///
+  /// In en, this message translates to:
+  /// **'Detailed items for this dress are pending doctrine review — only the base garments are listed.'**
+  String get wearingDoctrinePending;
+
+  /// No description provided for @wearingZoneHead.
+  ///
+  /// In en, this message translates to:
+  /// **'Head'**
+  String get wearingZoneHead;
+
+  /// No description provided for @wearingZoneCollar.
+  ///
+  /// In en, this message translates to:
+  /// **'Collar'**
+  String get wearingZoneCollar;
+
+  /// No description provided for @wearingZoneShoulder.
+  ///
+  /// In en, this message translates to:
+  /// **'Shoulder'**
+  String get wearingZoneShoulder;
+
+  /// No description provided for @wearingZoneChestCentre.
+  ///
+  /// In en, this message translates to:
+  /// **'Centre of chest'**
+  String get wearingZoneChestCentre;
+
+  /// No description provided for @wearingZoneRightChest.
+  ///
+  /// In en, this message translates to:
+  /// **'Right chest'**
+  String get wearingZoneRightChest;
+
+  /// No description provided for @wearingZoneLeftChest.
+  ///
+  /// In en, this message translates to:
+  /// **'Left chest'**
+  String get wearingZoneLeftChest;
+
+  /// No description provided for @wearingZoneSleeves.
+  ///
+  /// In en, this message translates to:
+  /// **'Sleeves'**
+  String get wearingZoneSleeves;
+
+  /// No description provided for @wearingZoneTorso.
+  ///
+  /// In en, this message translates to:
+  /// **'Torso'**
+  String get wearingZoneTorso;
+
+  /// No description provided for @wearingZoneWaist.
+  ///
+  /// In en, this message translates to:
+  /// **'Waist'**
+  String get wearingZoneWaist;
+
+  /// No description provided for @wearingZoneLegs.
+  ///
+  /// In en, this message translates to:
+  /// **'Legs'**
+  String get wearingZoneLegs;
+
+  /// No description provided for @wearingZoneFeet.
+  ///
+  /// In en, this message translates to:
+  /// **'Feet'**
+  String get wearingZoneFeet;
+
+  /// No description provided for @wearingStepChestBadgesNo4.
+  ///
+  /// In en, this message translates to:
+  /// **'SAF Badges'**
+  String get wearingStepChestBadgesNo4;
+
+  /// No description provided for @wearingStepChestBadgesNo4Sub.
+  ///
+  /// In en, this message translates to:
+  /// **'Left chest · max 3'**
+  String get wearingStepChestBadgesNo4Sub;
+
+  /// No description provided for @wearingStepChestBadgesTipArmy.
+  ///
+  /// In en, this message translates to:
+  /// **'Centred directly above the top edge of the left chest pocket · max 3 badges'**
+  String get wearingStepChestBadgesTipArmy;
+
+  /// No description provided for @wearingStepChestBadgesTipNavy.
+  ///
+  /// In en, this message translates to:
+  /// **'Centred 3 cm above the top edge of the left chest pocket · max 3 badges'**
+  String get wearingStepChestBadgesTipNavy;
+
+  /// No description provided for @wearingStepChestBadgesTipSingaporeTag.
+  ///
+  /// In en, this message translates to:
+  /// **'Centred directly above the top edge of the Singapore tag · max 3 badges'**
+  String get wearingStepChestBadgesTipSingaporeTag;
+
+  /// No description provided for @wearingStepSleeveBadges.
+  ///
+  /// In en, this message translates to:
+  /// **'Sleeve Badges'**
+  String get wearingStepSleeveBadges;
+
+  /// No description provided for @wearingStepSleeveBadgesSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Left sleeve · max 2'**
+  String get wearingStepSleeveBadgesSub;
+
+  /// No description provided for @wearingStepSleeveBadgesTipArmy.
+  ///
+  /// In en, this message translates to:
+  /// **'Marksmanship 1 cm below the left shoulder seam · IPPT badge centred 0.5 cm below it · only one marksmanship type'**
+  String get wearingStepSleeveBadgesTipArmy;
+
+  /// No description provided for @wearingStepSleeveBadgesTipRsaf.
+  ///
+  /// In en, this message translates to:
+  /// **'Centred 5 mm below the unit patch on the left sleeve · only one marksmanship type'**
+  String get wearingStepSleeveBadgesTipRsaf;
+
+  /// No description provided for @wearingStepSleeveBadgesTipDis.
+  ///
+  /// In en, this message translates to:
+  /// **'Centred about 0.4 cm below the patch on the left sleeve · only one marksmanship type'**
+  String get wearingStepSleeveBadgesTipDis;
+
+  /// No description provided for @wearingStepSleeveBadgesTipNavy.
+  ///
+  /// In en, this message translates to:
+  /// **'Centred on the left sleeve below the shoulder seam · only one marksmanship type'**
+  String get wearingStepSleeveBadgesTipNavy;
+
   /// No description provided for @arClose.
   ///
   /// In en, this message translates to:
@@ -1321,6 +1507,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Tap capture — we take 3 quick frames'**
   String get arAlignedSub;
+
+  /// No description provided for @arUnsupportedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{uniform} can\'t be checked yet'**
+  String arUnsupportedTitle(String uniform);
+
+  /// No description provided for @arUnsupportedSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Checks available now: {list}'**
+  String arUnsupportedSub(String list);
+
+  /// No description provided for @arChooseUniform.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose uniform on Dashboard →'**
+  String get arChooseUniform;
 
   /// No description provided for @arHintNoPerson.
   ///

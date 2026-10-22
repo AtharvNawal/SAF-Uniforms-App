@@ -417,9 +417,9 @@ class _SingleDressAccessoryList extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l = context.l10n;
     final accent = context.branchTheme.bright;
-    final checks =
-        ref.watch(uniformProfileProvider).dressAccessoryChecks[dressId] ??
-            const <String>{};
+    final profile = ref.watch(uniformProfileProvider);
+    final checks = profile.dressAccessoryChecks[dressId] ?? const <String>{};
+    final dress = DressCode.fromRequirementDocId(dressId);
 
     final entries = <_RowEntry>[
       for (final a in mandatory)
@@ -445,6 +445,9 @@ class _SingleDressAccessoryList extends ConsumerWidget {
           onTap: () => showAccessoryDetailSheetForAccessory(
             context: context,
             accessory: acc,
+            gender: profile.gender,
+            dress: dress,
+            branch: profile.branch,
             onMarkVerified: () {
               ref
                   .read(uniformProfileProvider.notifier)
@@ -501,6 +504,7 @@ class _AllAccessoriesList extends ConsumerWidget {
           onTap: () => showAccessoryDetailSheetForAccessory(
             context: context,
             accessory: acc,
+            gender: profile.gender,
             onMarkVerified: () =>
                 _setAcrossAllDresses(ref, acc.id, index, true),
           ),

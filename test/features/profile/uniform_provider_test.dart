@@ -4,6 +4,7 @@ import 'package:saf_uniforms/features/profile/domain/entities/branch_id.dart';
 import 'package:saf_uniforms/features/profile/domain/entities/dress_code.dart';
 import 'package:saf_uniforms/features/profile/domain/entities/gender.dart';
 import 'package:saf_uniforms/features/profile/domain/entities/rank.dart';
+import 'package:saf_uniforms/features/profile/domain/entities/uniform_profile.dart';
 import 'package:saf_uniforms/features/profile/presentation/providers/uniform_provider.dart';
 
 void main() {
@@ -48,6 +49,32 @@ void main() {
       container.read(uniformProfileProvider).selectedAccessoryIds,
       isEmpty,
     );
+  });
+
+  group('hydrate vs pending local edit', () {
+    test('a stale snapshot does not revert an unsaved dress pick', () {
+      final notifier = container.read(uniformProfileProvider.notifier);
+      notifier.setDressCode(DressCode.no4);
+      // Snapshot from before the edit (still No.3) arrives within the
+      // debounce window.
+      notifier.hydrate(const UniformProfile(dressCode: DressCode.no3));
+      expect(container.read(uniformProfileProvider).dressCode, DressCode.no4);
+    });
+
+    test('snapshots apply again once the pending write has fired', () async {
+      final notifier = container.read(uniformProfileProvider.notifier);
+      notifier.setDressCode(DressCode.no4);
+      await Future<void>.delayed(const Duration(milliseconds: 600));
+      notifier.hydrate(const UniformProfile(dressCode: DressCode.no5));
+      expect(container.read(uniformProfileProvider).dressCode, DressCode.no5);
+    });
+
+    test('applies immediately when nothing is pending', () {
+      container
+          .read(uniformProfileProvider.notifier)
+          .hydrate(const UniformProfile(dressCode: DressCode.no4));
+      expect(container.read(uniformProfileProvider).dressCode, DressCode.no4);
+    });
   });
 
   group('setFullName', () {

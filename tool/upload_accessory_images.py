@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 """Upload assets/accessories/<id>/{image,placement}.png to Firebase Storage.
 
+Also uploads dress-specific variants (`<variant>_{image,placement}.png`,
+variant `no4` / `no4_<branch>`) and records them under the entry's
+`dress_images[<variant>]` map.
+
 Why this lives in Python and not in tool/seed_firestore.dart:
   Dart's shared HttpClient inside `google_cloud_storage` (used via
   firebase_admin_sdk) gets into a corrupted-state mid-stream after a
@@ -38,12 +42,16 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+import re
 import uuid
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 JSON_PATH = REPO_ROOT / "assets" / "data" / "accessory_library.v1.json"
 ASSETS_ROOT = REPO_ROOT / "assets" / "accessories"
+# `<variant>_{image,placement}.png`, variant = `no4` or `no4_<branch>` →
+# `dress_images[<variant>].{image_url,placement_diagram}`.
+VARIANT_FILE = re.compile(r"(no[1-5](?:_(?:army|navy|rsaf|dis))?)_(image|placement)\.png")
 TOKEN_TTL = 3500  # seconds; refresh before the 1-hour cap
 
 OAUTH_SCOPE = "https://www.googleapis.com/auth/devstorage.read_write"
@@ -226,7 +234,21 @@ def main() -> int:
             continue
 
         patched_this_entry = False
-        for file_name, json_key in [("image.png", "image_url"), ("placement.png", "placement_diagram")]:
+        # (file name, JSON key, dress_images variant or None for the base pair)
+        targets: list[tuple[str, str, str | None]] = [
+            ("image.png", "image_url", None),
+            ("placement.png", "placement_diagram", None),
+        ]
+        # Dress-specific pictures (`no4_image.png`, `no4_rsaf_placement.png`,
+        # …) written by tool/extract_pdf_accessories_no4.py. Stored flat in
+        # the same Storage folder so the existing storage.rules match.
+        for p in sorted(accessory_dir.glob("*_image.png")) + sorted(accessory_dir.glob("*_placement.png")):
+            m = VARIANT_FILE.fullmatch(p.name)
+            if m:
+                key = "image_url" if m.group(2) == "image" else "placement_diagram"
+                targets.append((p.name, key, m.group(1)))
+
+        for file_name, json_key, variant in targets:
             local_path = accessory_dir / file_name
             if not local_path.is_file():
                 missing += 1
@@ -287,8 +309,9 @@ def main() -> int:
                     uploaded += 1
 
                 url = _download_url(args.bucket, object_name, download_token)
-                if entry.get(json_key) != url:
-                    entry[json_key] = url
+                slot = entry if variant is None else entry.setdefault("dress_images", {}).setdefault(variant, {})
+                if slot.get(json_key) != url:
+                    slot[json_key] = url
                     patched_this_entry = True
             except urllib.error.HTTPError as e:
                 failed += 1

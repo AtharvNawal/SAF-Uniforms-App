@@ -51,8 +51,22 @@ class UniformProfileNotifier extends _$UniformProfileNotifier {
   /// Replaces in-memory state with values loaded from Firestore.
   /// Called by the post-auth hydration listener; does NOT trigger a
   /// debounced write back (that would be a no-op echo).
+  ///
+  /// A snapshot that arrives while a local edit is still waiting for its
+  /// debounced write is ignored: it predates the edit, and applying it
+  /// would silently revert the edit (e.g. a No.4 dress pick snapping back
+  /// to No.3) and cancel the write that would have saved it. The pending
+  /// write lands shortly after and its own snapshot re-syncs everything.
   void hydrate(UniformProfile profile) {
-    _debounce?.cancel();
+    if (_debounce?.isActive ?? false) {
+      AppLog.d(
+        'hydrate SKIPPED — local edit pending write '
+        '(local dress=${state.dressCode.wireName}, '
+        'snapshot dress=${profile.dressCode.wireName})',
+        tag: _tag,
+      );
+      return;
+    }
     state = profile;
     AppLog.i('hydrated from Firestore', tag: _tag);
   }

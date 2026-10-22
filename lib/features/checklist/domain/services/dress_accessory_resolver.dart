@@ -110,15 +110,28 @@ class DressAccessoryResolver {
       addMandatory(capBadge);
     }
 
-    // cap_embellishment: same shape as cap_badge (Navy/RSAF only)
+    // cap_embellishment: same shape as cap_badge (Navy/RSAF only). It is
+    // the peak of the ladies' service hat, so men (berets) never wear it.
     final capEmbellishment = override['cap_embellishment'];
-    if (capEmbellishment is Map) {
-      addMandatory(_pickByOfficerTier(
-        Map<String, dynamic>.from(capEmbellishment),
-        profile,
-      ));
-    } else {
-      addMandatory(capEmbellishment);
+    if (_isLadies(profile.gender)) {
+      if (capEmbellishment is Map) {
+        final m = Map<String, dynamic>.from(capEmbellishment);
+        // MAJ–SLTC and SWO–CWO have their own (plain) peak; lower ranks
+        // have none.
+        const majTier = 'maj_to_sltc_swo_to_cwo_me5_to_me6';
+        const majToSltcSwoCwo = {
+          Rank.maj,
+          Rank.ltc,
+          Rank.sltc,
+          Rank.swo,
+          Rank.cwo,
+        };
+        addMandatory(majToSltcSwoCwo.contains(profile.rank)
+            ? m[majTier]
+            : _pickByOfficerTier(m, profile));
+      } else {
+        addMandatory(capEmbellishment);
+      }
     }
 
     // rank_insignia_sleeve: { specialist, enlistee }
@@ -131,15 +144,39 @@ class DressAccessoryResolver {
       addMandatory(sleeve);
     }
 
-    // epaulettes: string id, or nested by rank tier
+    // epaulettes: string id, `{standard, cadet_trainee | me_trainee}`
+    // (No.3 shoulder epaulettes — men only; ladies wear collar pins or
+    // gorgettes instead, see `ladies_rank`), or legacy rank tiers.
     final epaulettes = override['epaulettes'];
     if (epaulettes is Map) {
-      addMandatory(_pickByOfficerTier(
-        Map<String, dynamic>.from(epaulettes),
-        profile,
-      ));
+      final m = Map<String, dynamic>.from(epaulettes);
+      if (m.containsKey('standard')) {
+        if (!_isLadies(profile.gender)) {
+          final trainee = m['cadet_trainee'] ?? m['me_trainee'];
+          addMandatory(
+            profile.rank == Rank.oct ? (trainee ?? m['standard']) : m['standard'],
+          );
+        }
+      } else {
+        addMandatory(_pickByOfficerTier(m, profile));
+      }
     } else {
       addMandatory(epaulettes);
+    }
+
+    // ladies_rank: No.3 rank items for ladies, who wear no epaulettes —
+    // `{collar_pins, gorgette_officer_cadet, gorgette_me_trainee}`. Lady
+    // officers / WOs wear collar rank pins; a lady Officer Cadet wears the
+    // gorgette (DIS has only the ME-trainee one). Specialists / enlistees
+    // wear sleeve insignia (`rank_insignia_sleeve`).
+    final ladiesRank = override['ladies_rank'];
+    if (ladiesRank is Map && _isLadies(profile.gender)) {
+      final m = Map<String, dynamic>.from(ladiesRank);
+      if (profile.rank == Rank.oct) {
+        addMandatory(m['gorgette_officer_cadet'] ?? m['gorgette_me_trainee']);
+      } else if (_isOfficerOrWarrant(profile.rank)) {
+        addMandatory(m['collar_pins']);
+      }
     }
 
     // rank_epaulette: { standard, cadet_trainee } — No.4's single
@@ -186,7 +223,7 @@ class DressAccessoryResolver {
     void addGenderedMandatory(Object? raw) {
       if (raw is Map) {
         final m = Map<String, dynamic>.from(raw);
-        final key = profile.gender == Gender.female ? 'ladies' : 'men';
+        final key = _isLadies(profile.gender) ? 'ladies' : 'men';
         addOne(m[key]);
       } else {
         addOne(raw);
@@ -262,16 +299,28 @@ class DressAccessoryResolver {
       return headdress['unisex'] as String?;
     }
 
-    if (profile.gender == Gender.female) {
+    if (_isLadies(profile.gender)) {
       final ladies = headdress['ladies'];
       if (ladies is Map) {
         final m = Map<String, dynamic>.from(ladies);
-        final officerKey =
-            _isOfficerOrWarrant(profile.rank) ? 'officer_wo_me3_to_me8' : null;
-        final enlisteeKey = _isEnlistedOrSpecialist(profile.rank)
-            ? 'specialist_enlistee_me1_me2'
-            : null;
-        return (m[officerKey] ?? m[enlisteeKey]) as String?;
+        final r = profile.rank;
+        // RSAF: BG/ME8 and above have their own hat.
+        if (_isBgOrAboveMe8Plus(r) && m['bg_me8_above'] is String) {
+          return m['bg_me8_above'] as String;
+        }
+        // Officers and WOs; an Officer Cadet wears the specialists' hat
+        // (Navy / RSAF PDFs list cadets with the specialist hat).
+        if (_isOfficerOrWarrant(r) && r != Rank.oct) {
+          return m['officer_wo_me3_to_me8'] as String?;
+        }
+        // Specialists / enlistees / cadets: the key's wording differs per
+        // branch (`specialist_enlistee_me1_me2`,
+        // `specialist_rating_cadet_me_trainee_me1_me2`, …).
+        for (final e in m.entries) {
+          if (e.key.startsWith('specialist') && e.value is String) {
+            return e.value as String;
+          }
+        }
       }
       return null;
     }
@@ -283,6 +332,12 @@ class DressAccessoryResolver {
       if (_isColOrAboveMe7Plus(profile.rank) && m['sikh_col_me7_above'] is String) {
         return m['sikh_col_me7_above'] as String;
       }
+      // Navy: white turban for 3WO/ME3 and above (WOs and officers).
+      if (_isOfficerOrWarrant(profile.rank) &&
+          profile.rank != Rank.oct &&
+          m['sikh_3wo_me3_above'] is String) {
+        return m['sikh_3wo_me3_above'] as String;
+      }
       if (m['sikh'] is String) return m['sikh'] as String;
     }
     return m['default'] as String?;
@@ -293,8 +348,15 @@ class DressAccessoryResolver {
     UniformProfile profile,
   ) {
     final r = profile.rank;
-    if (_isBgOrAboveMe8Plus(r) && tiers['bg_me8_above'] is String) {
-      return tiers['bg_me8_above'] as String;
+    if (_isBgOrAboveMe8Plus(r)) {
+      // RSAF has a beret and a (smaller) service-hat version; DIS names
+      // its key `bg_me8_radm_above`.
+      final hatKey = _isLadies(profile.gender)
+          ? 'bg_me8_above_service_hat'
+          : 'bg_me8_above_beret';
+      for (final k in [hatKey, 'bg_me8_above', 'bg_me8_radm_above']) {
+        if (tiers[k] is String) return tiers[k] as String;
+      }
     }
     if (r == Rank.col) {
       if (tiers['col_me7'] is String) return tiers['col_me7'] as String;
@@ -315,13 +377,13 @@ class DressAccessoryResolver {
     final raw = a.gender;
     if (raw == null || raw.isEmpty) return true;
     if (raw == 'unisex') return true;
-    if (g == Gender.female) return raw == 'female' || raw == 'ladies';
+    if (_isLadies(g)) return raw == 'female' || raw == 'ladies';
     return raw == 'male' || raw == 'men';
   }
 
-  bool _isEnlistedOrSpecialist(Rank r) {
-    return _enlisteeOrSpecialist(r) != null;
-  }
+  /// Ladies' items apply to maternity too (maternity uniforms are the
+  /// ladies' uniform cut for pregnancy) — same rule as the TS port.
+  bool _isLadies(Gender g) => g == Gender.female || g == Gender.maternity;
 
   String? _enlisteeOrSpecialist(Rank r) {
     switch (r) {

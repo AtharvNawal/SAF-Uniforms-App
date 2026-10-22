@@ -25,6 +25,12 @@ real people approximately, not exactly — re-fit against real labelled
 photos when they exist (same script shape, different image source).
 
     .venv-tools/bin/python cv-service/pose/calibrate_anchor_offsets.py --n 40
+    .venv-tools/bin/python cv-service/pose/calibrate_anchor_offsets.py --n 60 --uniform rsaf_no4_female
+
+`--uniform` (default `army_no3_male`) picks the reference body, anchor file
+and output file from `uniforms.py`. RSAF No.4 uses the operator's dressed
+figures (`training/rsaf_figure.py`), fully dressed — the landmarks are
+fitted against the uniform as worn. ChangeRequest/2026-10-05_cv-service-rsaf-no4.md.
 """
 
 from __future__ import annotations
@@ -44,6 +50,7 @@ CV_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(CV_ROOT))
 sys.path.insert(0, str(CV_ROOT / "training"))
 
+import uniforms  # noqa: E402
 from pose.anchor_mapping import body_frame, estimate_anchor_pose  # noqa: E402
 from pose.detect_person import detect_person  # noqa: E402
 
@@ -68,10 +75,21 @@ def main() -> None:
     parser.add_argument("--bare", action="store_true",
                         help="render the bare body (the original fit); default renders it dressed in randomised "
                              "No.3 accessories, since a beret or belt shifts where pose landmarks land")
+    parser.add_argument("--uniform", default="army_no3_male", choices=sorted(uniforms.UNIFORMS))
     args = parser.parse_args()
+    spec = uniforms.UNIFORMS[args.uniform]
+    out_path = spec.offsets_path
+    figure = None
+    if args.uniform.startswith("rsaf_no4_"):
+        import rsaf_figure
+        from rules.rule_engine import load_anchors
 
-    anchors = gen.load_anchors()
-    body = gen.load_body_parts_v2(anchors)
+        anchors = load_anchors(spec.anchors_path)
+        figure = rsaf_figure.load_figure(args.uniform.rsplit("_", 1)[1])
+        body = None
+    else:
+        anchors = gen.load_anchors()
+        body = gen.load_body_parts_v2(anchors)
     rng = random.Random(args.seed)
     samples: dict[str, list[tuple[float, float]]] = {}
 
@@ -80,9 +98,12 @@ def main() -> None:
             cam_pose, yfov = gen._camera_pose(rng, wide=False)
             focal = (HEIGHT / 2) / math.tan(yfov / 2)
             scene = pyrender.Scene(bg_color=[rng.randint(120, 230)] * 3 + [255], ambient_light=[0.3] * 3)
-            meshes = list(body["rgb"])
-            if not args.bare:
-                meshes += [m for _, _, _, m in gen.placed_accessories(gen.choose_accessories(rng), anchors)]
+            if figure is not None:
+                meshes = [m for m, _ in rsaf_figure.build_scene(figure, rng, removals={}, sikh=False, cadet=False)]
+            else:
+                meshes = list(body["rgb"])
+                if not args.bare:
+                    meshes += [m for _, _, _, m in gen.placed_accessories(gen.choose_accessories(rng), anchors)]
             for mesh in meshes:
                 scene.add(pyrender.Mesh.from_trimesh(mesh))
             scene.add(pyrender.PerspectiveCamera(yfov=yfov, aspectRatio=WIDTH / HEIGHT), pose=cam_pose)
@@ -122,9 +143,11 @@ def main() -> None:
             "residual_std": round(float(np.linalg.norm(arr.std(axis=0))), 4),
             "n": len(arr),
         }
-    OUT_PATH.write_text(json.dumps({
-        "fitted_on": f"{args.n} synthetic near-frontal renders of assets/3d/bodies/male_apose.glb, "
-                     f"{'bare' if args.bare else 'dressed in randomised No.3 accessories'} (seed {args.seed})",
+    source = (f"assets/3d/bodies/{args.uniform}.glb, fully dressed" if figure is not None else
+              f"assets/3d/bodies/male_apose.glb, {'bare' if args.bare else 'dressed in randomised No.3 accessories'}")
+    out_path.write_text(json.dumps({
+        "fitted_on": f"{args.n} synthetic near-frontal renders of {source} (seed {args.seed})",
+        "uniform_type": args.uniform,
         "units": "fraction of detected shoulder width; outward = away from body midline (mirrored per side, "
                  "image +x for midline anchors); down = along the torso axis",
         "real_photos_used": 0,
@@ -132,7 +155,7 @@ def main() -> None:
     }, indent=2) + "\n")
     for name, o in offsets.items():
         print(f"{name:22s} outward {o['outward']:+.3f} down {o['down']:+.3f}  residual_std {o['residual_std']:.3f}  n={o['n']}")
-    print(f"wrote {OUT_PATH}")
+    print(f"wrote {out_path}")
 
 
 if __name__ == "__main__":

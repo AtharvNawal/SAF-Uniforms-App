@@ -640,6 +640,115 @@ class AppLocalizationsEn extends AppLocalizations {
       'Beret tilted right · or turban with fifti';
 
   @override
+  String wearingStepTrousersFor(String dress) {
+    return '$dress Trousers';
+  }
+
+  @override
+  String wearingStepShirtFor(String dress) {
+    return '$dress Shirt';
+  }
+
+  @override
+  String get wearingStepTrousersTipGeneric =>
+      'Waistband at natural waist · trousers straight and even';
+
+  @override
+  String get wearingStepShirtTipGeneric =>
+      'All buttons done up · collar flat · shirt sits evenly';
+
+  @override
+  String wearingAccessorySub(String zone, String kind) {
+    return '$zone · $kind';
+  }
+
+  @override
+  String get wearingRequired => 'Required';
+
+  @override
+  String get wearingOptional => 'Optional';
+
+  @override
+  String get wearingNoTip => 'Wear as shown in the placement diagram';
+
+  @override
+  String get wearingDoctrinePending =>
+      'Detailed items for this dress are pending doctrine review — only the base garments are listed.';
+
+  @override
+  String get wearingZoneHead => 'Head';
+
+  @override
+  String get wearingZoneCollar => 'Collar';
+
+  @override
+  String get wearingZoneShoulder => 'Shoulder';
+
+  @override
+  String get wearingZoneChestCentre => 'Centre of chest';
+
+  @override
+  String get wearingZoneRightChest => 'Right chest';
+
+  @override
+  String get wearingZoneLeftChest => 'Left chest';
+
+  @override
+  String get wearingZoneSleeves => 'Sleeves';
+
+  @override
+  String get wearingZoneTorso => 'Torso';
+
+  @override
+  String get wearingZoneWaist => 'Waist';
+
+  @override
+  String get wearingZoneLegs => 'Legs';
+
+  @override
+  String get wearingZoneFeet => 'Feet';
+
+  @override
+  String get wearingStepChestBadgesNo4 => 'SAF Badges';
+
+  @override
+  String get wearingStepChestBadgesNo4Sub => 'Left chest · max 3';
+
+  @override
+  String get wearingStepChestBadgesTipArmy =>
+      'Centred directly above the top edge of the left chest pocket · max 3 badges';
+
+  @override
+  String get wearingStepChestBadgesTipNavy =>
+      'Centred 3 cm above the top edge of the left chest pocket · max 3 badges';
+
+  @override
+  String get wearingStepChestBadgesTipSingaporeTag =>
+      'Centred directly above the top edge of the Singapore tag · max 3 badges';
+
+  @override
+  String get wearingStepSleeveBadges => 'Sleeve Badges';
+
+  @override
+  String get wearingStepSleeveBadgesSub => 'Left sleeve · max 2';
+
+  @override
+  String get wearingStepSleeveBadgesTipArmy =>
+      'Marksmanship 1 cm below the left shoulder seam · IPPT badge centred 0.5 cm below it · only one marksmanship type';
+
+  @override
+  String get wearingStepSleeveBadgesTipRsaf =>
+      'Centred 5 mm below the unit patch on the left sleeve · only one marksmanship type';
+
+  @override
+  String get wearingStepSleeveBadgesTipDis =>
+      'Centred about 0.4 cm below the patch on the left sleeve · only one marksmanship type';
+
+  @override
+  String get wearingStepSleeveBadgesTipNavy =>
+      'Centred on the left sleeve below the shoulder seam · only one marksmanship type';
+
+  @override
   String get arClose => 'Close';
 
   @override
@@ -659,6 +768,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get arAlignedSub => 'Tap capture — we take 3 quick frames';
+
+  @override
+  String arUnsupportedTitle(String uniform) {
+    return '$uniform can\'t be checked yet';
+  }
+
+  @override
+  String arUnsupportedSub(String list) {
+    return 'Checks available now: $list';
+  }
+
+  @override
+  String get arChooseUniform => 'Choose uniform on Dashboard →';
 
   @override
   String get arHintNoPerson => 'Step into the frame';
