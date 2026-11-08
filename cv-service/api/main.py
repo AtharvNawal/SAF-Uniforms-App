@@ -287,6 +287,7 @@ async def check_uniform(
     medal_row_count: int = Form(0),
     view: str = Form("front"),
     body_type: str = Form("male"),
+    personnel_category: str = Form("regular"),
     include_debug_image: bool = Form(False),
     wearer_name: str | None = Form(None),
     height_cm: float | None = Form(None),
@@ -313,6 +314,7 @@ async def check_uniform(
     params = _params(
         uniform_type=uniform_type, rank_tier=rank_tier, gender=gender, is_sikh=is_sikh,
         medal_row_count=medal_row_count, view=view, body_type=body_type,
+        personnel_category=personnel_category,
         include_debug_image=include_debug_image, wearer_name=wearer_name, height_cm=height_cm,
         focal_length_px=focal_length_px, gravity_x=gravity_x, gravity_y=gravity_y, gravity_z=gravity_z,
     )
@@ -335,6 +337,7 @@ async def check_uniform_burst(
     medal_row_count: int = Form(0),
     view: str = Form("front"),
     body_type: str = Form("male"),
+    personnel_category: str = Form("regular"),
     include_debug_image: bool = Form(False),
     wearer_name: str | None = Form(None),
     height_cm: float | None = Form(None),
@@ -355,6 +358,7 @@ async def check_uniform_burst(
     params = _params(
         uniform_type=uniform_type, rank_tier=rank_tier, gender=gender, is_sikh=is_sikh,
         medal_row_count=medal_row_count, view=view, body_type=body_type,
+        personnel_category=personnel_category,
         include_debug_image=include_debug_image, wearer_name=wearer_name, height_cm=height_cm,
         focal_length_px=focal_length_px, gravity_x=gravity_x, gravity_y=gravity_y, gravity_z=gravity_z,
     )

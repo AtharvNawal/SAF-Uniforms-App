@@ -45,7 +45,8 @@ from geometry.solve_camera_pose import solve_camera_pose as solve_camera_pose_v2
 from pose.anchor_mapping import estimate_anchor_pose
 from pose.detect_person import detect_person
 from reporting.report import render_debug_image_b64
-from rules.rule_engine import evaluate_verdicts, load_anchors, load_rules, resolve_rules
+from rules.rule_engine import evaluate_verdicts, load_anchors, resolve_rules
+from rules.rule_selector import profile_from_uniform_type, select_rule_config
 from segmentation.segment_uniform import segment_uniform, using_model
 from segmentation.two_stage import refine_small_items
 
@@ -67,6 +68,7 @@ class CheckParams:
     medal_row_count: int = 0
     view: str = "front"
     body_type: str = "male"
+    personnel_category: str = "regular"
     include_debug_image: bool = False
     # D16 / B8 — all optional; each only improves the measurement.
     wearer_name: str | None = None
@@ -187,8 +189,23 @@ def solve_geometry(image_path: str, params: CheckParams) -> Geometry:
                          "Could not determine physical scale from this photo (shoulders not clearly visible). "
                          "Please retake with both shoulders in frame.")
 
-    profile = {"rank_tier": params.rank_tier, "gender": params.gender, "isSikh": params.is_sikh, "medalRowCount": params.medal_row_count}
-    all_rules = load_rules(spec.rules_path)
+    try:
+        inspection_profile = profile_from_uniform_type(
+            params.uniform_type,
+            params.rank_tier,
+            params.gender,
+            params.personnel_category,
+            params.is_sikh,
+        )
+        rule_config = select_rule_config(inspection_profile, spec)
+    except ValueError as exc:
+        raise CheckError(422, "INVALID_INSPECTION_PROFILE", str(exc)) from exc
+
+    profile = {
+        **inspection_profile.as_rule_profile(),
+        "medalRowCount": params.medal_row_count,
+    }
+    all_rules = rule_config.rules
     resolved = resolve_rules(camera, cm_per_px, profile=profile, rules=all_rules, anchors=anchors)
     if not resolved:
         raise CheckError(500, "NO_RULES", "No doctrine rules resolved for this profile.")
@@ -227,6 +244,14 @@ def _run_check(image_path: str, params: CheckParams) -> dict:
     response = build_check_uniform_response(
         resolved, verdicts, detection, validation.usable, validation.confidence, class_names=segmentation.class_names,
     )
+    response["inspection_profile"] = {
+        "service": params.uniform_type.split("_", 1)[0],
+        "dress": params.uniform_type.split("_")[1],
+        "gender": params.gender,
+        "rank_tier": params.rank_tier,
+        "personnel_category": params.personnel_category,
+        "is_sikh": params.is_sikh,
+    }
     response["uniform_identification"] = {
         "status": g.identity.status,
         "detected_attire": params.uniform_type,

@@ -1274,6 +1274,19 @@ proof that an accessory mesh or doctrine-approved item is present. The
 manifest is an offline inventory only; request-time compliance still uses the
 frozen anchor/rule files and detector evidence.
 
+**Rule selection is profile-aware** (2026-11-08,
+`ChangeRequest/2026-11-08-official-rule-engine.md`). `rules/rule_loader.py`
+validates every doctrine JSON's metadata and per-rule source reference;
+`rules/rule_selector.py` validates the requested service, dress, gender,
+rank tier, personnel category and Sikh flag before selecting the exact
+configuration. `/check_uniform` and `/check_uniform_burst` accept
+`personnel_category` and include the selected `inspection_profile` in a
+successful response. The currently provisioned, validated request-time
+configurations remain Army No.3 Male and RSAF No.4 Male/Female. Navy, DIS,
+other dresses and diagram-only rules must not be represented by copied Army
+rules or invented tolerances; they remain unavailable until their source
+rules, matching anchors and detector evidence are added and tested.
+
 **What's real, measured geometry today** (built
 2026-08-05, `ChangeRequest/2026-08-05_cv-service-mvp-inspect-endpoint.md`):
 `pose/detect_person.py` (YOLOv8n, pretrained), `pose/estimate_pose.py`

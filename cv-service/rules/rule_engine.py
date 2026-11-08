@@ -26,6 +26,7 @@ import numpy as np
 import config
 from calibration.pnp_solve import CameraSolution, project_point
 from pose.estimate_pose import PoseResult
+from rules.rule_loader import load_rule_config
 from segmentation.mask_geometry import angle_difference_deg, mask_centroid_px, mask_orientation_deg, mask_reference_point
 from segmentation.segment_uniform import SegmentationResult
 
@@ -38,7 +39,7 @@ _MIN_CROP_RADIUS_CM = config.MIN_CROP_RADIUS_CM
 
 
 def load_rules(path: Path = _RULES_PATH) -> list[dict]:
-    return json.loads(path.read_text())["rules"]
+    return load_rule_config(path).rules
 
 
 def load_anchors(path: Path = _ANCHORS_PATH) -> dict:
