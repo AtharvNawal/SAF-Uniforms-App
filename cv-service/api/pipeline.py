@@ -35,6 +35,7 @@ from api.response_schema import build_check_uniform_response
 from api.validation import check_sharpness, validate_image
 from detectors.color_check import check_colors
 from detectors.name_tag_ocr import check_name_tag
+from detectors.uniform_identity import identify_uniform
 from detectors.variant_matcher import check_variants
 from detectors.zero_shot import fill_missed_detections
 from geometry.mask_anchor_refinement import refine_anchors_with_masks
@@ -102,6 +103,7 @@ class Geometry:
     validation: object
     image_bgr: object
     segmentation: object
+    identity: object
     anchor_pose: dict
     intrinsics: object
     anchors: dict
@@ -147,6 +149,20 @@ def solve_geometry(image_path: str, params: CheckParams) -> Geometry:
         segmentation = segment_uniform(image_path)
     except FileNotFoundError:
         raise CheckError(503, "SEGMENTER_UNAVAILABLE", "The uniform segmentation model is not installed on this server.")
+    identity = identify_uniform(segmentation, params.uniform_type)
+    if not identity.inspection_allowed:
+        raise CheckError(
+            200,
+            identity.status,
+            identity.message,
+            uniform_identification={
+                "status": identity.status,
+                "detected_attire": identity.detected_attire,
+                "confidence": identity.confidence,
+                "message": identity.message,
+                "inspection_allowed": False,
+            },
+        )
 
     anchor_pose = estimate_anchor_pose(image_path, person_box=detection.person, offsets_path=spec.offsets_path)
     anchor_pose = refine_anchors_with_masks(anchor_pose, segmentation)
@@ -176,7 +192,7 @@ def solve_geometry(image_path: str, params: CheckParams) -> Geometry:
     resolved = resolve_rules(camera, cm_per_px, profile=profile, rules=all_rules, anchors=anchors)
     if not resolved:
         raise CheckError(500, "NO_RULES", "No doctrine rules resolved for this profile.")
-    return Geometry(detection, validation, image_bgr, segmentation, anchor_pose, intrinsics, anchors,
+    return Geometry(detection, validation, image_bgr, segmentation, identity, anchor_pose, intrinsics, anchors,
                     height_scale, camera, cm_per_px, all_rules, resolved)
 
 
@@ -211,6 +227,13 @@ def _run_check(image_path: str, params: CheckParams) -> dict:
     response = build_check_uniform_response(
         resolved, verdicts, detection, validation.usable, validation.confidence, class_names=segmentation.class_names,
     )
+    response["uniform_identification"] = {
+        "status": g.identity.status,
+        "detected_attire": params.uniform_type,
+        "confidence": g.identity.confidence,
+        "message": g.identity.message,
+        "inspection_allowed": g.identity.inspection_allowed,
+    }
     response["camera"] = {
         "focal_length_px": round(float(camera.camera_matrix[0, 0]), 1),
         "focal_source": intrinsics.source,
@@ -232,4 +255,3 @@ def _run_check(image_path: str, params: CheckParams) -> dict:
     if params.include_debug_image:
         response["debug_image_base64"] = render_debug_image_b64(image_bgr, verdicts)
     return response
-

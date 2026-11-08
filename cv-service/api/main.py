@@ -224,6 +224,36 @@ async def inspect(
 
 
 def _error(status_code: int, status: str, message: str, **extra) -> JSONResponse:
+    if status in {"INVALID_ATTIRE", "WRONG_UNIFORM", "UNABLE_TO_VERIFY"}:
+        identity = extra.get("uniform_identification", {})
+        return JSONResponse(
+            status_code=200,
+            content={
+                "success": False,
+                "overall_status": status,
+                "overall_score": None,
+                "uniform_identification": identity,
+                "image_quality": {"usable": True, "confidence": 0.0},
+                "person": {"detected": True, "confidence": 0.0},
+                "accessories": [],
+                "summary": {
+                    "detected_accessories": 0,
+                    "correct": 0,
+                    "incorrect": 0,
+                    "slightly_misaligned": 0,
+                    "missing": 0,
+                    "uncertain": 0,
+                    "required_accessories": 0,
+                },
+                "coverage": {
+                    "verified_required": 0,
+                    "checkable_required": 0,
+                    "fraction": 0.0,
+                    "not_checkable_required": 0,
+                },
+                "message": message,
+            },
+        )
     return JSONResponse(status_code=status_code, content={"success": False, "status": status, "message": message, **extra})
 
 

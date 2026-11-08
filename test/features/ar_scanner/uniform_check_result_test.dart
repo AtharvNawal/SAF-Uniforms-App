@@ -73,24 +73,51 @@ void main() {
       expect(r.uncertain.map((a) => a.name), ['item_4']);
     });
 
+    test('verdict groups account for every accessory exactly once', () {
+      final base = make([
+        UniformCheckStatus.correct,
+        UniformCheckStatus.incorrect,
+        UniformCheckStatus.missing,
+        UniformCheckStatus.slightlyMisaligned,
+        UniformCheckStatus.uncertain,
+      ]);
+      final r = base.copyWith(
+        accessories: [
+          ...base.accessories.take(4),
+          base.accessories.last.copyWith(checkable: false),
+        ],
+      );
+      expect(
+        {...r.issues, ...r.passes, ...r.couldNotCheck, ...r.checkByEye}.length,
+        r.accessories.length,
+      );
+    });
+
     test('passed reflects overallStatus, case-insensitively', () {
       expect(
-        make([UniformCheckStatus.correct]).copyWith(overallStatus: 'pass').passed,
+        make([
+          UniformCheckStatus.correct,
+        ]).copyWith(overallStatus: 'pass').passed,
         isTrue,
       );
       expect(
-        make([UniformCheckStatus.correct]).copyWith(overallStatus: 'FAIL').passed,
+        make([
+          UniformCheckStatus.correct,
+        ]).copyWith(overallStatus: 'FAIL').passed,
         isFalse,
       );
     });
 
     test('incomplete is distinct from passed and failed', () {
-      final r = make([UniformCheckStatus.uncertain])
-          .copyWith(overallStatus: 'INCOMPLETE');
+      final r = make([
+        UniformCheckStatus.uncertain,
+      ]).copyWith(overallStatus: 'INCOMPLETE');
       expect(r.incomplete, isTrue);
       expect(r.passed, isFalse);
       expect(
-        make([UniformCheckStatus.correct]).copyWith(overallStatus: 'FAIL').incomplete,
+        make([
+          UniformCheckStatus.correct,
+        ]).copyWith(overallStatus: 'FAIL').incomplete,
         isFalse,
       );
     });

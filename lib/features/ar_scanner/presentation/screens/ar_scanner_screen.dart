@@ -1180,9 +1180,15 @@ class _RealScorecard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final branchTheme = context.branchTheme;
+    final identityFailed =
+        result.overallStatus == 'INVALID_ATTIRE' ||
+        result.overallStatus == 'WRONG_UNIFORM' ||
+        result.overallStatus == 'UNABLE_TO_VERIFY';
     final score = result.overallScore.round();
     final color = result.passed
         ? AppColors.ok
+        : identityFailed
+        ? AppColors.err
         : result.incomplete || score >= 70
         ? AppColors.warn
         : AppColors.err;
@@ -1234,7 +1240,9 @@ class _RealScorecard extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      _summaryLine(result),
+                      identityFailed
+                          ? 'Not assessed — ${_identityMessage(result.overallStatus)}'
+                          : _summaryLine(result),
                       textAlign: TextAlign.center,
                       style: AppTextStyles.body(
                         color: Colors.white.withValues(alpha: 0.7),
@@ -1288,8 +1296,18 @@ class _RealScorecard extends StatelessWidget {
                         ),
                       ),
                     ],
+                    if (identityFailed) ...[
+                      const SizedBox(height: 16),
+                      _IssueCard(
+                        title: _identityLabel(result.overallStatus),
+                        body:
+                            'Accessory checks were skipped because SAF uniform identity was not verified.',
+                        color: AppColors.err,
+                        icon: Icons.block_outlined,
+                      ),
+                    ],
                     const SizedBox(height: 24),
-                    if (issues.isNotEmpty) ...[
+                    if (!identityFailed && issues.isNotEmpty) ...[
                       Text(
                         '${issues.length} ISSUE(S)',
                         style: AppTextStyles.bodyStrong(
@@ -1314,7 +1332,7 @@ class _RealScorecard extends StatelessWidget {
                         ),
                       const SizedBox(height: 10),
                     ],
-                    if (passes.isNotEmpty) ...[
+                    if (!identityFailed && passes.isNotEmpty) ...[
                       Text(
                         '${passes.length} CORRECT',
                         style: AppTextStyles.bodyStrong(
@@ -1325,12 +1343,15 @@ class _RealScorecard extends StatelessWidget {
                       const SizedBox(height: 8),
                       for (final item in passes)
                         Padding(
-                          padding: const EdgeInsets.only(bottom: 6),
-                          child: _PassCard(label: _prettyName(item.name)),
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: _PassCard(
+                            label: _prettyName(item.name),
+                            body: _accessoryBody(item),
+                          ),
                         ),
                       const SizedBox(height: 10),
                     ],
-                    if (couldNotCheck.isNotEmpty) ...[
+                    if (!identityFailed && couldNotCheck.isNotEmpty) ...[
                       Text(
                         '${couldNotCheck.length} COULD NOT CHECK — A RETAKE MAY HELP',
                         style: AppTextStyles.bodyStrong(
@@ -1351,7 +1372,7 @@ class _RealScorecard extends StatelessWidget {
                         ),
                       const SizedBox(height: 10),
                     ],
-                    if (checkByEye.isNotEmpty) ...[
+                    if (!identityFailed && checkByEye.isNotEmpty) ...[
                       Text(
                         '${checkByEye.length} CHECK BY EYE',
                         style: AppTextStyles.bodyStrong(
@@ -1373,43 +1394,53 @@ class _RealScorecard extends StatelessWidget {
                           padding: const EdgeInsets.only(bottom: 6),
                           child: _IssueCard(
                             title: _prettyName(item.name),
-                            body: item.doctrineRef.isNotEmpty
-                                ? 'Ref: ${item.doctrineRef}'
-                                : 'See the doctrine diagram.',
+                            body: _accessoryBody(item),
                             color: AppColors.inkSubtle,
                             icon: Icons.visibility_outlined,
                           ),
                         ),
                       const SizedBox(height: 10),
                     ],
-                    GridView.count(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      crossAxisCount: 3,
-                      childAspectRatio: 1.7,
-                      children: [
-                        _MetaTile(
-                          label: 'REQUIRED',
-                          value: '${result.summary.requiredAccessories}',
+                    if (identityFailed)
+                      Text(
+                        'UNIFORM IDENTITY GATE',
+                        textAlign: TextAlign.center,
+                        style: AppTextStyles.mono(
+                          fontSize: 10,
+                          color: AppColors.inkSubtle,
+                          letterSpacing: 1.4,
                         ),
-                        _MetaTile(
-                          label: 'PERSON',
-                          value: '${(result.personConfidence * 100).round()}%',
-                        ),
-                        if (result.burstFrames != null)
+                      ),
+                    if (!identityFailed)
+                      GridView.count(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        crossAxisCount: 3,
+                        childAspectRatio: 1.7,
+                        children: [
                           _MetaTile(
-                            label: 'FRAMES',
-                            value:
-                                '${result.burstUsableFrames ?? 0}/${result.burstFrames}',
-                          )
-                        else
-                          _MetaTile(
-                            label: 'IMG QUALITY',
-                            value:
-                                '${(result.imageQualityConfidence * 100).round()}%',
+                            label: 'REQUIRED',
+                            value: '${result.summary.requiredAccessories}',
                           ),
-                      ],
-                    ),
+                          _MetaTile(
+                            label: 'PERSON',
+                            value:
+                                '${(result.personConfidence * 100).round()}%',
+                          ),
+                          if (result.burstFrames != null)
+                            _MetaTile(
+                              label: 'FRAMES',
+                              value:
+                                  '${result.burstUsableFrames ?? 0}/${result.burstFrames}',
+                            )
+                          else
+                            _MetaTile(
+                              label: 'IMG QUALITY',
+                              value:
+                                  '${(result.imageQualityConfidence * 100).round()}%',
+                            ),
+                        ],
+                      ),
                   ],
                 ),
               ),
@@ -1451,6 +1482,7 @@ String _summaryLine(UniformCheckResult r) {
   if (s.requiredAccessories == 0) {
     return 'No doctrine rules resolved for this profile.';
   }
+
   final line =
       '${s.correct} of ${s.requiredAccessories} required items correct · '
       '${s.incorrect} off · ${s.slightlyMisaligned} slightly off · '
@@ -1462,21 +1494,68 @@ String _summaryLine(UniformCheckResult r) {
   return line;
 }
 
+String _identityLabel(String status) => switch (status) {
+  'INVALID_ATTIRE' => 'INVALID ATTIRE',
+  'WRONG_UNIFORM' => 'WRONG UNIFORM',
+  _ => 'UNABLE TO VERIFY UNIFORM',
+};
+
+String _identityMessage(String status) => switch (status) {
+  'INVALID_ATTIRE' => 'No SAF uniform was detected.',
+  'WRONG_UNIFORM' => 'The detected uniform does not match your selection.',
+  _ =>
+    'The photograph does not provide enough evidence to identify the uniform.',
+};
+
 /// The instruction first — what to do, in cm and the wearer's own
 /// left/right — then how solid the call is and the doctrine reference.
 /// Falls back to the technical message for older service versions.
 String _accessoryBody(UniformCheckAccessory a) {
   final parts = <String>[];
+  parts.add(
+    'Presence: ${a.present == null
+        ? 'not determined'
+        : a.present!
+        ? 'present'
+        : 'missing'} · '
+    'Placement: ${a.positionCorrect == null
+        ? 'not determined'
+        : a.positionCorrect!
+        ? 'correct'
+        : 'not within tolerance'}',
+  );
   final instruction = a.instruction;
   if (instruction.isNotEmpty) {
     final colon = instruction.indexOf(': ');
     parts.add(colon >= 0 ? instruction.substring(colon + 2) : instruction);
   } else if (a.message.isNotEmpty) {
     parts.add(a.message);
+  } else if (!a.checkable) {
+    parts.add(
+      'Not measured automatically yet — compare with the doctrine diagram.',
+    );
+  } else if (a.status == UniformCheckStatus.correct) {
+    parts.add('Detected within the doctrine tolerance.');
+  } else if (a.status == UniformCheckStatus.uncertain) {
+    parts.add(
+      'The image did not provide enough evidence for a reliable verdict.',
+    );
+  }
+  if (a.confidence != null) {
+    parts.add('Confidence: ${(a.confidence! * 100).round()}%.');
+  }
+  if (a.visibility.isNotEmpty) {
+    parts.add('Visibility: ${a.visibility.toLowerCase()}.');
+  }
+  if (a.errorMagnitudePx != null) {
+    parts.add('Measured offset: ${a.errorMagnitudePx!.toStringAsFixed(1)} px.');
   }
   if (a.frameAgreement != null) parts.add('${a.frameAgreement} frames agree.');
+  if (a.detectionSource != null) {
+    parts.add('Detection: ${a.detectionSource!.replaceAll('_', ' ')}.');
+  }
   if (a.doctrineRef.isNotEmpty) parts.add('Ref: ${a.doctrineRef}');
-  return parts.isEmpty ? 'Out of doctrine tolerance.' : parts.join('\n');
+  return parts.join('\n');
 }
 
 Uint8List? _decodeOverlay(String? base64Image) {
@@ -1618,8 +1697,9 @@ class _IssueCard extends StatelessWidget {
 }
 
 class _PassCard extends StatelessWidget {
-  const _PassCard({required this.label});
+  const _PassCard({required this.label, required this.body});
   final String label;
+  final String body;
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -1645,9 +1725,25 @@ class _PassCard extends StatelessWidget {
           ),
           const SizedBox(width: 10),
           Expanded(
-            child: Text(
-              label,
-              style: AppTextStyles.body(color: AppColors.ink, fontSize: 12.5),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: AppTextStyles.bodyStrong(
+                    color: AppColors.ink,
+                    fontSize: 12.5,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  body,
+                  style: AppTextStyles.body(
+                    color: AppColors.inkMuted,
+                    fontSize: 11.5,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
