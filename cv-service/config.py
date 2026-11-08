@@ -206,3 +206,8 @@ INSTRUCTION_MIN_CM = _float_env("INSTRUCTION_MIN_CM", 0.3)
 
 # D17: burst — majority vote across frames.
 BURST_MAX_FRAMES = _int_env("BURST_MAX_FRAMES", 5)
+HF_EVIDENCE_ENABLED = os.getenv("CV_SERVICE_HF_EVIDENCE_ENABLED", "0").lower() in {"1", "true", "yes"}
+HF_SIGLIP_MODEL = os.getenv("CV_SERVICE_HF_SIGLIP_MODEL", "google/siglip2-so400m-patch14-384")
+HF_FLORENCE_MODEL = os.getenv("CV_SERVICE_HF_FLORENCE_MODEL", "microsoft/Florence-2-large-ft")
+HF_DINOV2_MODEL = os.getenv("CV_SERVICE_HF_DINOV2_MODEL", "facebook/dinov2-base")
+HF_UNIFORM_MIN_CONFIDENCE = _float_env("HF_UNIFORM_MIN_CONFIDENCE", 0.90)

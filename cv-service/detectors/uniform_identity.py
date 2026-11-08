@@ -28,6 +28,7 @@ class UniformIdentityResult:
 def identify_uniform(
     segmentation: "SegmentationResult",
     selected_uniform: str,
+    visual_evidence=None,
 ) -> UniformIdentityResult:
     shirt = segmentation.coverage_fraction("shirt")
     trousers = segmentation.coverage_fraction("trousers")
@@ -41,6 +42,23 @@ def identify_uniform(
     # These are intentionally conservative lower bounds. They are not a
     # classifier accuracy claim; they only block the known failure mode where
     # an isolated head-region detection is treated as an SAF accessory.
+    if visual_evidence is not None and visual_evidence.available:
+        if visual_evidence.detected_service == "CIVILIAN":
+            return UniformIdentityResult(
+                "INVALID_ATTIRE", "civilian clothing", visual_evidence.confidence,
+                "The visual profile evidence identifies civilian clothing.", False,
+            )
+        if visual_evidence.detected_service == "OTHER_SAF":
+            return UniformIdentityResult(
+                "WRONG_UNIFORM", "different SAF service", visual_evidence.confidence,
+                "The detected SAF profile does not match the selected service and dress.", False,
+            )
+        if not visual_evidence.supported_by_visual_evidence:
+            return UniformIdentityResult(
+                "UNABLE_TO_VERIFY", "unidentified attire", visual_evidence.confidence,
+                "Visual uniform evidence is below the conservative verification threshold.", False,
+            )
+
     if shirt < 0.04 and trousers < 0.04:
         return UniformIdentityResult(
             "INVALID_ATTIRE",

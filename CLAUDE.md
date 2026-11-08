@@ -1287,6 +1287,18 @@ other dresses and diagram-only rules must not be represented by copied Army
 rules or invented tolerances; they remain unavailable until their source
 rules, matching anchors and detector evidence are added and tested.
 
+**Optional Hugging Face evidence adapters** (2026-11-08,
+`ChangeRequest/2026-11-08-hf-vision-evidence-stack.md`) live in
+`detectors/hf_evidence.py`. SigLIP 2 is the opt-in uniform/profile similarity
+adapter; Florence-2 and DINOv2 are registered as lazy secondary-localization
+and reference-similarity capabilities. Their packages are listed in
+`cv-service/requirements.txt`, but imports, model downloads, and inference are
+disabled unless `CV_SERVICE_HF_EVIDENCE_ENABLED=1`. General-purpose pretrained
+models are evidence candidates, not SAF classifiers: no model result can
+override missing visual/segmentation evidence, and automatic PASS requires a
+labelled real-photo validation program before this flag is enabled in a
+deployment.
+
 **What's real, measured geometry today** (built
 2026-08-05, `ChangeRequest/2026-08-05_cv-service-mvp-inspect-endpoint.md`):
 `pose/detect_person.py` (YOLOv8n, pretrained), `pose/estimate_pose.py`

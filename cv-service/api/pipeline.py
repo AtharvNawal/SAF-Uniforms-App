@@ -36,6 +36,7 @@ from api.validation import check_sharpness, validate_image
 from detectors.color_check import check_colors
 from detectors.name_tag_ocr import check_name_tag
 from detectors.uniform_identity import identify_uniform
+from detectors.hf_evidence import classify_uniform
 from detectors.variant_matcher import check_variants
 from detectors.zero_shot import fill_missed_detections
 from geometry.mask_anchor_refinement import refine_anchors_with_masks
@@ -106,6 +107,7 @@ class Geometry:
     image_bgr: object
     segmentation: object
     identity: object
+    visual_evidence: object
     anchor_pose: dict
     intrinsics: object
     anchors: dict
@@ -151,7 +153,15 @@ def solve_geometry(image_path: str, params: CheckParams) -> Geometry:
         segmentation = segment_uniform(image_path)
     except FileNotFoundError:
         raise CheckError(503, "SEGMENTER_UNAVAILABLE", "The uniform segmentation model is not installed on this server.")
-    identity = identify_uniform(segmentation, params.uniform_type)
+    inspection_profile = profile_from_uniform_type(
+        params.uniform_type,
+        params.rank_tier,
+        params.gender,
+        params.personnel_category,
+        params.is_sikh,
+    )
+    visual_evidence = classify_uniform(image_path, inspection_profile)
+    identity = identify_uniform(segmentation, params.uniform_type, visual_evidence)
     if not identity.inspection_allowed:
         raise CheckError(
             200,
@@ -163,6 +173,8 @@ def solve_geometry(image_path: str, params: CheckParams) -> Geometry:
                 "confidence": identity.confidence,
                 "message": identity.message,
                 "inspection_allowed": False,
+                "evidence_source": visual_evidence.source,
+                "evidence_available": visual_evidence.available,
             },
         )
 
@@ -209,7 +221,7 @@ def solve_geometry(image_path: str, params: CheckParams) -> Geometry:
     resolved = resolve_rules(camera, cm_per_px, profile=profile, rules=all_rules, anchors=anchors)
     if not resolved:
         raise CheckError(500, "NO_RULES", "No doctrine rules resolved for this profile.")
-    return Geometry(detection, validation, image_bgr, segmentation, identity, anchor_pose, intrinsics, anchors,
+    return Geometry(detection, validation, image_bgr, segmentation, identity, visual_evidence, anchor_pose, intrinsics, anchors,
                     height_scale, camera, cm_per_px, all_rules, resolved)
 
 
@@ -258,6 +270,8 @@ def _run_check(image_path: str, params: CheckParams) -> dict:
         "confidence": g.identity.confidence,
         "message": g.identity.message,
         "inspection_allowed": g.identity.inspection_allowed,
+        "evidence_source": g.visual_evidence.source,
+        "evidence_available": g.visual_evidence.available,
     }
     response["camera"] = {
         "focal_length_px": round(float(camera.camera_matrix[0, 0]), 1),
