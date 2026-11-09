@@ -1310,6 +1310,15 @@ improvement; representative before/after benchmarks and GPU-specific
 optimizations remain deployment work. Burst frames remain correlated evidence
 and are combined conservatively rather than treated as independent proof.
 
+**Canonical evidence aggregation** (2026-11-09,
+`ChangeRequest/2026-11-09-uniform-evidence-aggregation.md`) keeps one response
+entry per applicable `rule_id`. Repeated evidence for one rule is collapsed;
+conflicting statuses become `UNCERTAIN` rather than being allowed to inflate
+detected or required counts. Response confidence is namespaced separately for
+the person, uniform identity, and accessory evidence. Out-of-frame, occluded,
+blurred, and otherwise unavailable evidence must remain abstention evidence,
+not a fabricated accessory `MISSING` finding.
+
 **What's real, measured geometry today** (built
 2026-08-05, `ChangeRequest/2026-08-05_cv-service-mvp-inspect-endpoint.md`):
 `pose/detect_person.py` (YOLOv8n, pretrained), `pose/estimate_pose.py`

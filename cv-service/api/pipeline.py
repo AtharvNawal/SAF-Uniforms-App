@@ -292,6 +292,15 @@ def _run_check(image_path: str, params: CheckParams) -> dict:
         "evidence_source": g.visual_evidence.source,
         "evidence_available": g.visual_evidence.available,
     }
+    response["confidence"] = {
+        "person": response["person"]["confidence"],
+        "uniform": g.identity.confidence,
+        "accessory_mean": round(
+            sum(a["confidence"] for a in response["accessories"] if a["confidence"] is not None)
+            / max(1, sum(1 for a in response["accessories"] if a["confidence"] is not None)),
+            2,
+        ),
+    }
     response["camera"] = {
         "focal_length_px": round(float(camera.camera_matrix[0, 0]), 1),
         "focal_source": intrinsics.source,
