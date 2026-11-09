@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import json
 import math
+from functools import lru_cache
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -42,8 +43,14 @@ def load_rules(path: Path = _RULES_PATH) -> list[dict]:
     return load_rule_config(path).rules
 
 
+@lru_cache(maxsize=32)
+def _load_anchors_cached(path_string: str, modified_ns: int) -> dict:
+    return json.loads(Path(path_string).read_text())["anchors"]
+
+
 def load_anchors(path: Path = _ANCHORS_PATH) -> dict:
-    return json.loads(path.read_text())["anchors"]
+    stat = path.stat()
+    return _load_anchors_cached(str(path), stat.st_mtime_ns)
 
 
 @dataclass(frozen=True)

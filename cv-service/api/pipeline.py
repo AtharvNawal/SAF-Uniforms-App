@@ -25,6 +25,7 @@ order:
 from __future__ import annotations
 
 from dataclasses import dataclass
+from time import perf_counter
 
 import cv2
 
@@ -76,6 +77,7 @@ class CheckParams:
     height_cm: float | None = None
     focal_length_px: float | None = None
     gravity_up_cam: tuple[float, float, float] | None = None
+    request_id: str = "local"
 
 
 class CheckError(Exception):
@@ -116,11 +118,14 @@ class Geometry:
     cm_per_px: float
     all_rules: list
     resolved: list
+    diagnostics: dict[str, float]
 
 
 def solve_geometry(image_path: str, params: CheckParams) -> Geometry:
     """Stages 0-6 of the pipeline. Raises `CheckError` for every
     condition the photo can't be judged under."""
+    started = perf_counter()
+    timings: dict[str, float] = {}
     spec = uniforms.get(params.uniform_type)
     if spec is None:
         raise CheckError(
@@ -129,11 +134,15 @@ def solve_geometry(image_path: str, params: CheckParams) -> Geometry:
         )
 
     # Blur is judged on the person, after detection (see check_sharpness).
+    stage_started = perf_counter()
     validation = validate_image(image_path, check_blur=False)
+    timings["image_quality_ms"] = round((perf_counter() - stage_started) * 1000, 2)
     if not validation.usable:
         raise CheckError(422, validation.status, validation.message)
 
+    stage_started = perf_counter()
     detection = detect_person(image_path)
+    timings["person_detection_ms"] = round((perf_counter() - stage_started) * 1000, 2)
     if not detection.accepted:
         if detection.reason == "no_person_detected":
             raise CheckError(422, "NO_PERSON_DETECTED",
@@ -150,7 +159,9 @@ def solve_geometry(image_path: str, params: CheckParams) -> Geometry:
         raise CheckError(422, sharpness.status, sharpness.message)
 
     try:
+        stage_started = perf_counter()
         segmentation = segment_uniform(image_path)
+        timings["segmentation_ms"] = round((perf_counter() - stage_started) * 1000, 2)
     except FileNotFoundError:
         raise CheckError(503, "SEGMENTER_UNAVAILABLE", "The uniform segmentation model is not installed on this server.")
     inspection_profile = profile_from_uniform_type(
@@ -178,15 +189,19 @@ def solve_geometry(image_path: str, params: CheckParams) -> Geometry:
             },
         )
 
+    stage_started = perf_counter()
     anchor_pose = estimate_anchor_pose(image_path, person_box=detection.person, offsets_path=spec.offsets_path)
     anchor_pose = refine_anchors_with_masks(anchor_pose, segmentation)
+    timings["pose_and_anchor_ms"] = round((perf_counter() - stage_started) * 1000, 2)
 
     intrinsics = resolve_intrinsics(image_path, width_px, height_px, params.focal_length_px)
     anchors, height_scale = scaled_anchors(params.height_cm, spec)
+    stage_started = perf_counter()
     camera = solve_camera_pose_v2(
         anchor_pose, width_px, height_px, anchors=anchors,
         focal_px=intrinsics.focal_px, gravity_up_cam=params.gravity_up_cam,
     )
+    timings["camera_geometry_ms"] = round((perf_counter() - stage_started) * 1000, 2)
     if not camera.solved or not camera.reliable:
         raise CheckError(
             422, "POSE_UNRELIABLE",
@@ -218,11 +233,14 @@ def solve_geometry(image_path: str, params: CheckParams) -> Geometry:
         "medalRowCount": params.medal_row_count,
     }
     all_rules = rule_config.rules
+    stage_started = perf_counter()
     resolved = resolve_rules(camera, cm_per_px, profile=profile, rules=all_rules, anchors=anchors)
+    timings["rule_resolution_ms"] = round((perf_counter() - stage_started) * 1000, 2)
     if not resolved:
         raise CheckError(500, "NO_RULES", "No doctrine rules resolved for this profile.")
+    timings["total_geometry_ms"] = round((perf_counter() - started) * 1000, 2)
     return Geometry(detection, validation, image_bgr, segmentation, identity, visual_evidence, anchor_pose, intrinsics, anchors,
-                    height_scale, camera, cm_per_px, all_rules, resolved)
+                    height_scale, camera, cm_per_px, all_rules, resolved, timings)
 
 
 def run_check(image_path: str, params: CheckParams) -> dict:
@@ -235,6 +253,7 @@ def run_check(image_path: str, params: CheckParams) -> dict:
 
 
 def _run_check(image_path: str, params: CheckParams) -> dict:
+    started = perf_counter()
     g = solve_geometry(image_path, params)
     detection, validation, image_bgr, camera = g.detection, g.validation, g.image_bgr, g.camera
     segmentation, resolved, all_rules, cm_per_px = g.segmentation, g.resolved, g.all_rules, g.cm_per_px
@@ -281,6 +300,19 @@ def _run_check(image_path: str, params: CheckParams) -> dict:
         "gravity_disagreement_deg": round(gravity_disagreement_deg(camera.rotation_vec, params.gravity_up_cam), 1)
         if params.gravity_up_cam else None,
         "height_scale": round(height_scale, 3),
+    }
+    response["diagnostics"] = {
+        "request_id": params.request_id,
+        "stage_ms": {
+            **g.diagnostics,
+            "verdicts_ms": None,
+            "total_ms": round((perf_counter() - started) * 1000, 2),
+        },
+        "deep_verification": {
+            "enabled": config.HF_EVIDENCE_ENABLED,
+            "source": g.visual_evidence.source,
+            "available": g.visual_evidence.available,
+        },
     }
     if intrinsics.source == "assumed":
         response["image_quality"]["note"] = (

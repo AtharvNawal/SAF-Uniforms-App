@@ -1299,6 +1299,17 @@ override missing visual/segmentation evidence, and automatic PASS requires a
 labelled real-photo validation program before this flag is enabled in a
 deployment.
 
+**Cascaded inference diagnostics and caching** (2026-11-09,
+`ChangeRequest/2026-11-09-cascaded-inference-optimization.md`) now attach a
+request ID, per-stage timings, and deep-verification availability to successful
+`/check_uniform` responses. Rule and anchor JSON reads are cached by file
+modification time, so GLB-derived reference data and doctrine configuration are
+not reparsed on every request while edits invalidate the cache automatically.
+These diagnostics are measurement instrumentation, not a claimed latency
+improvement; representative before/after benchmarks and GPU-specific
+optimizations remain deployment work. Burst frames remain correlated evidence
+and are combined conservatively rather than treated as independent proof.
+
 **What's real, measured geometry today** (built
 2026-08-05, `ChangeRequest/2026-08-05_cv-service-mvp-inspect-endpoint.md`):
 `pose/detect_person.py` (YOLOv8n, pretrained), `pose/estimate_pose.py`

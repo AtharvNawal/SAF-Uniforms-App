@@ -43,3 +43,10 @@ def test_rule_config_requires_doctrine_metadata(tmp_path):
     path.write_text('{"_meta": {}, "rules": [{"object": "x"}]}')
     with pytest.raises(RuleConfigError):
         load_rule_config(path)
+
+
+def test_rule_config_is_cached_until_file_changes():
+    path = ROOT / "rules" / "army_no3_male.json"
+    first = load_rule_config(path)
+    second = load_rule_config(path)
+    assert first is second

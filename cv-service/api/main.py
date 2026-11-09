@@ -30,6 +30,7 @@ from __future__ import annotations
 
 import sys
 import tempfile
+from uuid import uuid4
 from pathlib import Path
 
 import cv2
@@ -267,7 +268,7 @@ def _gravity(gravity_x: float | None, gravity_y: float | None, gravity_z: float 
 
 def _params(**kwargs) -> CheckParams:
     gravity = _gravity(kwargs.pop("gravity_x"), kwargs.pop("gravity_y"), kwargs.pop("gravity_z"))
-    return CheckParams(**kwargs, gravity_up_cam=gravity)
+    return CheckParams(**kwargs, gravity_up_cam=gravity, request_id=str(uuid4()))
 
 
 async def _save_upload(image: UploadFile) -> str:

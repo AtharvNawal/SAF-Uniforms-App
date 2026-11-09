@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from functools import lru_cache
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -18,7 +19,8 @@ class RuleConfig:
     rules: list[dict[str, Any]]
 
 
-def load_rule_config(path: Path) -> RuleConfig:
+def _load_rule_config(path_string: str, modified_ns: int) -> RuleConfig:
+    path = Path(path_string)
     try:
         payload = json.loads(path.read_text())
     except (OSError, json.JSONDecodeError) as exc:
@@ -40,3 +42,18 @@ def load_rule_config(path: Path) -> RuleConfig:
             raise RuleConfigError(f"'{path}' rule {index} has no doctrine reference")
 
     return RuleConfig(metadata=payload["_meta"], rules=rules)
+
+
+def load_rule_config(path: Path) -> RuleConfig:
+    """Load a rule file with an mtime-aware process cache."""
+    stat = path.stat()
+    return _load_rule_config_cached(str(path), stat.st_mtime_ns)
+
+
+@lru_cache(maxsize=64)
+def _load_rule_config_cached(path_string: str, modified_ns: int) -> RuleConfig:
+    return _load_rule_config(path_string, modified_ns)
+
+
+def clear_rule_config_cache() -> None:
+    _load_rule_config_cached.cache_clear()
