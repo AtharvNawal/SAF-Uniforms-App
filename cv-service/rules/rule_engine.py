@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import json
 import math
+from functools import lru_cache
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -26,6 +27,7 @@ import numpy as np
 import config
 from calibration.pnp_solve import CameraSolution, project_point
 from pose.estimate_pose import PoseResult
+from rules.rule_loader import load_rule_config
 from segmentation.mask_geometry import angle_difference_deg, mask_centroid_px, mask_orientation_deg, mask_reference_point
 from segmentation.segment_uniform import SegmentationResult
 
@@ -38,11 +40,17 @@ _MIN_CROP_RADIUS_CM = config.MIN_CROP_RADIUS_CM
 
 
 def load_rules(path: Path = _RULES_PATH) -> list[dict]:
-    return json.loads(path.read_text())["rules"]
+    return load_rule_config(path).rules
+
+
+@lru_cache(maxsize=32)
+def _load_anchors_cached(path_string: str, modified_ns: int) -> dict:
+    return json.loads(Path(path_string).read_text())["anchors"]
 
 
 def load_anchors(path: Path = _ANCHORS_PATH) -> dict:
-    return json.loads(path.read_text())["anchors"]
+    stat = path.stat()
+    return _load_anchors_cached(str(path), stat.st_mtime_ns)
 
 
 @dataclass(frozen=True)

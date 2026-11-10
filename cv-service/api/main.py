@@ -30,6 +30,7 @@ from __future__ import annotations
 
 import sys
 import tempfile
+from uuid import uuid4
 from pathlib import Path
 
 import cv2
@@ -224,6 +225,36 @@ async def inspect(
 
 
 def _error(status_code: int, status: str, message: str, **extra) -> JSONResponse:
+    if status in {"INVALID_ATTIRE", "WRONG_UNIFORM", "UNABLE_TO_VERIFY"}:
+        identity = extra.get("uniform_identification", {})
+        return JSONResponse(
+            status_code=200,
+            content={
+                "success": False,
+                "overall_status": status,
+                "overall_score": None,
+                "uniform_identification": identity,
+                "image_quality": {"usable": True, "confidence": 0.0},
+                "person": {"detected": True, "confidence": 0.0},
+                "accessories": [],
+                "summary": {
+                    "detected_accessories": 0,
+                    "correct": 0,
+                    "incorrect": 0,
+                    "slightly_misaligned": 0,
+                    "missing": 0,
+                    "uncertain": 0,
+                    "required_accessories": 0,
+                },
+                "coverage": {
+                    "verified_required": 0,
+                    "checkable_required": 0,
+                    "fraction": 0.0,
+                    "not_checkable_required": 0,
+                },
+                "message": message,
+            },
+        )
     return JSONResponse(status_code=status_code, content={"success": False, "status": status, "message": message, **extra})
 
 
@@ -237,7 +268,7 @@ def _gravity(gravity_x: float | None, gravity_y: float | None, gravity_z: float 
 
 def _params(**kwargs) -> CheckParams:
     gravity = _gravity(kwargs.pop("gravity_x"), kwargs.pop("gravity_y"), kwargs.pop("gravity_z"))
-    return CheckParams(**kwargs, gravity_up_cam=gravity)
+    return CheckParams(**kwargs, gravity_up_cam=gravity, request_id=str(uuid4()))
 
 
 async def _save_upload(image: UploadFile) -> str:
@@ -257,6 +288,7 @@ async def check_uniform(
     medal_row_count: int = Form(0),
     view: str = Form("front"),
     body_type: str = Form("male"),
+    personnel_category: str = Form("regular"),
     include_debug_image: bool = Form(False),
     wearer_name: str | None = Form(None),
     height_cm: float | None = Form(None),
@@ -283,6 +315,7 @@ async def check_uniform(
     params = _params(
         uniform_type=uniform_type, rank_tier=rank_tier, gender=gender, is_sikh=is_sikh,
         medal_row_count=medal_row_count, view=view, body_type=body_type,
+        personnel_category=personnel_category,
         include_debug_image=include_debug_image, wearer_name=wearer_name, height_cm=height_cm,
         focal_length_px=focal_length_px, gravity_x=gravity_x, gravity_y=gravity_y, gravity_z=gravity_z,
     )
@@ -305,6 +338,7 @@ async def check_uniform_burst(
     medal_row_count: int = Form(0),
     view: str = Form("front"),
     body_type: str = Form("male"),
+    personnel_category: str = Form("regular"),
     include_debug_image: bool = Form(False),
     wearer_name: str | None = Form(None),
     height_cm: float | None = Form(None),
@@ -325,6 +359,7 @@ async def check_uniform_burst(
     params = _params(
         uniform_type=uniform_type, rank_tier=rank_tier, gender=gender, is_sikh=is_sikh,
         medal_row_count=medal_row_count, view=view, body_type=body_type,
+        personnel_category=personnel_category,
         include_debug_image=include_debug_image, wearer_name=wearer_name, height_cm=height_cm,
         focal_length_px=focal_length_px, gravity_x=gravity_x, gravity_y=gravity_y, gravity_z=gravity_z,
     )

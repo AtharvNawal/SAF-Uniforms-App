@@ -25,6 +25,7 @@ order:
 from __future__ import annotations
 
 from dataclasses import dataclass
+from time import perf_counter
 
 import cv2
 
@@ -35,6 +36,8 @@ from api.response_schema import build_check_uniform_response
 from api.validation import check_sharpness, validate_image
 from detectors.color_check import check_colors
 from detectors.name_tag_ocr import check_name_tag
+from detectors.uniform_identity import identify_uniform
+from detectors.hf_evidence import classify_uniform
 from detectors.variant_matcher import check_variants
 from detectors.zero_shot import fill_missed_detections
 from geometry.mask_anchor_refinement import refine_anchors_with_masks
@@ -44,7 +47,8 @@ from geometry.solve_camera_pose import solve_camera_pose as solve_camera_pose_v2
 from pose.anchor_mapping import estimate_anchor_pose
 from pose.detect_person import detect_person
 from reporting.report import render_debug_image_b64
-from rules.rule_engine import evaluate_verdicts, load_anchors, load_rules, resolve_rules
+from rules.rule_engine import evaluate_verdicts, load_anchors, resolve_rules
+from rules.rule_selector import profile_from_uniform_type, select_rule_config
 from segmentation.segment_uniform import segment_uniform, using_model
 from segmentation.two_stage import refine_small_items
 
@@ -66,12 +70,14 @@ class CheckParams:
     medal_row_count: int = 0
     view: str = "front"
     body_type: str = "male"
+    personnel_category: str = "regular"
     include_debug_image: bool = False
     # D16 / B8 — all optional; each only improves the measurement.
     wearer_name: str | None = None
     height_cm: float | None = None
     focal_length_px: float | None = None
     gravity_up_cam: tuple[float, float, float] | None = None
+    request_id: str = "local"
 
 
 class CheckError(Exception):
@@ -102,6 +108,8 @@ class Geometry:
     validation: object
     image_bgr: object
     segmentation: object
+    identity: object
+    visual_evidence: object
     anchor_pose: dict
     intrinsics: object
     anchors: dict
@@ -110,11 +118,14 @@ class Geometry:
     cm_per_px: float
     all_rules: list
     resolved: list
+    diagnostics: dict[str, float]
 
 
 def solve_geometry(image_path: str, params: CheckParams) -> Geometry:
     """Stages 0-6 of the pipeline. Raises `CheckError` for every
     condition the photo can't be judged under."""
+    started = perf_counter()
+    timings: dict[str, float] = {}
     spec = uniforms.get(params.uniform_type)
     if spec is None:
         raise CheckError(
@@ -123,11 +134,15 @@ def solve_geometry(image_path: str, params: CheckParams) -> Geometry:
         )
 
     # Blur is judged on the person, after detection (see check_sharpness).
+    stage_started = perf_counter()
     validation = validate_image(image_path, check_blur=False)
+    timings["image_quality_ms"] = round((perf_counter() - stage_started) * 1000, 2)
     if not validation.usable:
         raise CheckError(422, validation.status, validation.message)
 
+    stage_started = perf_counter()
     detection = detect_person(image_path)
+    timings["person_detection_ms"] = round((perf_counter() - stage_started) * 1000, 2)
     if not detection.accepted:
         if detection.reason == "no_person_detected":
             raise CheckError(422, "NO_PERSON_DETECTED",
@@ -144,19 +159,49 @@ def solve_geometry(image_path: str, params: CheckParams) -> Geometry:
         raise CheckError(422, sharpness.status, sharpness.message)
 
     try:
+        stage_started = perf_counter()
         segmentation = segment_uniform(image_path)
+        timings["segmentation_ms"] = round((perf_counter() - stage_started) * 1000, 2)
     except FileNotFoundError:
         raise CheckError(503, "SEGMENTER_UNAVAILABLE", "The uniform segmentation model is not installed on this server.")
+    inspection_profile = profile_from_uniform_type(
+        params.uniform_type,
+        params.rank_tier,
+        params.gender,
+        params.personnel_category,
+        params.is_sikh,
+    )
+    visual_evidence = classify_uniform(image_path, inspection_profile)
+    identity = identify_uniform(segmentation, params.uniform_type, visual_evidence)
+    if not identity.inspection_allowed:
+        raise CheckError(
+            200,
+            identity.status,
+            identity.message,
+            uniform_identification={
+                "status": identity.status,
+                "detected_attire": identity.detected_attire,
+                "confidence": identity.confidence,
+                "message": identity.message,
+                "inspection_allowed": False,
+                "evidence_source": visual_evidence.source,
+                "evidence_available": visual_evidence.available,
+            },
+        )
 
+    stage_started = perf_counter()
     anchor_pose = estimate_anchor_pose(image_path, person_box=detection.person, offsets_path=spec.offsets_path)
     anchor_pose = refine_anchors_with_masks(anchor_pose, segmentation)
+    timings["pose_and_anchor_ms"] = round((perf_counter() - stage_started) * 1000, 2)
 
     intrinsics = resolve_intrinsics(image_path, width_px, height_px, params.focal_length_px)
     anchors, height_scale = scaled_anchors(params.height_cm, spec)
+    stage_started = perf_counter()
     camera = solve_camera_pose_v2(
         anchor_pose, width_px, height_px, anchors=anchors,
         focal_px=intrinsics.focal_px, gravity_up_cam=params.gravity_up_cam,
     )
+    timings["camera_geometry_ms"] = round((perf_counter() - stage_started) * 1000, 2)
     if not camera.solved or not camera.reliable:
         raise CheckError(
             422, "POSE_UNRELIABLE",
@@ -171,13 +216,31 @@ def solve_geometry(image_path: str, params: CheckParams) -> Geometry:
                          "Could not determine physical scale from this photo (shoulders not clearly visible). "
                          "Please retake with both shoulders in frame.")
 
-    profile = {"rank_tier": params.rank_tier, "gender": params.gender, "isSikh": params.is_sikh, "medalRowCount": params.medal_row_count}
-    all_rules = load_rules(spec.rules_path)
+    try:
+        inspection_profile = profile_from_uniform_type(
+            params.uniform_type,
+            params.rank_tier,
+            params.gender,
+            params.personnel_category,
+            params.is_sikh,
+        )
+        rule_config = select_rule_config(inspection_profile, spec)
+    except ValueError as exc:
+        raise CheckError(422, "INVALID_INSPECTION_PROFILE", str(exc)) from exc
+
+    profile = {
+        **inspection_profile.as_rule_profile(),
+        "medalRowCount": params.medal_row_count,
+    }
+    all_rules = rule_config.rules
+    stage_started = perf_counter()
     resolved = resolve_rules(camera, cm_per_px, profile=profile, rules=all_rules, anchors=anchors)
+    timings["rule_resolution_ms"] = round((perf_counter() - stage_started) * 1000, 2)
     if not resolved:
         raise CheckError(500, "NO_RULES", "No doctrine rules resolved for this profile.")
-    return Geometry(detection, validation, image_bgr, segmentation, anchor_pose, intrinsics, anchors,
-                    height_scale, camera, cm_per_px, all_rules, resolved)
+    timings["total_geometry_ms"] = round((perf_counter() - started) * 1000, 2)
+    return Geometry(detection, validation, image_bgr, segmentation, identity, visual_evidence, anchor_pose, intrinsics, anchors,
+                    height_scale, camera, cm_per_px, all_rules, resolved, timings)
 
 
 def run_check(image_path: str, params: CheckParams) -> dict:
@@ -190,6 +253,7 @@ def run_check(image_path: str, params: CheckParams) -> dict:
 
 
 def _run_check(image_path: str, params: CheckParams) -> dict:
+    started = perf_counter()
     g = solve_geometry(image_path, params)
     detection, validation, image_bgr, camera = g.detection, g.validation, g.image_bgr, g.camera
     segmentation, resolved, all_rules, cm_per_px = g.segmentation, g.resolved, g.all_rules, g.cm_per_px
@@ -211,6 +275,32 @@ def _run_check(image_path: str, params: CheckParams) -> dict:
     response = build_check_uniform_response(
         resolved, verdicts, detection, validation.usable, validation.confidence, class_names=segmentation.class_names,
     )
+    response["inspection_profile"] = {
+        "service": params.uniform_type.split("_", 1)[0],
+        "dress": params.uniform_type.split("_")[1],
+        "gender": params.gender,
+        "rank_tier": params.rank_tier,
+        "personnel_category": params.personnel_category,
+        "is_sikh": params.is_sikh,
+    }
+    response["uniform_identification"] = {
+        "status": g.identity.status,
+        "detected_attire": params.uniform_type,
+        "confidence": g.identity.confidence,
+        "message": g.identity.message,
+        "inspection_allowed": g.identity.inspection_allowed,
+        "evidence_source": g.visual_evidence.source,
+        "evidence_available": g.visual_evidence.available,
+    }
+    response["confidence"] = {
+        "person": response["person"]["confidence"],
+        "uniform": g.identity.confidence,
+        "accessory_mean": round(
+            sum(a["confidence"] for a in response["accessories"] if a["confidence"] is not None)
+            / max(1, sum(1 for a in response["accessories"] if a["confidence"] is not None)),
+            2,
+        ),
+    }
     response["camera"] = {
         "focal_length_px": round(float(camera.camera_matrix[0, 0]), 1),
         "focal_source": intrinsics.source,
@@ -219,6 +309,19 @@ def _run_check(image_path: str, params: CheckParams) -> dict:
         "gravity_disagreement_deg": round(gravity_disagreement_deg(camera.rotation_vec, params.gravity_up_cam), 1)
         if params.gravity_up_cam else None,
         "height_scale": round(height_scale, 3),
+    }
+    response["diagnostics"] = {
+        "request_id": params.request_id,
+        "stage_ms": {
+            **g.diagnostics,
+            "verdicts_ms": None,
+            "total_ms": round((perf_counter() - started) * 1000, 2),
+        },
+        "deep_verification": {
+            "enabled": config.HF_EVIDENCE_ENABLED,
+            "source": g.visual_evidence.source,
+            "available": g.visual_evidence.available,
+        },
     }
     if intrinsics.source == "assumed":
         response["image_quality"]["note"] = (
@@ -232,4 +335,3 @@ def _run_check(image_path: str, params: CheckParams) -> dict:
     if params.include_debug_image:
         response["debug_image_base64"] = render_debug_image_b64(image_bgr, verdicts)
     return response
-

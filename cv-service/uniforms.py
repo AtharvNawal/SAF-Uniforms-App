@@ -23,6 +23,9 @@ _ROOT = Path(__file__).resolve().parent
 @dataclass(frozen=True)
 class UniformSpec:
     uniform_type: str
+    service: str
+    dress: str
+    gender: str
     rules_path: Path
     anchors_path: Path
     offsets_path: Path
@@ -37,8 +40,12 @@ class UniformSpec:
 
 
 def _spec(uniform_type: str, body: str, stature: float, segmentation_model: str | None = None) -> UniformSpec:
+    service, dress, gender = uniform_type.split("_")
     return UniformSpec(
         uniform_type=uniform_type,
+        service=service,
+        dress=dress,
+        gender=gender,
         rules_path=_ROOT / "rules" / f"{uniform_type}.json",
         anchors_path=_ROOT / "rules" / f"anchors.{body}.json",
         offsets_path=_ROOT / "pose" / f"anchor_offsets.{body}.json",

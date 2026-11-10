@@ -27,6 +27,17 @@ Pillow>=10.0
 easyocr>=1.7
 clip @ git+https://github.com/ultralytics/CLIP.git
 
+# Optional Hugging Face evidence stack (lazy-loaded and disabled by default).
+# These pretrained models provide candidate evidence only; they are not SAF
+# classifiers and require labelled validation before enabling automatic use.
+torch>=2.4
+torchvision>=0.19
+transformers>=4.45
+accelerate>=0.34
+huggingface_hub>=0.24
+timm>=1.0
+supervision>=0.24
+
 # Stage 6/7 API
 fastapi>=0.110
 uvicorn>=0.29

@@ -77,6 +77,7 @@ def _point_to_dict(point: tuple[float, float] | None) -> dict | None:
 def _accessory_entry(verdict: VerdictResult, required: bool = False, checkable: bool = True) -> dict:
     return {
         "name": verdict.accessory,
+        "rule_id": verdict.accessory,
         # Whether doctrine requires this item for the wearer's profile, and
         # whether the system can detect it at all — lets a client (and the
         # burst aggregator, api/burst.py) recompute the overall result.
@@ -173,6 +174,7 @@ def build_check_uniform_response(
     """Pure mapping — no model inference happens here. `resolved_rules`
     supplies `required_accessories` (verdicts alone don't carry that
     flag); everything else comes from `verdicts`."""
+    verdicts = canonicalize_verdicts(verdicts)
     overall_score = compute_overall_score(verdicts, resolved_rules)
     coverage = compute_coverage(verdicts, resolved_rules, class_names)
     required_ids = {rule.object_id for rule in resolved_rules if rule.required}
@@ -212,6 +214,7 @@ def recompute_from_entries(accessories: list[dict]) -> dict:
     `status`, `required`, `checkable`) — the same rules as
     `build_check_uniform_response`, for callers that only have the JSON
     (the burst aggregator)."""
+    accessories = canonicalize_entries(accessories)
     internal = [(a, _INTERNAL_STATUS[a["status"]]) for a in accessories]
     scorable = [_STATUS_TO_ITEM_SCORE[st] for a, st in internal if a["required"] and st in _STATUS_TO_ITEM_SCORE]
     score = round(sum(scorable) / len(scorable), 1) if scorable else 0.0
@@ -237,3 +240,64 @@ def recompute_from_entries(accessories: list[dict]) -> dict:
         "required_accessories": sum(1 for a in accessories if a["required"]),
     }
     return {"overall_score": score, "overall_status": status, "coverage": coverage, "summary": summary}
+
+
+def canonicalize_verdicts(verdicts: list[VerdictResult]) -> list[VerdictResult]:
+    """Keep one evidence result per applicable accessory/rule identity.
+
+    Duplicate rows cannot improve confidence. If repeated evidence for one
+    rule disagrees, abstain instead of allowing the first/last row to create a
+    misleading PASS.
+    """
+    grouped: dict[str, list[VerdictResult]] = {}
+    for verdict in verdicts:
+        grouped.setdefault(verdict.accessory, []).append(verdict)
+    canonical: list[VerdictResult] = []
+    for entries in grouped.values():
+        statuses = {entry.status for entry in entries}
+        if len(statuses) == 1:
+            canonical.append(entries[0])
+            continue
+        canonical.append(
+            VerdictResult(
+                accessory=entries[0].accessory,
+                status="unverifiable",
+                reason="Conflicting evidence was returned for this rule; additional evidence is required.",
+                doctrine_ref=entries[0].doctrine_ref,
+                confidence=None,
+                bounding_box_px=None,
+                expected_position_px=entries[0].expected_position_px,
+                detected_position_px=None,
+                error_px=None,
+                visibility="uncertain",
+                detection_source="conflicting_evidence",
+            )
+        )
+    return canonical
+
+
+def canonicalize_entries(accessories: list[dict]) -> list[dict]:
+    grouped: dict[str, list[dict]] = {}
+    for entry in accessories:
+        grouped.setdefault(entry.get("rule_id", entry.get("name", "")), []).append(entry)
+    canonical: list[dict] = []
+    for entries in grouped.values():
+        statuses = {entry["status"] for entry in entries}
+        if len(statuses) == 1:
+            canonical.append(entries[0])
+            continue
+        entry = dict(entries[0])
+        entry.update(
+            status="UNCERTAIN",
+            present=None,
+            position_correct=None,
+            confidence=None,
+            bounding_box=None,
+            detected_position=None,
+            error=None,
+            visibility="UNKNOWN",
+            detection_source="conflicting_evidence",
+            message="Conflicting evidence was returned for this rule; additional evidence is required.",
+        )
+        canonical.append(entry)
+    return canonical
